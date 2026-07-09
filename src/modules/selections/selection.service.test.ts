@@ -10,7 +10,18 @@ vi.mock("./selection.repository", () => ({
   },
 }));
 
-const { exportSelectionCsv } = await import("./selection.service");
+vi.mock("@/lib/db", () => ({
+  db: {
+    gallery: {
+      findUnique: vi.fn(async () => ({
+        title: "Boda Ana y Luis",
+        client: { name: "Ana Perez" },
+      })),
+    },
+  },
+}));
+
+const { exportSelectionCsv, exportSelectionText } = await import("./selection.service");
 
 describe("exportSelectionCsv", () => {
   it("produces a header plus one escaped row per selected photo", async () => {
@@ -21,5 +32,16 @@ describe("exportSelectionCsv", () => {
     expect(lines[1]).toBe("IMG_2031.webp,IMG_2031,me gusta para perfil");
     expect(lines[2]).toBe("IMG_2044.webp,IMG_2044,");
     expect(lines[3]).toBe('IMG_2050.webp,IMG_2050,"con ""comillas"", y coma"');
+  });
+});
+
+describe("exportSelectionText", () => {
+  it("includes the comment after the baseName when present, and just the baseName otherwise", async () => {
+    const text = await exportSelectionText("gallery_1");
+    const lines = text.split("\n");
+
+    expect(lines).toContain("IMG_2031 — me gusta para perfil");
+    expect(lines).toContain("IMG_2044");
+    expect(lines).toContain('IMG_2050 — con "comillas", y coma');
   });
 });
