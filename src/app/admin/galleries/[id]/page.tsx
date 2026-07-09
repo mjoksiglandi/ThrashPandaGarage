@@ -85,6 +85,7 @@ export default async function GalleryDetailPage({ params }: { params: Promise<{ 
           <form action={importPhotos}><button className="w-full" type="submit">Importar fotos</button></form>
           <form action={sendEmail}><button className="secondary w-full" type="submit">Enviar correo</button></form>
           <a className="button secondary text-center" href={`/admin/galleries/${id}/export`}>Exportar seleccion TXT</a>
+          <a className="button secondary text-center" href={`/admin/galleries/${id}/export/csv`}>Exportar seleccion CSV</a>
           <form action={archive}><button className="secondary w-full" type="submit">Archivar</button></form>
           <div className="rounded-lg border border-zinc-800 bg-[#141417] p-4">
             <h2 className="font-bold">Seleccionadas</h2>

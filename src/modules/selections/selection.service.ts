@@ -41,3 +41,19 @@ export async function exportSelectionText(galleryId: string) {
     "",
   ].join("\n");
 }
+
+function csvEscape(value: string): string {
+  if (/[",\n]/.test(value)) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+export async function exportSelectionCsv(galleryId: string): Promise<string> {
+  const selected = await selectionRepository.selectedForGallery(galleryId);
+  const header = "filename,baseName,comment";
+  const rows = selected.map((item) =>
+    [item.photo.filename, item.photo.baseName, csvEscape(item.comment ?? "")].join(",")
+  );
+  return [header, ...rows].join("\n");
+}
