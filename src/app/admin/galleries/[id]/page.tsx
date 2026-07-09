@@ -14,15 +14,28 @@ import { sendGalleryEmail } from "@/modules/mail/mail.service";
 
 export const dynamic = "force-dynamic";
 
-export default async function GalleryDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function GalleryDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const { id } = await params;
+  const { error } = await searchParams;
   const [gallery, clients] = await Promise.all([galleryRepository.find(id), clientRepository.list()]);
   if (!gallery) redirect("/admin/galleries");
 
   async function update(formData: FormData) {
     "use server";
-    await updateGalleryFromForm(id, formData);
-    redirect(`/admin/galleries/${id}`);
+    let redirectTarget = `/admin/galleries/${id}`;
+    try {
+      await updateGalleryFromForm(id, formData);
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : "No se pudo guardar la galeria";
+      redirectTarget += `?error=${encodeURIComponent(message)}`;
+    }
+    redirect(redirectTarget);
   }
 
   async function importPhotos() {
@@ -54,6 +67,10 @@ export default async function GalleryDetailPage({ params }: { params: Promise<{ 
         </div>
         <StatusBadge status={gallery.status} />
       </div>
+
+      {error && (
+        <p className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-300">{error}</p>
+      )}
 
       <div className="mt-6 grid gap-4 rounded-lg border border-zinc-800 bg-[#141417] p-4 text-sm text-zinc-300">
         <p>Link privado: <Link className="text-[#d9902f]" href={`/g/${gallery.accessToken}`}>{env.APP_BASE_URL}/g/{gallery.accessToken}</Link></p>

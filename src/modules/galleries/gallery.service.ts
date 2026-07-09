@@ -10,6 +10,15 @@ export function isGalleryAccessible(gallery: { status: GalleryStatus; expiresAt:
   return true;
 }
 
+export function assertReadyForDeliveryAllowed(data: {
+  status?: GalleryStatus;
+  deliveryDriveUrl?: string | null;
+}): void {
+  if (data.status === GalleryStatus.READY_FOR_DELIVERY && !data.deliveryDriveUrl) {
+    throw new Error("Agrega el link de entrega de Google Drive antes de marcar como lista para entrega.");
+  }
+}
+
 function cleanGalleryForm(formData: FormData) {
   const parsed = gallerySchema.parse(Object.fromEntries(formData));
   return {
@@ -40,6 +49,7 @@ export async function createGalleryFromForm(formData: FormData) {
 
 export async function updateGalleryFromForm(id: string, formData: FormData) {
   const data = cleanGalleryForm(formData);
+  assertReadyForDeliveryAllowed(data);
   const gallery = await galleryRepository.update(id, data);
   await galleryRepository.event(id, "GALLERY_UPDATED", { status: data.status });
   revalidatePath(`/admin/galleries/${id}`);
