@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { env } from "@/lib/env";
+import { signSessionValue, verifySessionValue } from "@/lib/session-token";
 
 const cookieName = "tpg_admin";
 
@@ -13,7 +15,7 @@ export async function loginAdmin(email: string, password: string) {
   if (!ok) return false;
 
   const jar = await cookies();
-  jar.set(cookieName, user.id, {
+  jar.set(cookieName, signSessionValue(user.id, env.AUTH_SECRET), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -30,7 +32,7 @@ export async function logoutAdmin() {
 
 export async function getCurrentAdmin() {
   const jar = await cookies();
-  const userId = jar.get(cookieName)?.value;
+  const userId = verifySessionValue(jar.get(cookieName)?.value, env.AUTH_SECRET);
   if (!userId) return null;
   return db.user.findUnique({ where: { id: userId } });
 }

@@ -11,7 +11,7 @@ const envSchema = z.object({
   MAIL_FROM: z.string().default("Trashpanda Garage <noreply@example.com>"),
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_PASSWORD: z.string().optional(),
-  AUTH_SECRET: z.string().optional(),
+  AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters long"),
 });
 
 export const env = envSchema.parse(process.env);

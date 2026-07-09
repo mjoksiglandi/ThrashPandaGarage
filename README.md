@@ -17,20 +17,21 @@ Web fullstack en Next.js + TypeScript para portfolio publico, galerias privadas 
 
 1. Copia `.env.example` a `.env`.
 2. Ajusta `DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `PHOTO_STORAGE_ROOT`.
-3. Instala dependencias:
+3. Genera un `AUTH_SECRET` de al menos 32 caracteres, por ejemplo con `openssl rand -base64 32`, y pegalo en `.env`.
+4. Instala dependencias:
 
 ```bash
 npm install
 ```
 
-4. Crea el esquema y el admin:
+5. Crea el esquema y el admin:
 
 ```bash
 npm run prisma:push
 npm run db:seed
 ```
 
-5. Levanta Next:
+6. Levanta Next:
 
 ```bash
 npm run dev
