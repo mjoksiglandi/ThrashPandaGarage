@@ -132,6 +132,24 @@ export default async function GalleryDetailPage({
           ))}
         </div>
       </section>
+
+      <section className="mt-8">
+        <h2 className="text-xl font-bold">Historial</h2>
+        <ul className="mt-4 grid gap-2 text-sm text-zinc-400">
+          {gallery.events.map((event) => (
+            <li key={event.id} className="rounded border border-zinc-800 p-2">
+              <span className="font-mono text-xs text-zinc-500">{event.createdAt.toLocaleString()}</span>{" "}
+              <strong className="text-zinc-200">{event.type}</strong>
+              {event.metadata != null && (
+                <pre className="mt-1 overflow-x-auto text-xs text-zinc-500">
+                  {JSON.stringify(event.metadata, null, 2)}
+                </pre>
+              )}
+            </li>
+          ))}
+          {gallery.events.length === 0 && <li className="text-zinc-500">Sin eventos todavia.</li>}
+        </ul>
+      </section>
     </AdminShell>
   );
 }
