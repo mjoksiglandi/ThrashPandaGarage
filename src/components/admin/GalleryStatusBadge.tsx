@@ -11,7 +11,7 @@ const labels: Record<GalleryStatus, string> = {
   ARCHIVED: "Archivada",
 };
 
-export function StatusBadge({ status }: { status: GalleryStatus }) {
+export function GalleryStatusBadge({ status }: { status: GalleryStatus }) {
   return (
     <span className="rounded-full border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-200">
       {labels[status]}

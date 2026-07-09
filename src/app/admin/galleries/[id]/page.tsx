@@ -2,14 +2,17 @@ import { GalleryStatus } from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
-import { StatusBadge } from "@/components/admin/StatusBadge";
+import { GalleryStatusBadge } from "@/components/admin/GalleryStatusBadge";
+import { GalleryPhotoManager } from "@/components/admin/GalleryPhotoManager";
+import { SelectedPhotoList } from "@/components/admin/SelectedPhotoList";
+import { SendGalleryEmailButton } from "@/components/admin/SendGalleryEmailButton";
+import { ExportSelectionButton } from "@/components/admin/ExportSelectionButton";
 import { FormField } from "@/components/ui/FormField";
 import { env } from "@/lib/env";
 import { clientRepository } from "@/modules/clients/client.repository";
 import { archiveGallery, updateGalleryFromForm } from "@/modules/galleries/gallery.service";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 import { importGalleryPhotos } from "@/modules/photos/photo-import.service";
-import { exportSelectionText } from "@/modules/selections/selection.service";
 import { sendGalleryEmail } from "@/modules/mail/mail.service";
 
 export const dynamic = "force-dynamic";
@@ -65,7 +68,7 @@ export default async function GalleryDetailPage({
           <h1 className="text-3xl font-black">{gallery.title}</h1>
           <p className="mt-2 text-zinc-500">{gallery.client.name}</p>
         </div>
-        <StatusBadge status={gallery.status} />
+        <GalleryStatusBadge status={gallery.status} />
       </div>
 
       {error && (
@@ -100,38 +103,14 @@ export default async function GalleryDetailPage({
 
         <aside className="grid content-start gap-3">
           <form action={importPhotos}><button className="w-full" type="submit">Importar fotos</button></form>
-          <form action={sendEmail}><button className="secondary w-full" type="submit">Enviar correo</button></form>
-          <a className="button secondary text-center" href={`/admin/galleries/${id}/export`}>Exportar seleccion TXT</a>
-          <a className="button secondary text-center" href={`/admin/galleries/${id}/export/csv`}>Exportar seleccion CSV</a>
+          <SendGalleryEmailButton onSend={sendEmail} />
+          <ExportSelectionButton galleryId={id} />
           <form action={archive}><button className="secondary w-full" type="submit">Archivar</button></form>
-          <div className="rounded-lg border border-zinc-800 bg-[#141417] p-4">
-            <h2 className="font-bold">Seleccionadas</h2>
-            <p className="mt-1 text-sm text-zinc-500">{selected.length} fotos</p>
-            <ul className="mt-4 grid gap-2 text-sm">
-              {selected.map((selection) => (
-                <li key={selection.id} className="rounded border border-zinc-800 p-2">
-                  <strong>{selection.photo.baseName}</strong>
-                  {selection.comment && <p className="mt-1 text-zinc-400">{selection.comment}</p>}
-                </li>
-              ))}
-            </ul>
-          </div>
+          <SelectedPhotoList selections={selected} />
         </aside>
       </div>
 
-      <section className="mt-8">
-        <h2 className="text-xl font-bold">Fotos</h2>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {gallery.photos.map((photo) => (
-            <article key={photo.id} className="rounded-lg border border-zinc-800 bg-[#141417] p-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/api/photos/${photo.id}?variant=thumb`} alt={photo.baseName} className="aspect-square w-full rounded object-cover" />
-              <p className="mt-2 truncate text-sm">{photo.filename}</p>
-              {photo.selection?.comment && <p className="mt-1 text-xs text-zinc-500">{photo.selection.comment}</p>}
-            </article>
-          ))}
-        </div>
-      </section>
+      <GalleryPhotoManager photos={gallery.photos} />
 
       <section className="mt-8">
         <h2 className="text-xl font-bold">Historial</h2>
