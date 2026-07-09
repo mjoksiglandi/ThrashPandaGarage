@@ -12,7 +12,7 @@ services:
       PHOTO_STORAGE_ROOT: /data/photos
     depends_on:
       - db
-    command: sh -c "npx prisma db push && npm run start"
+    command: sh -c "npx prisma migrate deploy && npm run start"
 
   db:
     image: postgres:16
@@ -20,8 +20,6 @@ services:
       POSTGRES_DB: trashpanda
       POSTGRES_USER: trashpanda
       POSTGRES_PASSWORD: trashpanda_password
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
