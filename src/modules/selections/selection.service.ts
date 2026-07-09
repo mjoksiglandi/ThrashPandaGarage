@@ -1,7 +1,6 @@
-import { GalleryStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { selectionSchema } from "@/lib/validators";
-import { markSelectionConfirmed } from "@/modules/galleries/gallery.service";
+import { isGalleryAccessible, markSelectionConfirmed } from "@/modules/galleries/gallery.service";
 import { selectionRepository } from "./selection.repository";
 
 export async function updateSelectionFromClient(accessToken: string, input: unknown) {
@@ -10,8 +9,7 @@ export async function updateSelectionFromClient(accessToken: string, input: unkn
     where: { accessToken },
     include: { photos: true, selections: true },
   });
-  if (!gallery || gallery.status === GalleryStatus.ARCHIVED) throw new Error("Gallery not available");
-  if (gallery.expiresAt && gallery.expiresAt < new Date()) throw new Error("Gallery expired");
+  if (!gallery || !isGalleryAccessible(gallery)) throw new Error("Gallery not available");
 
   const belongs = gallery.photos.some((photo) => photo.id === parsed.photoId);
   if (!belongs) throw new Error("Invalid photo");
@@ -26,7 +24,7 @@ export async function updateSelectionFromClient(accessToken: string, input: unkn
 
 export async function confirmSelection(accessToken: string) {
   const gallery = await db.gallery.findUnique({ where: { accessToken } });
-  if (!gallery || gallery.status === GalleryStatus.ARCHIVED) throw new Error("Gallery not available");
+  if (!gallery || !isGalleryAccessible(gallery)) throw new Error("Gallery not available");
   await markSelectionConfirmed(gallery.id);
 }
 

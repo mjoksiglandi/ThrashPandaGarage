@@ -1,7 +1,9 @@
 import fs from "fs/promises";
 import path from "path";
 import { NextRequest, NextResponse } from "next/server";
+import { getCurrentAdmin } from "@/lib/auth";
 import { photoRepository } from "@/modules/photos/photo.repository";
+import { canServePhoto } from "@/modules/photos/photo-access.service";
 import { resolveStoragePath } from "@/modules/storage/storage.service";
 
 const contentTypes: Record<string, string> = {
@@ -15,6 +17,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params;
   const photo = await photoRepository.find(id);
   if (!photo) return new NextResponse("Not found", { status: 404 });
+
+  const admin = await getCurrentAdmin();
+  const token = request.nextUrl.searchParams.get("token");
+  if (!canServePhoto(photo.gallery, { isAdmin: Boolean(admin), token })) {
+    return new NextResponse("Not found", { status: 404 });
+  }
 
   const variant = request.nextUrl.searchParams.get("variant") === "preview" ? "preview" : "thumb";
   const relativePath = variant === "preview" ? photo.previewPath || photo.thumbPath : photo.thumbPath;

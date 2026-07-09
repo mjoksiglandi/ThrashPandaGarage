@@ -4,6 +4,12 @@ import { gallerySchema } from "@/lib/validators";
 import { createAccessToken, slugify } from "@/lib/tokens";
 import { galleryRepository } from "./gallery.repository";
 
+export function isGalleryAccessible(gallery: { status: GalleryStatus; expiresAt: Date | null }): boolean {
+  if (gallery.status === GalleryStatus.ARCHIVED) return false;
+  if (gallery.expiresAt && gallery.expiresAt < new Date()) return false;
+  return true;
+}
+
 function cleanGalleryForm(formData: FormData) {
   const parsed = gallerySchema.parse(Object.fromEntries(formData));
   return {
