@@ -1,0 +1,29 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - /mnt/trashpanda/photos:/data/photos
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://trashpanda:trashpanda_password@db:5432/trashpanda
+      PHOTO_STORAGE_ROOT: /data/photos
+    depends_on:
+      - db
+    command: sh -c "npx prisma db push && npm run start"
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: trashpanda
+      POSTGRES_USER: trashpanda
+      POSTGRES_PASSWORD: trashpanda_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

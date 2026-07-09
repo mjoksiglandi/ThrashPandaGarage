@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+}
+
+enum GalleryStatus {
+  DRAFT
+  EMAIL_SENT
+  PROOFING
+  SELECTION_CONFIRMED
+  EDITING
+  READY_FOR_DELIVERY
+  DELIVERED
+  ARCHIVED
+}
+
+enum PhotoStatus {
+  PROOF
+  SELECTED
+  EDITING
+  READY
+  DELIVERED
+  REJECTED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  passwordHash String?
+  role         UserRole @default(ADMIN)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  email     String?
+  phone     String?
+  notes     String?
+  galleries Gallery[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Gallery {
+  id                   String        @id @default(cuid())
+  clientId             String
+  client               Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title                String
+  slug                 String
+  accessToken          String        @unique
+  status               GalleryStatus @default(DRAFT)
+  selectionLimit       Int?
+  expiresAt            DateTime?
+  proofingLocalPath    String?
+  thumbnailLocalPath   String?
+  previewLocalPath     String?
+  googleDriveFolderUrl String?
+  deliveryDriveUrl     String?
+  emailSentAt          DateTime?
+  selectionConfirmedAt DateTime?
+  deliveredAt          DateTime?
+  photos               Photo[]
+  selections           Selection[]
+  events               GalleryEvent[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+}
+
+model Photo {
+  id           String     @id @default(cuid())
+  galleryId    String
+  gallery      Gallery    @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  filename     String
+  baseName     String
+  thumbPath    String
+  previewPath  String?
+  driveFileUrl String?
+  width        Int?
+  height       Int?
+  status       PhotoStatus @default(PROOF)
+  sortOrder    Int         @default(0)
+  selection    Selection?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  @@unique([galleryId, baseName])
+}
+
+model Selection {
+  id        String   @id @default(cuid())
+  galleryId String
+  photoId   String   @unique
+  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  photo     Photo    @relation(fields: [photoId], references: [id], onDelete: Cascade)
+  selected  Boolean  @default(false)
+  rating    Int?
+  comment   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GalleryEvent {
+  id        String   @id @default(cuid())
+  galleryId String
+  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  type      String
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
