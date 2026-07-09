@@ -6,17 +6,17 @@ import { galleryRepository } from "@/modules/galleries/gallery.repository";
 export function galleryEmailText(clientName: string, galleryUrl: string) {
   return `Hola, ${clientName}.
 
-Tu galeria de seleccion ya esta disponible:
+Tu galería de selección ya está disponible:
 
 ${galleryUrl}
 
-Puedes revisar las fotos, marcar tus favoritas y dejar comentarios si necesitas indicar algo especifico.
+Puedes revisar las fotos, marcar tus favoritas y dejar comentarios si necesitas indicar algo específico.
 
-Cuando termines, presiona "Confirmar seleccion" para que pueda avanzar con la edicion final.
+Cuando termines, presiona "Confirmar selección" para que pueda avanzar con la edición final.
 
 Gracias por confiar en Trashpanda Garage.
 
-- Gormm`;
+— Gormm`;
 }
 
 export async function sendGalleryEmail(galleryId: string) {
@@ -34,7 +34,7 @@ export async function sendGalleryEmail(galleryId: string) {
   await transport.sendMail({
     from: env.MAIL_FROM,
     to: gallery.client.email,
-    subject: "Tu galeria esta lista - Trashpanda Garage",
+    subject: "Tu galería está lista — Trashpanda Garage",
     text: galleryEmailText(gallery.client.name, galleryUrl),
   });
 
