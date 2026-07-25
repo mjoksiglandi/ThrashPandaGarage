@@ -45,6 +45,17 @@ La direccion de dependencia esperada es `app/components -> modules -> repositori
 
 El seed consume `ADMIN_EMAIL` y `ADMIN_PASSWORD` solo desde el entorno. La base de datos conserva un hash, no una contrasena recuperable.
 
+### Cuentas de cliente en preparacion
+
+El modelo aditivo de Slice 1 separa la identidad comercial `Client` de la
+identidad de acceso `Account`, junto con `Invitation` y `AccountSession`. Sus
+reglas puras estan documentadas en
+[`slice-1-pr1-model-and-policy.md`](slice-1-pr1-model-and-policy.md).
+
+Estos modelos todavia no tienen callers productivos. El login de clientes sigue
+leyendo `Client.passwordHash` y las galerias continuan autorizandose mediante
+`Gallery.accessToken` hasta los PRs de migracion, sesiones y acceso por cuenta.
+
 ### Galeria privada
 
 1. `/g/[token]` carga una galeria accesible por su token.

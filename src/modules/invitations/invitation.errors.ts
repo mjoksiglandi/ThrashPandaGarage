@@ -1,0 +1,43 @@
+import type { AccountStatusValue } from "@/modules/accounts/account.types";
+
+export class InvitationAlreadyAcceptedError extends Error {
+  constructor() {
+    super("Invitation has already been accepted");
+    this.name = "InvitationAlreadyAcceptedError";
+  }
+}
+
+export class InvitationRevokedError extends Error {
+  constructor() {
+    super("Invitation has been revoked");
+    this.name = "InvitationRevokedError";
+  }
+}
+
+export class InvitationAlreadyRevokedError extends Error {
+  constructor() {
+    super("Invitation has already been revoked");
+    this.name = "InvitationAlreadyRevokedError";
+  }
+}
+
+export class InvitationExpiredError extends Error {
+  constructor() {
+    super("Invitation has expired");
+    this.name = "InvitationExpiredError";
+  }
+}
+
+export class InvitationAccountNotFoundError extends Error {
+  constructor() {
+    super("Invitation account not found");
+    this.name = "InvitationAccountNotFoundError";
+  }
+}
+
+export class InvitationAccountStatusError extends Error {
+  constructor(status: AccountStatusValue) {
+    super(`Account in ${status} cannot accept an invitation`);
+    this.name = "InvitationAccountStatusError";
+  }
+}
