@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { requireAdmin } from "@/lib/auth";
 import { clientRepository } from "@/modules/clients/client.repository";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
+  await requireAdmin();
   const [clients, galleries] = await Promise.all([clientRepository.list(), galleryRepository.list()]);
   return (
     <AdminShell>

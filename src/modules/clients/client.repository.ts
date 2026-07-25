@@ -14,6 +14,12 @@ export const clientRepository = {
       include: { galleries: { orderBy: { createdAt: "desc" } } },
     });
   },
+  findByEmail(email: string) {
+    return db.client.findFirst({
+      where: { email: { equals: email, mode: "insensitive" } },
+      include: { galleries: { orderBy: { createdAt: "desc" } } },
+    });
+  },
   create(data: ClientInput) {
     return db.client.create({ data });
   },

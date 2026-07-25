@@ -1,4 +1,3 @@
-import { GalleryStatus } from "@prisma/client";
 import { z } from "zod";
 
 export const clientSchema = z.object({
@@ -6,6 +5,7 @@ export const clientSchema = z.object({
   email: z.string().trim().email().optional().or(z.literal("")),
   phone: z.string().trim().optional(),
   notes: z.string().trim().optional(),
+  password: z.string().min(8).optional().or(z.literal("")),
 });
 
 export const gallerySchema = z.object({
@@ -19,7 +19,6 @@ export const gallerySchema = z.object({
   previewLocalPath: z.string().trim().optional(),
   googleDriveFolderUrl: z.string().trim().url().optional().or(z.literal("")),
   deliveryDriveUrl: z.string().trim().url().optional().or(z.literal("")),
-  status: z.nativeEnum(GalleryStatus).optional(),
 });
 
 export const selectionSchema = z.object({

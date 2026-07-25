@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ClientGallery } from "@/components/gallery/ClientGallery";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 import { isGalleryAccessible } from "@/modules/galleries/gallery.service";
+import { isSelectionOpen } from "@/modules/galleries/gallery-workflow";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,8 @@ export default async function PrivateGalleryPage({ params }: { params: Promise<{
       selectionLimit={gallery.selectionLimit}
       deliveryDriveUrl={gallery.deliveryDriveUrl}
       canShowDelivery={canShowDelivery}
-      alreadyConfirmed={gallery.status === GalleryStatus.SELECTION_CONFIRMED}
+      selectionOpen={isSelectionOpen(gallery)}
+      alreadyConfirmed={gallery.selectionConfirmedAt !== null}
       photos={gallery.photos.map((photo) => ({
         id: photo.id,
         filename: photo.filename,

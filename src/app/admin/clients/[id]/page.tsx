@@ -1,18 +1,21 @@
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FormField } from "@/components/ui/FormField";
+import { requireAdmin } from "@/lib/auth";
 import { clientRepository } from "@/modules/clients/client.repository";
 import { updateClientFromForm } from "@/modules/clients/client.service";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  await requireAdmin();
   const { id } = await params;
   const client = await clientRepository.find(id);
   if (!client) redirect("/admin/clients");
 
   async function update(formData: FormData) {
     "use server";
+    await requireAdmin();
     await updateClientFromForm(id, formData);
     redirect(`/admin/clients/${id}`);
   }
@@ -23,6 +26,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <form action={update} className="mt-6 grid max-w-xl gap-4">
         <FormField label="Nombre"><input name="name" defaultValue={client.name} required /></FormField>
         <FormField label="Email"><input name="email" type="email" defaultValue={client.email ?? ""} /></FormField>
+        <FormField label="Nueva contraseña del portal"><input name="password" type="password" minLength={8} autoComplete="new-password" placeholder="Dejar vacío para conservarla" /></FormField>
         <FormField label="Telefono"><input name="phone" defaultValue={client.phone ?? ""} /></FormField>
         <FormField label="Notas"><textarea name="notes" rows={4} defaultValue={client.notes ?? ""} /></FormField>
         <button type="submit">Guardar</button>

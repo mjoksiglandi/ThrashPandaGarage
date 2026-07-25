@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Client Portal — Trashpanda Garage</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0D10;--surface:#1C232B;--text:#D7DEE5;--text-2:#A9B4BF;
+  --accent:#5E4B8B;--accent-bright:#8A73C4;--steel:#5B6F8E;
+  --line:rgba(215,222,229,.08);
+  --mono:'Geist Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Geist',ui-sans-serif,system-ui,sans-serif;
+  font-weight:300;line-height:1.7;-webkit-font-smoothing:antialiased;
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer}
+.meta{font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-2)}
+
+/* ---- FULLSCREEN PHOTOGRAPH ---- */
+.stage{position:relative;min-height:100vh;min-height:100svh;overflow:hidden;display:grid;place-items:center;padding:48px 24px}
+.stage-bg{position:absolute;inset:0;z-index:0}
+.stage-bg img{
+  width:100%;height:100%;object-fit:cover;display:block;
+  animation:kb 16s var(--ease) forwards;
+  filter:brightness(.75);
+}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.045)}}
+.stage-fade{
+  position:absolute;inset:0;z-index:1;
+  background:radial-gradient(ellipse 90% 90% at 50% 45%,rgba(11,13,16,.25) 0%,rgba(11,13,16,.72) 100%),
+             linear-gradient(180deg,rgba(11,13,16,.5) 0%,transparent 25%,transparent 70%,rgba(11,13,16,.75) 100%);
+}
+.stage-top{position:absolute;top:40px;left:0;right:0;z-index:2;text-align:center}
+.logo{font-family:var(--mono);font-size:13px;letter-spacing:.3em;font-weight:500;color:var(--text)}
+.logo span{color:var(--accent-bright)}
+.plate{
+  position:absolute;bottom:36px;right:44px;z-index:2;
+  font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--text-2);text-align:right;line-height:2;
+}
+.stage-foot{
+  position:absolute;bottom:36px;left:44px;z-index:2;
+  font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--steel);
+}
+.stage-foot a{transition:color .3s var(--ease)}
+.stage-foot a:hover{color:var(--text-2)}
+
+/* ---- FLOATING CARD ---- */
+.card{
+  position:relative;z-index:3;
+  width:100%;max-width:440px;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:56px 48px 48px;
+  animation:rise .8s var(--ease) both;
+}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.card-head{text-align:center;margin-bottom:48px}
+.card-head .meta{display:block;margin-bottom:18px;color:var(--accent-bright)}
+.card-head h1{font-size:32px;font-weight:300;letter-spacing:.01em;line-height:1.15;margin-bottom:12px}
+.card-head p{font-size:14px;color:var(--text-2)}
+
+.form{display:flex;flex-direction:column;gap:28px}
+.field label{
+  display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--text-2);margin-bottom:10px;
+}
+.field input{
+  width:100%;background:transparent;border:none;border-bottom:1px solid rgba(215,222,229,.14);
+  color:var(--text);font-family:'Geist',sans-serif;font-size:16px;font-weight:300;
+  padding:11px 0;transition:border-color .3s var(--ease);
+}
+.field input::placeholder{color:rgba(169,180,191,.35)}
+.field input:focus{outline:none;border-bottom-color:var(--accent-bright)}
+.form-row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.remember{display:flex;align-items:center;gap:10px;color:var(--text-2);cursor:pointer;user-select:none}
+.remember input{appearance:none;width:14px;height:14px;border-radius:4px;border:1px solid var(--text-2);background:transparent;cursor:pointer;transition:all .25s var(--ease)}
+.remember input:checked{background:var(--accent);border-color:var(--accent)}
+.form-row a{color:var(--text-2);letter-spacing:.04em;transition:color .3s var(--ease)}
+.form-row a:hover{color:var(--accent-bright)}
+.btn{
+  border-radius:10px;
+  border:1px solid var(--accent);background:var(--accent);color:#EDEAF5;
+  font-size:13px;letter-spacing:.12em;text-transform:uppercase;
+  padding:16px 0;width:100%;
+  transition:all .35s var(--ease);
+}
+.btn:hover{background:var(--accent-bright);border-color:var(--accent-bright);color:#fff}
+.divider{display:flex;align-items:center;gap:20px;color:var(--steel);font-family:var(--mono);font-size:10px;letter-spacing:.24em;text-transform:uppercase}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--line)}
+.code-access{
+  border-radius:10px;
+  border:1px solid var(--line);background:transparent;color:var(--text-2);
+  font-size:13px;letter-spacing:.1em;padding:14px 0;width:100%;
+  transition:all .35s var(--ease);
+}
+.code-access:hover{border-color:var(--accent);color:var(--accent-bright)}
+.code-access .meta-inline{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--steel);display:block;margin-top:2px}
+.card-foot{
+  margin-top:36px;padding-top:24px;border-top:1px solid var(--line);
+  text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--steel);
+}
+.card-foot a{transition:color .3s var(--ease)}
+.card-foot a:hover{color:var(--text-2)}
+
+/* ---- MOBILE ---- */
+@media (max-width:600px){
+  .stage{padding:96px 20px 72px;align-items:start}
+  .card{padding:44px 28px 36px;max-width:100%}
+  .plate{display:none}
+  .stage-foot{left:0;right:0;text-align:center}
+  .stage-top{top:32px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body>
+<main class="stage">
+
+  <div class="stage-bg" aria-hidden="true">
+    <img src="https://picsum.photos/id/1041/1920/1280?grayscale" alt="">
+  </div>
+  <div class="stage-fade" aria-hidden="true"></div>
+
+  <div class="stage-top">
+    <span class="logo">TRASHPANDA<span>—</span>GARAGE</span>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <span class="meta">Client Portal</span>
+      <h1>Welcome back.</h1>
+      <p>Sign in to access your private gallery.</p>
+    </div>
+
+    <form class="form" onsubmit="event.preventDefault()">
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" placeholder="you@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="form-row">
+        <label class="remember"><input type="checkbox"> Remember me</label>
+        <a href="#">Forgot password?</a>
+      </div>
+      <button type="submit" class="btn">Enter Gallery</button>
+      <div class="divider">or</div>
+      <button type="button" class="code-access">
+        Access with session code
+        <span class="meta-inline">Sent with your delivery email</span>
+      </button>
+    </form>
+
+    <div class="card-foot">
+      <a href="#">Privacy</a> · <a href="#">Need help?</a>
+    </div>
+  </section>
+
+  <span class="stage-foot">© 2026 Trashpanda Garage</span>
+  <div class="plate">
+    Midnight Ronin<br>
+    Winter 2026 · 50mm · f/1.4
+  </div>
+
+</main>
+</body>
+</html>

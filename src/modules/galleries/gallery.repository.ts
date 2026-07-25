@@ -1,6 +1,16 @@
-import type { Prisma } from "@prisma/client";
+import type { GalleryEventActorType, GalleryStatus, Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import type { GalleryInput } from "./gallery.types";
+
+export type DbClient = Prisma.TransactionClient | typeof db;
+
+type GalleryEventInput = {
+  galleryId: string;
+  type: string;
+  actorType?: GalleryEventActorType;
+  actorId?: string | null;
+  metadata?: Prisma.InputJsonValue;
+};
 
 export const galleryRepository = {
   list() {
@@ -20,6 +30,19 @@ export const galleryRepository = {
       },
     });
   },
+  async findForUpdate(id: string, client: DbClient = db) {
+    await client.$queryRaw`SELECT id FROM "Gallery" WHERE id = ${id} FOR UPDATE`;
+    return client.gallery.findUnique({ where: { id } });
+  },
+  async findForInvitationForUpdate(id: string, client: DbClient = db) {
+    await client.$queryRaw`SELECT id FROM "Gallery" WHERE id = ${id} FOR UPDATE`;
+    return client.gallery.findUnique({ where: { id }, include: { client: true } });
+  },
+  async findByTokenForUpdate(accessToken: string, client: DbClient = db) {
+    const gallery = await client.gallery.findUnique({ where: { accessToken }, select: { id: true } });
+    if (!gallery) return null;
+    return this.findForUpdate(gallery.id, client);
+  },
   findByToken(accessToken: string) {
     return db.gallery.findUnique({
       where: { accessToken },
@@ -29,13 +52,34 @@ export const galleryRepository = {
       },
     });
   },
-  create(data: GalleryInput & { accessToken: string }) {
-    return db.gallery.create({ data });
+  create(
+    data: GalleryInput & { accessToken: string; status: GalleryStatus },
+    client: DbClient = db
+  ) {
+    return client.gallery.create({ data });
   },
-  update(id: string, data: Prisma.GalleryUncheckedUpdateInput) {
-    return db.gallery.update({ where: { id }, data });
+  update(id: string, data: Prisma.GalleryUncheckedUpdateInput, client: DbClient = db) {
+    return client.gallery.update({ where: { id }, data });
   },
-  event(galleryId: string, type: string, metadata?: Prisma.InputJsonValue) {
-    return db.galleryEvent.create({ data: { galleryId, type, metadata } });
+  event(
+    inputOrGalleryId: GalleryEventInput | string,
+    clientOrType: DbClient | string = db,
+    maybeMetadata?: Prisma.InputJsonValue
+  ) {
+    const client = typeof inputOrGalleryId === "string" ? db : (clientOrType as DbClient);
+    const input =
+      typeof inputOrGalleryId === "string"
+        ? { galleryId: inputOrGalleryId, type: clientOrType as string, metadata: maybeMetadata }
+        : inputOrGalleryId;
+
+    return client.galleryEvent.create({
+      data: {
+        galleryId: input.galleryId,
+        type: input.type,
+        actorType: input.actorType ?? "SYSTEM",
+        actorId: input.actorId ?? null,
+        metadata: input.metadata,
+      },
+    });
   },
 };

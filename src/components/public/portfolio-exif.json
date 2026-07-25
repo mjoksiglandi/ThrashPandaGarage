@@ -1,0 +1,352 @@
+{
+  "0001-01-festi25-ahri-festi25-34.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/40 s",
+    "iso": 320,
+    "captureDate": "2025-10-25"
+  },
+  "0002-02-festi25-jinx-festi25-39.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/60 s",
+    "iso": 500,
+    "captureDate": "2025-10-25"
+  },
+  "0003-03-fer-fer-blood-fer-blood-19.webp": {
+    "focalLength": "85",
+    "aperture": "2.2",
+    "shutterSpeed": "1/320 s",
+    "iso": 1000,
+    "captureDate": "2025-03-14"
+  },
+  "0004-04-fer-lilith-rm-0405.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/500 s",
+    "iso": 100,
+    "captureDate": "2026-05-03"
+  },
+  "0005-05-calaca-calaca-1.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/40 s",
+    "iso": 500,
+    "captureDate": "2024-09-07"
+  },
+  "0006-06-comicon-25-red-rose-cosplay-comicon-25-2-2.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/60 s",
+    "iso": 400,
+    "captureDate": "2025-07-06"
+  },
+  "0007-07-neon-neon-6.webp": {
+    "focalLength": "85",
+    "aperture": "2.8",
+    "shutterSpeed": "1/160 s",
+    "iso": 125,
+    "captureDate": "2025-02-08"
+  },
+  "0008-08-lelouch-lelouch-4.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/40 s",
+    "iso": 400,
+    "captureDate": "2024-10-19"
+  },
+  "0009-09-lelouch-lelouch-1.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/125 s",
+    "iso": 400,
+    "captureDate": "2024-10-19"
+  },
+  "0010-10-lelouch-lelouch-8.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/25 s",
+    "iso": 800,
+    "captureDate": "2024-10-19"
+  },
+  "0011-11-snowmiku-snowmiku-17.webp": {
+    "focalLength": "85",
+    "aperture": "8",
+    "shutterSpeed": "1/100 s",
+    "iso": 320,
+    "captureDate": "2024-07-28"
+  },
+  "0012-12-snowmiku-snowmiku-11.webp": {
+    "focalLength": "85",
+    "aperture": "9",
+    "shutterSpeed": "1/200 s",
+    "iso": 320,
+    "captureDate": "2024-07-28"
+  },
+  "0013-13-cata-rm-8630.webp": {
+    "focalLength": null,
+    "aperture": null,
+    "shutterSpeed": null,
+    "iso": null,
+    "captureDate": null
+  },
+  "0014-14-fer-lilith-rm-0445.webp": {
+    "focalLength": "85",
+    "aperture": "4",
+    "shutterSpeed": "1/160 s",
+    "iso": 320,
+    "captureDate": "2026-05-03"
+  },
+  "0015-15-fer-lilith-rm-0463.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/1250 s",
+    "iso": 320,
+    "captureDate": "2026-05-03"
+  },
+  "0016-16-fer-rumi2-rm-9763.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/2000 s",
+    "iso": 160,
+    "captureDate": "2026-04-30"
+  },
+  "0017-17-fer-rumi2-rm-9752.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/1600 s",
+    "iso": 200,
+    "captureDate": "2026-04-30"
+  },
+  "0018-18-fer-rumi2-rm-9753.webp": {
+    "focalLength": "85",
+    "aperture": "5.6",
+    "shutterSpeed": "1/320 s",
+    "iso": 320,
+    "captureDate": "2026-04-30"
+  },
+  "0019-19-fer-fer-blood-fer-blood-37.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/200 s",
+    "iso": 1000,
+    "captureDate": "2025-03-14"
+  },
+  "0020-20-fer-fer-blood-fer-blood-29.webp": {
+    "focalLength": "85",
+    "aperture": "2.2",
+    "shutterSpeed": "1/160 s",
+    "iso": 1000,
+    "captureDate": "2025-03-14"
+  },
+  "0021-21-fer-fer-ragnarok-fer-ragnarok-17.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/200 s",
+    "iso": 1250,
+    "captureDate": "2025-03-02"
+  },
+  "0022-22-fer-fer-ragnarok-fer-ragnarok-23.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/200 s",
+    "iso": 1250,
+    "captureDate": "2025-03-02"
+  },
+  "0023-23-fer-fer-ragnarok-fer-ragnarok-6.webp": {
+    "focalLength": "85",
+    "aperture": "4.5",
+    "shutterSpeed": "1/200 s",
+    "iso": 1250,
+    "captureDate": "2025-03-02"
+  },
+  "0024-24-fer-misato-rm-1991-1.webp": {
+    "focalLength": "85",
+    "aperture": "3.2",
+    "shutterSpeed": "1/10 s",
+    "iso": 125,
+    "captureDate": "2026-07-05"
+  },
+  "0025-25-fer-misato-rm-1988.webp": {
+    "focalLength": "85",
+    "aperture": "3.2",
+    "shutterSpeed": "1/10 s",
+    "iso": 125,
+    "captureDate": "2026-07-05"
+  },
+  "0026-26-fer-misato-rm-2001.webp": {
+    "focalLength": "85",
+    "aperture": "3.2",
+    "shutterSpeed": "1/13 s",
+    "iso": 125,
+    "captureDate": "2026-07-05"
+  },
+  "0027-27-fer-fer-shisuku-fer-shisuku-5.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/500 s",
+    "iso": 500,
+    "captureDate": "2024-10-13"
+  },
+  "0028-28-fer-fer-shisuku-fer-shisuku-2.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/1000 s",
+    "iso": 500,
+    "captureDate": "2024-10-13"
+  },
+  "0029-29-fer-fer-shisuku-fer-shisuku-24.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/640 s",
+    "iso": 500,
+    "captureDate": "2024-10-13"
+  },
+  "0030-30-emiria-emiria-15.webp": {
+    "focalLength": "24",
+    "aperture": "4",
+    "shutterSpeed": "1/60 s",
+    "iso": 160,
+    "captureDate": "2025-02-01"
+  },
+  "0031-31-emiria-emiria-16.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/50 s",
+    "iso": 1000,
+    "captureDate": "2025-02-01"
+  },
+  "0032-32-emiria-emiria-4.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/60 s",
+    "iso": 1000,
+    "captureDate": "2025-02-01"
+  },
+  "0033-33-bere-bere-4.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/50 s",
+    "iso": 500,
+    "captureDate": "2025-02-28"
+  },
+  "0034-34-bere-bere-8.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/320 s",
+    "iso": 500,
+    "captureDate": "2025-02-28"
+  },
+  "0035-35-bere-bere-5.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/200 s",
+    "iso": 500,
+    "captureDate": "2025-02-28"
+  },
+  "0036-36-calaca-calaca-2.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/30 s",
+    "iso": 500,
+    "captureDate": "2024-09-07"
+  },
+  "0037-37-calaca-calaca-3.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/25 s",
+    "iso": 500,
+    "captureDate": "2024-09-07"
+  },
+  "0038-38-miochi-miochin-8.webp": {
+    "focalLength": "85",
+    "aperture": "2.2",
+    "shutterSpeed": "1/320 s",
+    "iso": 125,
+    "captureDate": "2025-02-08"
+  },
+  "0039-39-brrynana-brrynana-5.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/200 s",
+    "iso": 125,
+    "captureDate": "2025-02-09"
+  },
+  "0040-40-corto-onepiece-op-2.webp": {
+    "focalLength": "85",
+    "aperture": "4",
+    "shutterSpeed": "1/800 s",
+    "iso": 125,
+    "captureDate": "2025-01-12"
+  },
+  "0041-41-fay-rojo-fay-3.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/400 s",
+    "iso": 125,
+    "captureDate": "2025-02-08"
+  },
+  "0042-42-hanabi-edit-rm-1655.webp": {
+    "focalLength": "40",
+    "aperture": "2.8",
+    "shutterSpeed": "1/125 s",
+    "iso": 640,
+    "captureDate": "2026-06-17"
+  },
+  "0043-43-festi25-paradise-festi25-30.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/30 s",
+    "iso": 500,
+    "captureDate": "2025-10-25"
+  },
+  "0044-44-festi25-hopito-festi25-08.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/125 s",
+    "iso": 320,
+    "captureDate": "2025-10-25"
+  },
+  "0045-45-festi25-zelda-festi25-13.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/160 s",
+    "iso": 320,
+    "captureDate": "2025-10-25"
+  },
+  "0046-46-festi25-dead-festi25-27.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/13 s",
+    "iso": 320,
+    "captureDate": "2025-10-25"
+  },
+  "0047-47-comicon-25-fengari-comicon-25-36.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/640 s",
+    "iso": 100,
+    "captureDate": "2025-07-06"
+  },
+  "0048-48-comicon-25-etcetera-cos-comicon-25-22.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/800 s",
+    "iso": 100,
+    "captureDate": "2025-07-06"
+  },
+  "0049-49-cyborg-cyborg-2.webp": {
+    "focalLength": "85",
+    "aperture": "2",
+    "shutterSpeed": "1/50 s",
+    "iso": 500,
+    "captureDate": "2024-10-13"
+  },
+  "0050-50-neon-neon-2.webp": {
+    "focalLength": "85",
+    "aperture": "2.8",
+    "shutterSpeed": "1/160 s",
+    "iso": 125,
+    "captureDate": "2025-02-08"
+  }
+}

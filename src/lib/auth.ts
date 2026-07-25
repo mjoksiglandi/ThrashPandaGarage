@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
@@ -6,6 +7,27 @@ import { env } from "@/lib/env";
 import { signSessionValue, verifySessionValue } from "@/lib/session-token";
 
 const cookieName = "tpg_admin";
+
+export type AuthenticatedAdmin = {
+  id: string;
+  email: string;
+  role: UserRole;
+};
+
+export class ForbiddenError extends Error {
+  readonly statusCode = 403;
+
+  constructor() {
+    super("Forbidden");
+    this.name = "ForbiddenError";
+  }
+}
+
+const authenticatedAdminSelect = {
+  id: true,
+  email: true,
+  role: true,
+} as const;
 
 export async function loginAdmin(email: string, password: string) {
   const user = await db.user.findUnique({ where: { email } });
@@ -30,15 +52,26 @@ export async function logoutAdmin() {
   jar.delete(cookieName);
 }
 
-export async function getCurrentAdmin() {
+async function getSessionUser(): Promise<AuthenticatedAdmin | null> {
   const jar = await cookies();
   const userId = verifySessionValue(jar.get(cookieName)?.value, env.AUTH_SECRET);
   if (!userId) return null;
-  return db.user.findUnique({ where: { id: userId } });
+  return db.user.findUnique({
+    where: { id: userId },
+    select: authenticatedAdminSelect,
+  });
 }
 
-export async function requireAdmin() {
-  const admin = await getCurrentAdmin();
-  if (!admin) redirect("/admin/login");
-  return admin;
+export async function getCurrentAdmin(): Promise<AuthenticatedAdmin | null> {
+  const user = await getSessionUser();
+  return user?.role === UserRole.ADMIN ? user : null;
+}
+
+export async function requireAdmin(): Promise<AuthenticatedAdmin> {
+  const user = await getSessionUser();
+  if (!user) redirect("/admin/login");
+  if (user.role !== UserRole.ADMIN) {
+    throw new ForbiddenError();
+  }
+  return user;
 }

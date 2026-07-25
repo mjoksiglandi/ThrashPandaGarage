@@ -20,8 +20,12 @@ async function main() {
     }));
 
   if (!gallery) throw new Error(`Gallery not found for ${folder}`);
-  const result = await importGalleryPhotos(gallery.id, folder);
-  console.log(`Imported ${result.count} photos into ${gallery.title}`);
+  const result = await importGalleryPhotos(gallery.id, { actorType: "SYSTEM" }, folder);
+  console.log(
+    `Processed ${result.totalProcessed} photos for ${gallery.title}: ` +
+      `${result.importedCount} imported, ${result.updatedCount} updated, ` +
+      `${result.skippedCount} skipped`
+  );
 }
 
 main()

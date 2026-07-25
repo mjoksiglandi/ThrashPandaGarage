@@ -3,7 +3,12 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Trashpanda Garage",
-  description: "Photo, props, FX and weird builds.",
+  description: "Photography, portraits, cosplay and editorial scenes.",
+  icons: {
+    icon: "/logo_hex.ico",
+    shortcut: "/logo_hex.ico",
+    apple: "/logo_hex_transparent.png",
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

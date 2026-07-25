@@ -4,6 +4,17 @@ import { env } from "@/lib/env";
 import { supportedImageExtensions } from "@/lib/validators";
 import type { StoredPhotoFile } from "./storage.types";
 
+type ListImageFilesOptions = {
+  rejectUnsupported?: boolean;
+};
+
+export class UnsupportedStoredImageError extends Error {
+  constructor(relativeFolder: string, filename: string) {
+    super(`Unsupported file "${filename}" in configured photo folder "${relativeFolder}"`);
+    this.name = "UnsupportedStoredImageError";
+  }
+}
+
 function safeJoin(root: string, ...segments: string[]) {
   const resolved = path.resolve(root, ...segments);
   const base = path.resolve(root);
@@ -28,7 +39,10 @@ export function buildRelativePhotoPath(...segments: string[]) {
   return joined;
 }
 
-export async function listImageFiles(relativeFolder: string): Promise<StoredPhotoFile[]> {
+export async function listImageFiles(
+  relativeFolder: string,
+  options: ListImageFilesOptions = {}
+): Promise<StoredPhotoFile[]> {
   const folderPath = resolveStoragePath(relativeFolder);
   const entries = await fs.readdir(folderPath, { withFileTypes: true });
 
@@ -36,7 +50,12 @@ export async function listImageFiles(relativeFolder: string): Promise<StoredPhot
     .filter((entry) => entry.isFile())
     .map((entry) => {
       const extension = path.extname(entry.name).replace(".", "").toLowerCase();
-      if (!supportedImageExtensions.has(extension)) return null;
+      if (!supportedImageExtensions.has(extension)) {
+        if (options.rejectUnsupported) {
+          throw new UnsupportedStoredImageError(relativeFolder, entry.name);
+        }
+        return null;
+      }
       const baseName = path.basename(entry.name, path.extname(entry.name));
       return {
         filename: entry.name,

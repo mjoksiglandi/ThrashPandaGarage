@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { GalleryTable } from "@/components/admin/GalleryTable";
+import { requireAdmin } from "@/lib/auth";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 
 export const dynamic = "force-dynamic";
 
 export default async function GalleriesPage() {
+  await requireAdmin();
   const galleries = await galleryRepository.list();
   return (
     <AdminShell>

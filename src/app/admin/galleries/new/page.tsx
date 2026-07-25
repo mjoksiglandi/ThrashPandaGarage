@@ -1,16 +1,19 @@
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FormField } from "@/components/ui/FormField";
+import { requireAdmin } from "@/lib/auth";
 import { clientRepository } from "@/modules/clients/client.repository";
 import { createGalleryFromForm } from "@/modules/galleries/gallery.service";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewGalleryPage() {
+  await requireAdmin();
   const clients = await clientRepository.list();
   async function create(formData: FormData) {
     "use server";
-    const gallery = await createGalleryFromForm(formData);
+    const admin = await requireAdmin();
+    const gallery = await createGalleryFromForm(formData, { actorId: admin.id });
     redirect(`/admin/galleries/${gallery.id}`);
   }
   return (

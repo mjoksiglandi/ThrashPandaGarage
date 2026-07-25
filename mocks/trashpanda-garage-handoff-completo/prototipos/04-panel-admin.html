@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Trashpanda Garage</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D0F12;--bg-deep:#090B0E;--surface:#14181E;--surface-2:#1B212A;--surface-3:#222A34;
+  --text:#EAF0F6;--text-2:#9AA8B8;--text-3:#6B7784;--line:rgba(234,240,246,.08);--line-2:rgba(234,240,246,.14);
+  --violet:#5E4B8B;--violet-b:#8A73C4;--blue:#3D7EFF;--blue-l:#8FB2FF;
+  --amber:#C4A15E;--amber-l:#E0C48E;--green:#5EC48A;--green-l:#96E0B6;
+  --red:#C45E5E;--red-l:#E09A9A;--gray:#77828F;
+  --mono:'Geist Mono',ui-monospace,monospace;--ease:cubic-bezier(.22,.61,.36,1);--r-s:6px;--r-m:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;font-weight:300;font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit}
+img{display:block;object-fit:cover}
+input{font-family:inherit}
+.mono{font-family:var(--mono)}
+.meta{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-2)}
+.screen{display:none}
+.screen.on{display:block}
+
+.app{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+.sidebar{border-right:1px solid var(--line);background:var(--bg-deep);position:sticky;top:0;height:100vh;display:flex;flex-direction:column;padding:22px 0}
+.sb-logo{padding:0 22px 24px;font-family:var(--mono);font-size:12px;letter-spacing:.24em;font-weight:500;border-bottom:1px solid var(--line);margin-bottom:16px}
+.sb-logo em{color:var(--violet-b);font-style:normal}
+.sb-sec{padding:14px 22px 6px;font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-3)}
+.sb-nav{display:flex;flex-direction:column;gap:1px;padding:0 12px}
+.sb-nav a{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:var(--r-s);font-size:13.5px;color:var(--text-2);transition:all .2s var(--ease)}
+.sb-nav a .ic{width:15px;text-align:center;opacity:.85;font-size:13px}
+.sb-nav a:hover{background:var(--surface);color:var(--text)}
+.sb-nav a.on{background:var(--surface-2);color:var(--text)}
+.sb-nav a .badge{margin-left:auto;font-family:var(--mono);font-size:9px;letter-spacing:.06em;background:var(--violet);color:#fff;padding:2px 7px;border-radius:20px}
+.sb-nav a .badge.amber{background:rgba(196,161,94,.25);color:var(--amber-l)}
+.sb-foot{margin-top:auto;padding:14px 22px 0;border-top:1px solid var(--line);display:flex;align-items:center;gap:11px}
+.sb-foot .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--blue));display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:#fff}
+.sb-foot .who{font-size:12.5px}.sb-foot .who small{display:block;color:var(--text-3);font-size:11px}
+
+.main{display:flex;flex-direction:column;min-width:0}
+.topbar{height:56px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:20px;padding:0 28px;position:sticky;top:0;background:rgba(13,15,18,.9);backdrop-filter:blur(8px);z-index:40}
+.crumbs{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--text-3)}
+.crumbs a:hover{color:var(--text-2)}
+.crumbs .cur{color:var(--text)}
+.search{margin-left:8px;flex:1;max-width:340px;display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);padding:7px 12px}
+.search input{background:none;border:none;color:var(--text);font-size:13px;width:100%;outline:none}
+.search input::placeholder{color:var(--text-3)}
+.search .k{font-family:var(--mono);font-size:9px;color:var(--text-3);border:1px solid var(--line-2);border-radius:3px;padding:2px 5px}
+.tb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+.icon-btn{width:34px;height:34px;border:1px solid var(--line);border-radius:var(--r-s);display:grid;place-items:center;color:var(--text-2);position:relative}
+.icon-btn:hover{border-color:var(--line-2);color:var(--text)}
+.icon-btn .dotr{position:absolute;top:7px;right:8px;width:6px;height:6px;background:var(--violet-b);border-radius:50%}
+
+.content{padding:28px;max-width:1600px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:13px;font-weight:400;min-height:38px;padding:0 16px;border-radius:var(--r-s);border:1px solid transparent;transition:all .25s var(--ease);white-space:nowrap}
+.btn-p{background:var(--violet);border-color:var(--violet-b);color:#F1EDFA}
+.btn-p:hover{background:var(--violet-b);color:#fff}
+.btn-g{border-color:var(--line-2);color:var(--text-2)}
+.btn-g:hover{border-color:var(--violet-b);color:var(--violet-b)}
+.btn-green{background:rgba(94,196,138,.16);border-color:rgba(94,196,138,.5);color:var(--green-l)}
+.btn-green:hover{background:rgba(94,196,138,.26)}
+.btn-red{border-color:rgba(196,94,94,.4);color:var(--red-l)}
+.btn-red:hover{background:rgba(196,94,94,.12)}
+.btn-sm{min-height:32px;padding:0 12px;font-size:12.5px}
+.btn-ic{min-height:34px;width:34px;padding:0}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+
+.chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:5px 10px;border-radius:var(--r-s);border:1px solid var(--line-2);color:var(--text-2);white-space:nowrap}
+.chip .dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.chip.gray{color:var(--gray)}
+.chip.blue{color:var(--blue-l);border-color:rgba(61,126,255,.4);background:rgba(61,126,255,.09)}
+.chip.violet{color:#BCA9E8;border-color:rgba(138,115,196,.45);background:rgba(94,75,139,.14)}
+.chip.amber{color:var(--amber-l);border-color:rgba(196,161,94,.4);background:rgba(196,161,94,.09)}
+.chip.green{color:var(--green-l);border-color:rgba(94,196,138,.4);background:rgba(94,196,138,.09)}
+.chip.red{color:var(--red-l);border-color:rgba(196,94,94,.4);background:rgba(196,94,94,.09)}
+
+.phead{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;margin-bottom:26px}
+.phead h1{font-size:24px;font-weight:300}
+.phead .sub{font-size:13px;color:var(--text-2);margin-top:4px}
+.phead-actions{display:flex;gap:10px}
+
+.metrics{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:28px}
+.metric{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:16px 18px}
+.metric .n{font-size:26px;font-weight:300;line-height:1}
+.metric .l{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-2);margin-top:8px}
+.metric.hl .n{color:var(--violet-b)}
+.metric.warn .n{color:var(--amber-l)}
+.metric.ok .n{color:var(--green-l)}
+.metric.danger .n{color:var(--red-l)}
+.metric .ctx{font-size:11px;color:var(--text-2);margin-top:5px}
+.metric .ctx.danger{color:var(--red-l)}
+
+.grid2{display:grid;grid-template-columns:1.6fr 1fr;gap:20px}
+.block{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
+.block-h{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.block-h h3{font-size:14px;font-weight:400}
+.block-h a{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--violet-b)}
+
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);text-align:left;padding:11px 16px;border-bottom:1px solid var(--line);font-weight:400;white-space:nowrap}
+.tbl th.sort::after{content:' ↓';color:var(--text-2)}
+.tbl td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tbody tr{transition:background .15s var(--ease)}
+.tbl tbody tr:hover{background:var(--surface-2)}
+.tbl .mono{font-family:var(--mono);font-size:12px;color:var(--text-2);letter-spacing:.04em}
+.tbl .strong{color:var(--text)}
+.cbx{width:16px;height:16px;border:1px solid var(--line-2);border-radius:4px;display:inline-grid;place-items:center;font-size:10px;color:transparent;cursor:pointer;vertical-align:middle}
+.cbx.on{background:var(--violet);border-color:var(--violet-b);color:#fff}
+.thumb-sm{width:44px;height:32px;border-radius:4px;overflow:hidden;background:var(--surface-2);flex-shrink:0}
+.thumb-sm img{width:100%;height:100%;filter:grayscale(1) brightness(.92)}
+.gname{display:flex;align-items:center;gap:12px}
+.gname .t{font-size:13.5px}.gname .c{font-family:var(--mono);font-size:10px;color:var(--text-3);margin-top:1px}
+.row-act{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.row-act .open-hover{opacity:0;transition:opacity .15s var(--ease)}
+.tbl tr:hover .open-hover{opacity:1}
+.row-act .always{opacity:.7}
+.tbl tr:hover .always{opacity:1}
+.count-cell{font-family:var(--mono);font-size:12px}
+.count-cell b{color:var(--violet-b);font-weight:400}
+.mini-prog{width:70px;height:3px;background:var(--surface-3);border-radius:2px;overflow:hidden;margin-top:5px}
+.mini-prog i{display:block;height:100%;background:var(--violet-b)}
+
+.toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.tabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);padding:3px}
+.tabs button{font-size:12.5px;padding:7px 13px;border-radius:4px;color:var(--text-2)}
+.tabs button.on{background:var(--surface-3);color:var(--text)}
+.tabs button .n{font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:5px}
+.tool-r{margin-left:auto;display:flex;gap:8px}
+.select{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-s);padding:7px 12px;font-size:12.5px;color:var(--text-2)}
+.select .ca{color:var(--text-3);font-size:10px}
+
+.batch{position:sticky;bottom:16px;margin:16px 0 0;background:rgba(9,11,14,.94);backdrop-filter:blur(12px);border:1px solid var(--violet-b);border-radius:var(--r-m);padding:12px 18px;display:flex;align-items:center;gap:18px;z-index:30}
+.batch .cnt{font-size:13px}.batch .cnt b{color:var(--violet-b);font-weight:400}
+.batch .sep{width:1px;height:22px;background:var(--line-2)}
+.batch .acts{display:flex;gap:8px;flex-wrap:wrap}
+.tip{position:relative;display:inline-flex}
+.tip .tiptext{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--bg-deep);border:1px solid var(--line-2);border-radius:var(--r-s);padding:7px 11px;font-size:11px;color:var(--text-2);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s;z-index:5}
+.tip:hover .tiptext{opacity:1}
+.batch .clear{margin-left:auto;font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:var(--text-2)}
+
+.gd-head{display:flex;gap:20px;align-items:flex-start;margin-bottom:22px}
+.gd-cover{width:150px;height:100px;border-radius:var(--r-s);overflow:hidden;flex-shrink:0;border:1px solid var(--line)}
+.gd-cover img{width:100%;height:100%;filter:grayscale(1) brightness(.92)}
+.gd-info{flex:1}
+.gd-info h1{font-size:22px;font-weight:300;display:flex;align-items:center;gap:14px}
+.gd-facts{display:flex;gap:6px 26px;flex-wrap:wrap;margin-top:12px}
+.gd-facts span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
+.gd-facts b{color:var(--text);font-weight:400}
+.gd-actions{display:flex;gap:9px;align-items:center}
+.tabbar{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.tabbar button{font-size:13px;padding:11px 16px;color:var(--text-2);border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabbar button.on{color:var(--text);border-bottom-color:var(--violet-b)}
+.tabbar button .n{font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:6px}
+
+.padmin{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.pa{position:relative;aspect-ratio:1;border-radius:var(--r-s);overflow:hidden;background:var(--surface-2);border:2px solid transparent;cursor:pointer}
+.pa img{width:100%;height:100%;filter:grayscale(1) brightness(.9);transition:transform .25s}
+.pa:hover img{transform:scale(1.03)}
+.pa.sel{border-color:var(--violet-b)}
+.pa.sel::after{content:'';position:absolute;inset:0;background:rgba(94,75,139,.2)}
+.pa .cb{position:absolute;top:8px;left:8px;z-index:2;width:22px;height:22px;border-radius:5px;border:1.5px solid rgba(234,240,246,.55);background:rgba(9,11,14,.5);display:grid;place-items:center;font-size:11px;color:transparent}
+.pa.sel .cb{background:var(--violet-b);border-color:var(--violet-b);color:#fff}
+.pa .fn{position:absolute;left:8px;bottom:8px;z-index:2;font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:rgba(234,240,246,.85);background:rgba(9,11,14,.6);padding:3px 6px;border-radius:3px}
+.pa .flags{position:absolute;top:8px;right:8px;z-index:2;display:flex;gap:4px;flex-direction:column;align-items:flex-end;max-height:60px;overflow:hidden}
+.ev-ic{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:4px;background:var(--surface-3);color:var(--text-2);font-size:10px;margin-right:10px;vertical-align:middle}
+.ev-ic.vio{background:rgba(94,75,139,.3);color:#BCA9E8}
+.ev-ic.blu{background:rgba(61,126,255,.2);color:var(--blue-l)}
+.pa .flag{font-family:var(--mono);font-size:8px;letter-spacing:.08em;padding:3px 5px;border-radius:3px;text-transform:uppercase;font-weight:500}
+.pa .flag.cli{background:rgba(94,75,139,.85);color:#fff}
+.pa .flag.cov{background:rgba(196,161,94,.85);color:#0D0F12}
+.pa .flag.hid{background:rgba(9,11,14,.8);color:var(--text-2);border:1px solid var(--line-2)}
+.pa .flag.dl{background:rgba(94,196,138,.85);color:#0D0F12}
+.pa.hidden-ph img{filter:grayscale(1) brightness(.4)}
+.pa .err{position:absolute;inset:0;display:grid;place-items:center;background:rgba(196,94,94,.14);z-index:1}
+.pa .err span{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--red-l);text-transform:uppercase}
+.pa.upload::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent,transparent 6px,rgba(234,240,246,.03) 6px,rgba(234,240,246,.03) 12px)}
+.pa .up{position:absolute;left:8px;right:8px;bottom:8px;z-index:2}
+.pa .up .bar{height:3px;background:rgba(9,11,14,.6);border-radius:2px;overflow:hidden}
+.pa .up .bar i{display:block;height:100%;background:var(--blue)}
+
+.rev-head{display:flex;align-items:center;justify-content:space-between;gap:20px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:18px 22px;margin-bottom:20px}
+.rev-head .l{display:flex;align-items:center;gap:20px}
+.rev-head .big{font-size:24px;font-weight:300}
+.rev-head .big b{color:var(--violet-b);font-weight:400}
+.rev-list{display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.rev-item{position:relative;border-radius:var(--r-s);overflow:hidden;border:1px solid var(--line);aspect-ratio:3/4}
+.rev-item img{width:100%;height:100%;filter:grayscale(1) brightness(.92)}
+.rev-item .o{position:absolute;left:0;right:0;bottom:0;padding:8px 10px;background:linear-gradient(transparent,rgba(9,11,14,.85));display:flex;justify-content:space-between;align-items:center}
+.rev-item .o .n{font-family:var(--mono);font-size:9px;color:#fff}
+.rev-item .o .r{font-family:var(--mono);font-size:9px;color:var(--violet-b)}
+
+.modal-wrap{position:fixed;inset:0;background:rgba(9,11,14,.7);backdrop-filter:blur(4px);display:grid;place-items:center;z-index:80;padding:32px}
+.modal{width:100%;max-width:540px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-m);overflow:hidden}
+.modal.wide{max-width:760px}
+.modal-h{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.modal-h h3{font-size:16px;font-weight:400}
+.modal-b{padding:24px}
+.modal-f{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;background:var(--bg-deep)}
+.field{margin-bottom:18px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-2);margin-bottom:8px}
+.field input[type=text],.field input[type=email],.field select,.field textarea{width:100%;background:var(--bg);border:1px solid var(--line-2);border-radius:var(--r-s);color:var(--text);font-size:14px;padding:11px 13px;outline:none}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--violet-b)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.warn-box{display:flex;gap:9px;align-items:flex-start;padding:12px 15px;border:1px solid rgba(196,161,94,.4);border-radius:var(--r-s);background:rgba(196,161,94,.08);color:var(--amber-l);font-size:12.5px;line-height:1.5}
+.warn-box.danger{border-color:rgba(196,94,94,.45);background:rgba(196,94,94,.08);color:var(--red-l)}
+.consequence{border:1px solid var(--line);border-radius:var(--r-s);padding:14px 16px;font-size:13px;color:var(--text-2);background:var(--bg)}
+.consequence li{margin-left:16px;margin-top:4px}
+
+.flow{display:flex;align-items:center;gap:0;margin:20px 0}
+.flow .fs{display:flex;flex-direction:column;align-items:center;gap:8px;position:relative;flex:1}
+.flow .fs .d{width:12px;height:12px;border-radius:50%;border:1px solid var(--line-2);background:var(--bg);z-index:2}
+.flow .fs.done .d{background:var(--violet);border-color:var(--violet-b)}
+.flow .fs.next .d{border-color:var(--green);box-shadow:0 0 0 4px rgba(94,196,138,.15)}
+.flow .fs.cur .d{background:var(--violet);border-color:var(--violet-b);box-shadow:0 0 0 4px rgba(138,115,196,.2)}
+.flow .fs.cur .lbl{color:#BCA9E8}
+.flow .fs.blocked{opacity:.35}
+.flow .fs.blocked .lbl{text-decoration:line-through}
+.flow .fs .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);text-align:center}
+.flow .fs.done .lbl{color:var(--text-2)}
+.flow .fs.next .lbl{color:var(--green-l)}
+.flow .ln{position:absolute;top:6px;left:-50%;width:100%;height:1px;background:var(--line-2);z-index:1}
+.flow .fs.done .ln{background:var(--violet)}
+
+.dropzone{border:1.5px dashed var(--line-2);border-radius:var(--r-m);padding:44px;text-align:center;background:var(--bg)}
+.dropzone .ic{font-size:26px;color:var(--text-3);margin-bottom:12px}
+.dropzone h4{font-size:15px;font-weight:400;margin-bottom:6px}
+.dropzone p{font-size:12.5px;color:var(--text-2)}
+.imp-list{margin-top:20px;display:flex;flex-direction:column;gap:8px}
+.imp-row{display:flex;align-items:center;gap:14px;padding:10px 14px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--surface);font-size:13px}
+.imp-row .fn{font-family:var(--mono);font-size:12px;flex:1}
+.imp-row .bar{width:120px;height:3px;background:var(--surface-3);border-radius:2px;overflow:hidden}
+.imp-row .bar i{display:block;height:100%;background:var(--blue)}
+.imp-row .st{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.imp-row .st.ok{color:var(--green-l)}.imp-row .st.up{color:var(--blue-l)}.imp-row .st.proc{color:#BCA9E8}.imp-row .st.dup{color:var(--amber-l)}.imp-row .st.err{color:var(--red-l)}
+
+.pagination{display:flex;align-items:center;justify-content:space-between;margin-top:16px;font-size:12.5px;color:var(--text-2)}
+.pagination .pages{display:flex;gap:4px}
+.pagination .pages button{width:32px;height:32px;border:1px solid var(--line);border-radius:var(--r-s);color:var(--text-2)}
+.pagination .pages button.on{background:var(--surface-3);color:var(--text);border-color:var(--line-2)}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.preview-card{background:var(--bg-deep);border:1px solid var(--line);border-radius:var(--r-m);padding:20px}
+.preview-card .pv-label{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-3);margin-bottom:14px}
+
+
+/* ===== FASE 2B — CLIENTES ===== */
+.cli-name{display:flex;align-items:center;gap:12px}
+.cli-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--blue));display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:#fff;flex-shrink:0}
+.cli-name .t{font-size:13.5px}.cli-name .c{font-family:var(--mono);font-size:10px;color:var(--text-3);margin-top:1px}
+.gal-count{font-family:var(--mono);font-size:12px;color:var(--text-2)}
+.gal-count b{color:var(--text);font-weight:400}
+.empty-admin{border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface);padding:80px 40px;text-align:center;position:relative;overflow:hidden}
+.empty-admin::before{content:'';position:absolute;inset:-40%;background:radial-gradient(ellipse 40% 30% at 40% 40%,rgba(94,75,139,.1),transparent 70%)}
+.empty-admin .ef{position:relative;width:96px;height:96px;margin:0 auto 32px;border:1px solid var(--line-2);border-radius:50%;display:grid;place-items:center;color:var(--text-3);font-size:22px}
+.empty-admin h2{font-size:22px;font-weight:300;position:relative}
+.empty-admin p{font-size:14px;color:var(--text-2);max-width:420px;margin:12px auto 0;position:relative}
+.empty-admin .ea-cta{position:relative;margin-top:28px;display:flex;gap:10px;justify-content:center}
+
+/* form */
+.form-admin{max-width:920px}
+.fblock{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:24px 26px;margin-bottom:18px}
+.fblock h3{font-size:14px;font-weight:400;margin-bottom:4px}
+.fblock .fh-sub{font-size:12.5px;color:var(--text-2);margin-bottom:20px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
+.fgrid .full{grid-column:1/-1}
+.radio-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.rcard{border:1px solid var(--line-2);border-radius:var(--r-s);padding:16px;cursor:pointer;transition:all .2s var(--ease)}
+.rcard.on{border-color:var(--violet-b);background:rgba(94,75,139,.1)}
+.rcard .rt{font-size:13.5px;display:flex;align-items:center;gap:9px}
+.rcard .rr{width:14px;height:14px;border-radius:50%;border:1px solid var(--line-2)}
+.rcard.on .rr{border-color:var(--violet-b);box-shadow:inset 0 0 0 3px var(--violet)}
+.rcard .rd{font-size:11.5px;color:var(--text-2);margin-top:8px}
+.form-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;padding-top:20px}
+.inline-warn{display:flex;gap:9px;align-items:center;font-size:12px;color:var(--amber-l);margin-top:8px}
+
+/* detail 2-col */
+.cli-detail{display:grid;grid-template-columns:1.5fr 1fr;gap:20px}
+.info-block{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden}
+.info-block .ib-h{padding:13px 18px;border-bottom:1px solid var(--line);font-size:13px;font-weight:400;display:flex;justify-content:space-between;align-items:center}
+.info-block .ib-b{padding:6px 18px}
+.kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+.kv:last-child{border-bottom:none}
+.kv .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.kv .v{color:var(--text)}
+.next-actions{display:flex;flex-direction:column;gap:8px;padding:14px 18px}
+.na-item{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);border-radius:var(--r-s);font-size:12.5px;background:var(--bg)}
+.na-item .na-ic{width:24px;height:24px;border-radius:5px;display:grid;place-items:center;font-size:11px;flex-shrink:0}
+.na-item.warn .na-ic{background:rgba(196,161,94,.18);color:var(--amber-l)}
+.na-item.vio .na-ic{background:rgba(94,75,139,.25);color:#BCA9E8}
+.na-item.red .na-ic{background:rgba(196,94,94,.18);color:var(--red-l)}
+.na-item .na-go{margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--violet-b)}
+
+/* security */
+.sec-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.act-btns{display:flex;flex-wrap:wrap;gap:8px;padding:16px 18px}
+.mail-preview{border:1px solid var(--line-2);border-radius:var(--r-s);background:#fff;color:#1a1a1a;overflow:hidden;font-family:'Geist',sans-serif}
+.mail-preview .mp-top{background:#0D0F12;padding:20px;text-align:center}
+.mail-preview .mp-top .lg{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:#EAF0F6}
+.mail-preview .mp-top .lg em{color:#8A73C4;font-style:normal}
+.mail-preview .mp-b{padding:24px 22px}
+.mail-preview .mp-b h4{font-size:16px;font-weight:400;margin-bottom:10px;color:#111}
+.mail-preview .mp-b p{font-size:12.5px;color:#555;line-height:1.6;margin-bottom:14px}
+.mail-preview .mp-btn{display:inline-block;background:#5E4B8B;color:#fff;font-size:12px;padding:11px 22px;border-radius:6px}
+.mail-preview .mp-foot{font-size:10px;color:#999;margin-top:16px;border-top:1px solid #eee;padding-top:12px}
+.pw-field{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line-2);border-radius:var(--r-s);padding:12px 14px;font-family:var(--mono);font-size:15px;letter-spacing:.1em}
+.pw-field .cp{margin-left:auto;font-family:'Geist';font-size:12px;color:var(--violet-b);letter-spacing:0}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--surface);border:1px solid var(--green);border-radius:var(--r-s);padding:14px 20px;display:flex;align-items:center;gap:12px;font-size:13px;z-index:90}
+.toast .ti{width:24px;height:24px;border-radius:50%;background:rgba(94,196,138,.18);display:grid;place-items:center;color:var(--green-l)}
+.note-item{display:flex;gap:14px;padding:16px 18px;border:1px solid var(--line);border-radius:var(--r-s);background:var(--surface);margin-bottom:10px}
+.note-item.pin{border-color:rgba(196,161,94,.35);background:rgba(196,161,94,.05)}
+.note-item .nb{flex:1}
+.note-item .nb p{font-size:13.5px;margin-bottom:6px}
+.note-item .nm{font-family:var(--mono);font-size:10px;color:var(--text-3);letter-spacing:.06em}
+.note-item .nact{display:flex;gap:6px;opacity:0;transition:opacity .15s}
+.note-item:hover .nact{opacity:1}
+.pin-badge{font-family:var(--mono);font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-l);background:rgba(196,161,94,.15);padding:2px 6px;border-radius:3px}
+
+@media (max-width:1200px){ .cli-detail,.sec-grid,.fgrid,.radio-cards{grid-template-columns:1fr} }
+
+@media (max-width:1200px){
+  .app{grid-template-columns:64px 1fr}
+  .sb-logo,.sb-sec,.sb-nav a span,.sb-foot .who{display:none}
+  .sb-nav a{justify-content:center;padding:11px}
+  .metrics{grid-template-columns:repeat(3,1fr)}
+  .padmin{grid-template-columns:repeat(4,1fr)}
+  .grid2{grid-template-columns:1fr}
+  .split{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<aside class="sidebar">
+  <div class="sb-logo">TRASHPANDA<em>—</em>GARAGE</div>
+  <div class="sb-sec">Operación</div>
+  <nav class="sb-nav">
+    <a href="?view=dashboard" id="nav-dashboard"><span class="ic">◨</span><span>Dashboard</span></a>
+    <a href="?view=galerias" id="nav-galerias" class="on"><span class="ic">▦</span><span>Galerías</span><span class="badge amber">3</span></a>
+    <a href="?view=clientes" id="nav-clientes"><span class="ic">◍</span><span>Clientes</span></a>
+    <a href="#"><span class="ic">↻</span><span>Actividad</span></a>
+  </nav>
+  <div class="sb-sec">Sistema</div>
+  <nav class="sb-nav">
+    <a href="#"><span class="ic">⚙</span><span>Configuración</span></a>
+  </nav>
+  <div class="sb-foot">
+    <span class="avatar">TG</span>
+    <span class="who">Estudio<small>admin</small></span>
+  </div>
+</aside>
+
+<div class="main">
+<div class="topbar">
+  <div class="crumbs" id="crumbs"><a href="?view=dashboard">Admin</a> <span>/</span> <span class="cur">Galerías</span></div>
+  <div class="search"><span style="color:var(--text-3)">⌕</span><input placeholder="Buscar galerías, clientes, archivos…"><span class="k">⌘K</span></div>
+  <div class="tb-right">
+    <button class="icon-btn"><span class="dotr"></span>◔</button>
+    <button class="btn btn-p btn-sm" id="tb-cta">+ Nueva galería</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<section class="screen" id="v-dashboard">
+<div class="content">
+  <div class="phead">
+    <div><h1>Dashboard</h1><div class="sub">Resumen operativo · Miércoles 22 de julio, 2026</div></div>
+    <div class="phead-actions">
+      <button class="btn btn-g btn-sm">+ Cliente</button>
+      <button class="btn btn-g btn-sm">↑ Importar</button>
+      <button class="btn btn-p btn-sm">+ Nueva galería</button>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><div class="n">18</div><div class="l">Clientes activos</div></div>
+    <div class="metric"><div class="n">7</div><div class="l">Galerías activas</div></div>
+    <div class="metric hl"><div class="n">3</div><div class="l">Selecciones pendientes</div><div class="ctx">1 sin abrir aún</div></div>
+    <div class="metric warn"><div class="n">2</div><div class="l">En edición</div></div>
+    <div class="metric ok"><div class="n">4</div><div class="l">Entregas disponibles</div></div>
+    <div class="metric danger"><div class="n">2</div><div class="l">Próx. a expirar</div><div class="ctx danger">1 vence mañana</div></div>
+  </div>
+  <div class="grid2">
+    <div class="block">
+      <div class="block-h"><h3>Galerías que requieren atención</h3><a href="?view=galerias">Ver todas →</a></div>
+      <table class="tbl">
+        <thead><tr><th>Galería</th><th>Estado</th><th>Selección</th><th>Vence</th><th></th></tr></thead>
+        <tbody>
+          <tr><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/64/88/64"></div><div><div class="t">Retratos Cata — After Hours</div><div class="c">Catalina R.</div></div></div></td>
+              <td><span class="chip blue"><i class="dot"></i>Sel. abierta</span></td>
+              <td class="count-cell"><b>8</b>/10<div class="mini-prog"><i style="width:80%"></i></div></td>
+              <td class="mono" style="color:var(--amber-l)">18 Ago</td>
+              <td><div class="row-act"><button class="btn btn-g btn-sm">Abrir</button></div></td></tr>
+          <tr><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/177/88/64"></div><div><div class="t">Signal / Noise</div><div class="c">M. Torres</div></div></div></td>
+              <td><span class="chip blue"><i class="dot"></i>Sel. abierta</span></td>
+              <td class="count-cell"><b>0</b>/12<div class="mini-prog"><i style="width:2%"></i></div></td>
+              <td class="mono" style="color:var(--red-l)">Mañana</td>
+              <td><div class="row-act"><button class="btn btn-g btn-sm">Abrir</button></div></td></tr>
+          <tr><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/1050/88/64"></div><div><div class="t">Neon Alley</div><div class="c">Estudio Vera</div></div></div></td>
+              <td><span class="chip green"><i class="dot"></i>Entrega</span></td>
+              <td class="mono">24 arch.</td>
+              <td class="mono" style="color:var(--amber-l)">30 Sep</td>
+              <td><div class="row-act"><button class="btn btn-g btn-sm">Abrir</button></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="block">
+      <div class="block-h"><h3>Actividad reciente</h3></div>
+      <table class="tbl">
+        <tbody>
+          <tr><td class="mono" style="color:var(--text-3);width:64px">14:20</td><td><b class="strong">Catalina R.</b> confirmó 10 fotografías<div class="mono" style="color:var(--text-3);font-size:10px;margin-top:2px">After Hours</div></td></tr>
+          <tr><td class="mono" style="color:var(--text-3)">11:05</td><td>Entrega vista por <b class="strong">Estudio Vera</b><div class="mono" style="color:var(--text-3);font-size:10px;margin-top:2px">Neon Alley</div></td></tr>
+          <tr><td class="mono" style="color:var(--text-3)">09:42</td><td>Invitación abierta · <b class="strong">M. Torres</b><div class="mono" style="color:var(--text-3);font-size:10px;margin-top:2px">Signal / Noise</div></td></tr>
+          <tr><td class="mono" style="color:var(--text-3)">Ayer</td><td>18 archivos importados<div class="mono" style="color:var(--text-3);font-size:10px;margin-top:2px">Midnight Ronin</div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- LISTA GALERÍAS -->
+<section class="screen" id="v-galerias">
+<div class="content">
+  <div class="phead">
+    <div><h1>Galerías</h1><div class="sub">7 activas · 23 en total</div></div>
+    <div class="phead-actions"><button class="btn btn-g btn-sm">↑ Importar</button><button class="btn btn-g btn-sm">⚙ Columnas</button></div>
+  </div>
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="on">Todas<span class="n">23</span></button>
+      <button>Borrador<span class="n">2</span></button>
+      <button>Sel. abierta<span class="n">3</span></button>
+      <button>Confirmada<span class="n">1</span></button>
+      <button>En edición<span class="n">2</span></button>
+      <button>Entrega<span class="n">4</span></button>
+      <button>Archivada<span class="n">11</span></button>
+    </div>
+    <div class="tool-r">
+      <span class="select">Cliente: Todos <span class="ca">▾</span></span>
+      <span class="select">Ordenar: Actividad <span class="ca">▾</span></span>
+    </div>
+  </div>
+  <div class="block">
+    <table class="tbl">
+      <thead><tr>
+        <th style="width:36px"><span class="cbx"></span></th>
+        <th>Galería</th><th>Cliente</th><th>Estado</th><th class="sort">Fotos</th><th>Selección</th>
+        <th>Vence</th><th style="width:96px"></th>
+      </tr></thead>
+      <tbody id="gal-rows"></tbody>
+    </table>
+  </div>
+  <div class="batch">
+    <span class="cnt"><b>2</b> galerías seleccionadas</span>
+    <span class="sep"></span>
+    <div class="acts">
+      <button class="btn btn-g btn-sm">Cambiar estado</button>
+      <button class="btn btn-g btn-sm">Enviar invitación</button>
+      <button class="btn btn-g btn-sm">Duplicar</button>
+      <button class="btn btn-red btn-sm">Archivar</button>
+    </div>
+    <button class="clear">Limpiar selección</button>
+  </div>
+  <div class="pagination">
+    <span>Mostrando 1–8 de 23</span>
+    <div class="pages"><button>←</button><button class="on">1</button><button>2</button><button>3</button><button>→</button></div>
+  </div>
+</div>
+</section>
+
+<!-- DETALLE — FOTOGRAFÍAS -->
+<section class="screen" id="v-detalle">
+<div class="content">
+  <div class="gd-head">
+    <div class="gd-cover"><img src="https://picsum.photos/id/64/300/200"></div>
+    <div class="gd-info">
+      <h1>Retratos Cata — After Hours <span class="chip blue"><i class="dot"></i>Selección abierta</span></h1>
+      <div class="gd-facts">
+        <span>Cliente · <b>Catalina R.</b></span><span>Retrato</span><span>12 Jul 2026</span>
+        <span>Fotos · <b>42</b></span><span>Selección · <b>8/10</b></span><span>Vence · <b style="color:var(--amber-l)">18 Ago</b></span>
+      </div>
+    </div>
+    <div class="gd-actions">
+      <button class="btn btn-g btn-sm">Enviar invitación</button>
+      <button class="btn btn-g btn-sm">Cambiar estado</button>
+      <button class="btn btn-p btn-sm">Ver como cliente ↗</button>
+    </div>
+  </div>
+  <div class="tabbar">
+    <button>Resumen</button>
+    <button class="on">Fotografías<span class="n">42</span></button>
+    <button>Selección<span class="n">8</span></button>
+    <button>Entrega</button>
+    <button>Actividad</button>
+    <button>Configuración</button>
+  </div>
+  <div class="toolbar">
+    <span class="select">Todas <span class="ca">▾</span></span>
+    <span class="select">Visibles · 40 <span class="ca">▾</span></span>
+    <div class="tool-r">
+      <button class="btn btn-g btn-sm">↕ Reordenar</button>
+      <button class="btn btn-g btn-sm">↑ Importar</button>
+    </div>
+  </div>
+  <div class="padmin" id="pa-grid"></div>
+  <div class="batch">
+    <span class="cnt"><b>3</b> fotografías seleccionadas</span>
+    <span class="sep"></span>
+    <div class="acts">
+      <span class="tip"><button class="btn btn-g btn-sm" disabled>★ Marcar portada</button><span class="tiptext">Selecciona una sola imagen para marcarla como portada</span></span>
+      <button class="btn btn-g btn-sm">◎ Ocultar al cliente</button>
+      <button class="btn btn-g btn-sm">Añadir nota</button>
+      <button class="btn btn-red btn-sm">Eliminar</button>
+    </div>
+    <button class="clear">Limpiar</button>
+  </div>
+</div>
+</section>
+
+<!-- REVISIÓN DE SELECCIÓN -->
+<section class="screen" id="v-revision">
+<div class="content">
+  <div class="gd-head">
+    <div class="gd-cover"><img src="https://picsum.photos/id/64/300/200"></div>
+    <div class="gd-info">
+      <h1>Retratos Cata — After Hours <span class="chip violet"><i class="dot"></i>Selección confirmada</span></h1>
+      <div class="gd-facts"><span>Cliente · <b>Catalina R.</b></span><span>Confirmada · <b>14 Ago 2026, 19:42</b></span><span>Seleccionadas · <b>10 de 42</b></span></div>
+    </div>
+    <div class="gd-actions">
+      <button class="btn btn-g btn-sm">Exportar selección</button>
+      <button class="btn btn-p btn-sm">Marcar en edición →</button>
+    </div>
+  </div>
+  <div class="tabbar">
+    <button>Resumen</button><button>Fotografías<span class="n">42</span></button>
+    <button class="on">Selección<span class="n">10</span></button><button>Entrega</button><button>Actividad</button><button>Configuración</button>
+  </div>
+  <div class="rev-head">
+    <div class="l">
+      <div class="big"><b>10</b> de 10 confirmadas</div>
+      <span class="chip violet"><i class="dot"></i>Bloqueada · no editable por el cliente</span>
+    </div>
+    <div style="display:flex;gap:9px">
+      <button class="btn btn-g btn-sm">Copiar nombres</button>
+      <button class="btn btn-g btn-sm">CSV</button>
+      <button class="btn btn-g btn-sm">Lightroom</button>
+    </div>
+  </div>
+  <div class="rev-list" id="rev-grid"></div>
+</div>
+</section>
+
+<!-- CONFIGURACIÓN DE ENTREGA -->
+<section class="screen" id="v-entrega-cfg">
+<div class="content">
+  <div class="gd-head">
+    <div class="gd-info" style="margin-left:0">
+      <h1>Configurar entrega <span class="chip amber"><i class="dot"></i>En edición</span></h1>
+      <div class="gd-facts"><span>Galería · <b>Neon Alley</b></span><span>Cliente · <b>Estudio Vera</b></span><span>24 fotografías finales</span></div>
+    </div>
+  </div>
+  <div class="split">
+    <div>
+      <div class="field"><label>Método de entrega</label>
+        <select><option>Enlace externo (Pic-Time / Drive / Dropbox)</option><option>Archivos alojados en la plataforma</option></select>
+      </div>
+      <div class="field"><label>Proveedor</label><select><option>Pic-Time</option><option>Google Drive</option><option>Dropbox</option></select></div>
+      <div class="field"><label>URL de entrega</label><input type="text" value="https://pictime.com/trashpanda/neon-alley"></div>
+      <div class="field-row">
+        <div class="field"><label>Contraseña (opcional)</label><input type="text" placeholder="—"></div>
+        <div class="field"><label>Expira</label><input type="text" value="30 Sep 2026"></div>
+      </div>
+      <div class="field"><label>Instrucciones para el cliente</label><textarea rows="3">Descarga en resolución completa. Guarda una copia de respaldo antes de la fecha de expiración.</textarea></div>
+      <div class="field" style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Notificar al cliente al publicar</label></div>
+      <div style="display:flex;gap:10px;margin-top:20px"><button class="btn btn-g">Guardar borrador</button><button class="btn btn-green">Publicar entrega</button></div>
+    </div>
+    <div class="preview-card">
+      <div class="pv-label">Vista previa · experiencia del cliente</div>
+      <div style="border-radius:var(--r-s);overflow:hidden;border:1px solid var(--line);margin-bottom:16px;position:relative">
+        <img src="https://picsum.photos/id/1050/700/300" style="width:100%;height:150px;filter:grayscale(1) brightness(.6)">
+        <div style="position:absolute;left:16px;bottom:14px"><span class="chip green"><i class="dot"></i>Entrega disponible</span></div>
+      </div>
+      <div style="font-size:17px;margin-bottom:4px">Tu entrega está lista.</div>
+      <div style="font-size:12.5px;color:var(--text-2);margin-bottom:16px">Neon Alley · 24 fotografías</div>
+      <div class="gd-facts" style="margin-bottom:16px"><span>JPG · 6720×4480</span><span>Hasta el 30 Sep</span></div>
+      <button class="btn btn-green btn-sm" style="width:100%">↓ Abrir entrega</button>
+      <button class="btn btn-g btn-sm" style="width:100%;margin-top:10px">Abrir vista previa como cliente ↗</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- MODAL IMPORTAR -->
+<section class="screen" id="v-importar">
+<div class="content"><div class="phead"><div><h1>Galerías</h1></div></div></div>
+<div class="modal-wrap">
+  <div class="modal wide">
+    <div class="modal-h"><h3>Importar fotografías · After Hours</h3><button class="icon-btn btn-ic">×</button></div>
+    <div class="modal-b">
+      <div class="dropzone">
+        <div class="ic">↑</div>
+        <h4>Arrastra tus fotografías aquí</h4>
+        <p>o selecciona archivos / carpeta · JPG · PNG · WebP · hasta 2.000 imágenes por lote</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;font-size:13px">
+        <span>Progreso general · <b>38 / 42</b></span>
+        <span class="mono" style="color:var(--text-2)">Subiendo → Procesando → Disponible</span>
+      </div>
+      <div class="mini-prog" style="width:100%;height:5px;margin-top:8px"><i style="width:90%"></i></div>
+      <div class="imp-list">
+        <div class="imp-row"><span class="fn">TPG-0438.jpg</span><span class="bar"><i style="width:100%"></i></span><span class="st ok">✓ Disponible</span></div>
+        <div class="imp-row"><span class="fn">TPG-0439.jpg</span><span class="bar"><i style="width:100%;background:var(--violet-b)"></i></span><span class="st proc">Procesando miniatura</span></div>
+        <div class="imp-row"><span class="fn">TPG-0440.jpg</span><span class="bar"><i style="width:64%"></i></span><span class="st up">Subiendo 64%</span></div>
+        <div class="imp-row"><span class="fn">TPG-0441.jpg</span><span class="bar" style="opacity:.4"><i style="width:0"></i></span><span class="st dup">Duplicado</span></div>
+        <div class="imp-row"><span class="fn">IMG_bad.webp</span><span class="bar" style="opacity:.4"><i style="width:0"></i></span><span class="st err">Error de procesamiento · reintentar</span></div>
+      </div>
+    </div>
+    <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar importación</button><button class="btn btn-p btn-sm">Continuar en segundo plano</button></div>
+  </div>
+</div>
+</section>
+
+<!-- MODAL EXPORTAR -->
+<section class="screen" id="v-exportar">
+<div class="content"><div class="phead"><div><h1>Retratos Cata — After Hours</h1></div></div></div>
+<div class="modal-wrap">
+  <div class="modal">
+    <div class="modal-h"><h3>Exportar selección · 10 fotografías</h3><button class="icon-btn btn-ic">×</button></div>
+    <div class="modal-b">
+      <div class="field"><label>Formato</label>
+        <select><option>CSV (nombre, orden, notas)</option><option>TXT (nombres de archivo)</option><option>Lista Lightroom (.lrcat compatible)</option></select>
+      </div>
+      <div class="field" style="display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Mantener orden del cliente</label></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Incluir notas y favoritos</label></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="cbx">✓</span><label style="margin:0">Incluir metadata EXIF</label></div>
+      </div>
+      <div class="field" style="margin-top:6px"><label>Vista previa</label>
+        <div class="consequence mono" style="font-size:11px;line-height:1.8">01, TPG-0405.jpg, "expresión"<br>02, TPG-0406.jpg<br>03, TPG-0409.jpg, "favorita"<br>04, TPG-0413.jpg<br><span style="color:var(--text-3)">… 6 más</span></div>
+      </div>
+    </div>
+    <div class="modal-f"><button class="btn btn-g btn-sm">Copiar al portapapeles</button><button class="btn btn-p btn-sm">↓ Descargar CSV</button></div>
+  </div>
+</div>
+</section>
+
+<!-- MODAL CAMBIAR ESTADO -->
+<section class="screen" id="v-estado">
+<div class="content"><div class="phead"><div><h1>Retratos Cata — After Hours</h1></div></div></div>
+<div class="modal-wrap">
+  <div class="modal">
+    <div class="modal-h"><h3>Cambiar estado de galería</h3><button class="icon-btn btn-ic">×</button></div>
+    <div class="modal-b">
+      <div class="flow">
+        <div class="fs done"><span class="d"></span><span class="lbl">Borrador</span></div>
+        <div class="fs done"><span class="ln"></span><span class="d"></span><span class="lbl">Sel. abierta</span></div>
+        <div class="fs cur"><span class="ln"></span><span class="d"></span><span class="lbl">Confirmada</span></div>
+        <div class="fs next"><span class="ln"></span><span class="d"></span><span class="lbl">En edición</span></div>
+        <div class="fs blocked"><span class="ln"></span><span class="d"></span><span class="lbl">Entrega</span></div>
+        <div class="fs blocked"><span class="ln"></span><span class="d"></span><span class="lbl">Archivada</span></div>
+      </div>
+      <div class="field" style="margin-top:10px"><label>Transición disponible desde «Confirmada»</label>
+        <div style="display:flex;align-items:center;gap:14px;font-size:14px">
+          <span class="chip violet"><i class="dot"></i>Confirmada</span><span style="color:var(--text-3)">→</span><span class="chip amber"><i class="dot"></i>En edición</span>
+        </div>
+        <p style="font-size:12px;color:var(--text-3);margin-top:8px">Entrega y Archivada no están disponibles hasta completar la edición.</p>
+      </div>
+      <div class="field"><label>Consecuencias de este cambio</label>
+        <div class="consequence"><ul style="list-style:disc"><li>La selección quedará cerrada de forma definitiva.</li><li>El cliente verá el estado «En edición» con la línea de progreso.</li><li>Se enviará una notificación por correo a Catalina R.</li></ul></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0;font-size:13px">Notificar al cliente</label></div>
+      <p class="meta" style="margin-top:14px;color:var(--text-3)">Este cambio quedará registrado en Actividad — quién, cuándo y desde qué estado.</p>
+    </div>
+    <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-p btn-sm">Confirmar cambio</button></div>
+  </div>
+</div>
+</section>
+
+<!-- ACTIVIDAD / HISTORIAL -->
+<section class="screen" id="v-actividad">
+<div class="content">
+  <div class="gd-head">
+    <div class="gd-cover"><img src="https://picsum.photos/id/64/300/200"></div>
+    <div class="gd-info">
+      <h1>Retratos Cata — After Hours <span class="chip blue"><i class="dot"></i>Selección abierta</span></h1>
+      <div class="gd-facts"><span>Cliente · <b>Catalina R.</b></span><span>Historial completo de la galería</span></div>
+    </div>
+  </div>
+  <div class="tabbar">
+    <button>Resumen</button><button>Fotografías<span class="n">42</span></button>
+    <button>Selección<span class="n">8</span></button><button>Entrega</button>
+    <button class="on">Actividad</button><button>Configuración</button>
+  </div>
+  <div class="block">
+    <table class="tbl act-tbl">
+      <thead><tr><th style="width:120px">Fecha</th><th>Evento</th><th>Autor</th><th>Detalle</th><th style="width:90px">Notif.</th></tr></thead>
+      <tbody>
+        <tr><td class="mono" style="color:var(--text-3)">14 Ago 19:42</td><td><span class="ev-ic vio">◆</span>Selección confirmada</td><td class="mono">Catalina R.</td><td class="mono" style="color:var(--text-2)">10 de 42 fotografías</td><td><span class="chip green" style="padding:3px 8px">Enviada</span></td></tr>
+        <tr><td class="mono" style="color:var(--text-3)">11 Ago 10:15</td><td><span class="ev-ic">↻</span>Cambio de estado</td><td class="mono">admin</td><td class="mono" style="color:var(--text-2)">Sel. abierta → <b style="color:var(--text)">Confirmada</b></td><td><span class="chip green" style="padding:3px 8px">Enviada</span></td></tr>
+        <tr><td class="mono" style="color:var(--text-3)">2 Ago 16:30</td><td><span class="ev-ic">★</span>Portada modificada</td><td class="mono">admin</td><td class="mono" style="color:var(--text-2)">TPG-0405.jpg</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+        <tr><td class="mono" style="color:var(--text-3)">2 Ago 16:12</td><td><span class="ev-ic">◎</span>Visibilidad cambiada</td><td class="mono">admin</td><td class="mono" style="color:var(--text-2)">2 fotos ocultadas al cliente</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+        <tr><td class="mono" style="color:var(--text-3)">1 Ago 09:04</td><td><span class="ev-ic blu">↑</span>Importación</td><td class="mono">admin</td><td class="mono" style="color:var(--text-2)">42 archivos · 40 disponibles, 2 duplicados</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+        <tr><td class="mono" style="color:var(--text-3)">28 Jul 12:20</td><td><span class="ev-ic">✉</span>Invitación enviada</td><td class="mono">admin</td><td class="mono" style="color:var(--text-2)">catalina@correo.com · abierta 30 Jul</td><td><span class="chip green" style="padding:3px 8px">Abierta</span></td></tr>
+        <tr><td class="mono" style="color:var(--text-3)">28 Jul 11:58</td><td><span class="ev-ic">＋</span>Galería creada</td><td class="mono">admin</td><td class="mono" style="color:var(--text-2)">Borrador</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</section>
+
+<!-- ============ LISTA CLIENTES ============ -->
+<section class="screen" id="v-clientes">
+<div class="content">
+  <div class="phead">
+    <div><h1>Clientes</h1><div class="sub">18 activos · 24 en total</div></div>
+    <div class="phead-actions"><button class="btn btn-g btn-sm">↑ Importar</button><button class="btn btn-g btn-sm">⚙ Columnas</button></div>
+  </div>
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="on">Todos<span class="n">24</span></button>
+      <button>Activos<span class="n">18</span></button>
+      <button>Sin activar<span class="n">3</span></button>
+      <button>Sin acceso<span class="n">2</span></button>
+      <button>Desactivados<span class="n">1</span></button>
+      <button>Archivados<span class="n">6</span></button>
+    </div>
+    <div class="tool-r">
+      <span class="select">Con galerías activas <span class="ca">▾</span></span>
+      <span class="select">Ordenar: Actividad <span class="ca">▾</span></span>
+    </div>
+  </div>
+  <div class="block">
+    <table class="tbl">
+      <thead><tr>
+        <th style="width:36px"><span class="cbx"></span></th>
+        <th>Cliente</th><th>Correo</th><th>Cuenta</th><th>Galerías</th><th>Invitación</th><th>Actividad</th><th style="width:96px"></th>
+      </tr></thead>
+      <tbody id="cli-rows"></tbody>
+    </table>
+  </div>
+  <div class="batch">
+    <span class="cnt"><b>2</b> clientes seleccionados</span>
+    <span class="sep"></span>
+    <div class="acts">
+      <span class="tip"><button class="btn btn-g btn-sm">Enviar invitación · 1 de 2</button><span class="tiptext">1 elegible · 1 omitido: cuenta activa</span></span>
+      <button class="btn btn-g btn-sm">+ Crear galería</button>
+      <span class="tip"><button class="btn btn-g btn-sm" disabled>Activar cuentas</button><span class="tiptext">Ninguno de los seleccionados está sin activar</span></span>
+      <button class="btn btn-red btn-sm">Archivar</button>
+    </div>
+    <button class="clear">Limpiar</button>
+  </div>
+  <div class="pagination">
+    <span>Mostrando 1–8 de 24</span>
+    <div class="pages"><button>←</button><button class="on">1</button><button>2</button><button>3</button><button>→</button></div>
+  </div>
+</div>
+</section>
+
+<!-- ============ LISTA FILTRADA: INVITACIÓN PENDIENTE ============ -->
+<section class="screen" id="v-clientes-pend">
+<div class="content">
+  <div class="phead"><div><h1>Clientes</h1><div class="sub">Filtro · invitación pendiente · 3 resultados</div></div></div>
+  <div class="toolbar">
+    <div class="tabs">
+      <button>Todos<span class="n">24</span></button>
+      <button>Activos<span class="n">18</span></button>
+      <button class="on">Sin activar<span class="n">3</span></button>
+      <button>Sin acceso<span class="n">2</span></button>
+      <button>Desactivados<span class="n">1</span></button>
+      <button>Archivados<span class="n">6</span></button>
+    </div>
+    <div class="tool-r"><span class="select">Invitación: Pendiente <span class="ca">▾</span></span></div>
+  </div>
+  <div class="block"><table class="tbl">
+    <thead><tr><th style="width:36px"><span class="cbx"></span></th><th>Cliente</th><th>Correo</th><th>Cuenta</th><th>Invitación</th><th>Enviada</th><th style="width:96px"></th></tr></thead>
+    <tbody id="cli-pend-rows"></tbody>
+  </table></div>
+  <div class="batch">
+    <span class="cnt"><b>3</b> con invitación pendiente</span><span class="sep"></span>
+    <div class="acts"><button class="btn btn-p btn-sm">Reenviar invitación</button><button class="btn btn-g btn-sm">Copiar enlaces</button><button class="btn btn-red btn-sm">Revocar</button></div>
+    <button class="clear">Limpiar</button>
+  </div>
+</div>
+</section>
+
+<!-- ============ ESTADO VACÍO ============ -->
+<section class="screen" id="v-clientes-empty">
+<div class="content">
+  <div class="phead"><div><h1>Clientes</h1></div></div>
+  <div class="empty-admin">
+    <div class="ef">◍</div>
+    <h2>Todavía no hay clientes registrados.</h2>
+    <p>Crea un cliente para asociar galerías, enviar invitaciones y habilitar acceso al portal.</p>
+    <div class="ea-cta"><button class="btn btn-p">Crear primer cliente</button><button class="btn btn-g">Importar clientes</button></div>
+  </div>
+</div>
+</section>
+
+<!-- ============ CREAR CLIENTE ============ -->
+<section class="screen" id="v-cliente-nuevo">
+<div class="content">
+  <div class="phead"><div><h1>Nuevo cliente</h1><div class="sub">Registra un cliente y define cómo accederá al portal</div></div></div>
+  <div class="form-admin">
+    <div class="fblock">
+      <h3>Información principal</h3>
+      <div class="fh-sub">Datos de contacto del cliente</div>
+      <div class="fgrid">
+        <div class="field" style="margin:0"><label>Nombre *</label><input type="text" value="Catalina"></div>
+        <div class="field" style="margin:0"><label>Apellido</label><input type="text" value="Ramírez"></div>
+        <div class="field" style="margin:0"><label>Nombre visible</label><input type="text" value="Catalina R."></div>
+        <div class="field" style="margin:0"><label>Correo de contacto *</label><input type="email" value="catalina@correo.com"></div>
+        <div class="field" style="margin:0"><label>Teléfono (opcional)</label><input type="text" placeholder="+56 9 …"></div>
+        <div class="field" style="margin:0"><label>Empresa o colectivo</label><input type="text" placeholder="—"></div>
+        <div class="field" style="margin:0"><label>Idioma preferido</label><select><option>Español</option><option>English</option></select></div>
+        <div class="field" style="margin:0"><label>Zona horaria</label><select><option>America/Santiago (GMT-3)</option></select></div>
+        <div class="field full" style="margin:0"><label>Notas internas</label><textarea rows="2" placeholder="Solo visibles para el estudio…"></textarea></div>
+      </div>
+      <div class="inline-warn">⚠ Ya existe un cliente con nombre similar: «Catalina Rivas». Verifica antes de continuar.</div>
+    </div>
+
+    <div class="fblock">
+      <h3>Acceso al portal</h3>
+      <div class="fh-sub">Un cliente puede existir sin cuenta. Puedes invitarlo ahora o más tarde.</div>
+      <div class="radio-cards">
+        <div class="rcard"><div class="rt"><span class="rr"></span>Sin acceso</div><div class="rd">Solo registro. Sin correo ni contraseña.</div></div>
+        <div class="rcard on"><div class="rt"><span class="rr"></span>Enviar invitación</div><div class="rd">El cliente define su contraseña desde un enlace.</div></div>
+        <div class="rcard"><div class="rt"><span class="rr"></span>Contraseña temporal</div><div class="rd">Genera una clave que deberá cambiar al entrar.</div></div>
+      </div>
+      <div class="fgrid" style="margin-top:20px">
+        <div class="field" style="margin:0"><label>Correo de acceso</label><input type="email" value="catalina@correo.com"></div>
+        <div class="field" style="margin:0"><label>Plantilla</label><select><option>Invitación estándar</option><option>Bienvenida sesión</option></select></div>
+        <div class="field" style="margin:0"><label>Expira en</label><select><option>7 días</option><option>14 días</option><option>30 días</option></select></div>
+        <div class="field" style="margin:0;display:flex;align-items:center;gap:10px;padding-top:24px"><span class="cbx on">✓</span><label style="margin:0">Enviar copia al administrador</label></div>
+        <div class="field full" style="margin:0"><label>Mensaje personalizado (opcional)</label><textarea rows="2" placeholder="Hola Catalina, aquí está el acceso a tu galería…"></textarea></div>
+      </div>
+      <div class="inline-warn" style="color:var(--text-2)">El correo de acceso coincide con el de contacto.</div>
+    </div>
+
+    <div class="fblock">
+      <h3>Asociar galería inicial</h3>
+      <div class="fh-sub">Opcional — puedes hacerlo después</div>
+      <div class="radio-cards">
+        <div class="rcard on"><div class="rt"><span class="rr"></span>No asociar por ahora</div></div>
+        <div class="rcard"><div class="rt"><span class="rr"></span>Galería existente</div></div>
+        <div class="rcard"><div class="rt"><span class="rr"></span>Crear nueva después</div></div>
+      </div>
+    </div>
+
+    <div class="form-foot">
+      <button class="btn btn-g">Cancelar</button>
+      <button class="btn btn-g">Guardar cliente</button>
+      <button class="btn btn-g">Guardar y crear galería</button>
+      <button class="btn btn-p">Guardar y enviar invitación</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============ DETALLE — RESUMEN ============ -->
+<section class="screen" id="v-cliente">
+<div class="content">
+  <div class="gd-head">
+    <div class="cli-av" style="width:56px;height:56px;font-size:16px">CR</div>
+    <div class="gd-info">
+      <h1>Catalina R. <span class="chip green"><i class="dot"></i>Cuenta activa</span></h1>
+      <div class="gd-facts">
+        <span>Catalina Ramírez</span><span>catalina@correo.com</span><span>+56 9 5555 1234</span>
+        <span>Alta · <b>28 Jul 2026</b></span><span>Galerías · <b>3</b></span><span>Último acceso · <b>hace 2h</b></span>
+      </div>
+    </div>
+    <div class="gd-actions">
+      <button class="btn btn-g btn-sm">Editar</button>
+      <button class="btn btn-g btn-sm">⋯ Más</button>
+      <button class="btn btn-p btn-sm">+ Crear galería</button>
+    </div>
+  </div>
+  <div class="tabbar">
+    <button class="on">Resumen</button><button>Galerías<span class="n">3</span></button>
+    <button>Actividad</button><button>Seguridad</button><button>Notas<span class="n">2</span></button>
+  </div>
+
+  <div class="cli-detail">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="info-block">
+        <div class="ib-h">Galerías recientes <a href="#" style="font-family:var(--mono);font-size:10px;color:var(--violet-b)">Ver todas →</a></div>
+        <table class="tbl">
+          <tbody>
+            <tr><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/64/88/64"></div><div class="t">After Hours</div></div></td><td><span class="chip blue"><i class="dot"></i>Sel. abierta</span></td><td class="count-cell"><b>8</b>/10</td><td class="mono" style="color:var(--amber-l)">18 Ago</td><td><div class="row-act"><button class="btn btn-g btn-sm always">⋯</button></div></td></tr>
+            <tr><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/1050/88/64"></div><div class="t">Neon Alley</div></div></td><td><span class="chip green"><i class="dot"></i>Entrega</span></td><td class="mono">24 arch.</td><td class="mono" style="color:var(--amber-l)">30 Sep</td><td><div class="row-act"><button class="btn btn-g btn-sm always">⋯</button></div></td></tr>
+            <tr><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/1074/88/64"></div><div class="t">Bosque — Parejas</div></div></td><td><span class="chip gray"><i class="dot"></i>Archivada</span></td><td class="mono" style="color:var(--text-3)">—</td><td class="mono" style="color:var(--text-3)">—</td><td><div class="row-act"><button class="btn btn-g btn-sm always">⋯</button></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="info-block">
+        <div class="ib-h">Información de contacto</div>
+        <div class="ib-b">
+          <div class="kv"><span class="k">Nombre completo</span><span class="v">Catalina Ramírez</span></div>
+          <div class="kv"><span class="k">Correo contacto</span><span class="v">catalina@correo.com</span></div>
+          <div class="kv"><span class="k">Teléfono</span><span class="v">+56 9 5555 1234</span></div>
+          <div class="kv"><span class="k">Empresa</span><span class="v" style="color:var(--text-3)">—</span></div>
+          <div class="kv"><span class="k">Idioma · Zona</span><span class="v">Español · GMT-3</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="info-block">
+        <div class="ib-h">Estado de cuenta</div>
+        <div class="ib-b">
+          <div class="kv"><span class="k">Acceso</span><span class="v"><span class="chip green" style="padding:3px 8px"><i class="dot"></i>Activa</span></span></div>
+          <div class="kv"><span class="k">Invitación</span><span class="v"><span class="chip green" style="padding:3px 8px">Aceptada</span></span></div>
+          <div class="kv"><span class="k">Contraseña</span><span class="v">Definida</span></div>
+          <div class="kv"><span class="k">Último acceso</span><span class="v">hace 2 horas</span></div>
+          <div class="kv"><span class="k">Sesiones activas</span><span class="v">1 dispositivo</span></div>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="ib-h">Próximas acciones</div>
+        <div class="next-actions">
+          <div class="na-item warn"><span class="na-ic">◷</span>Selección sin confirmar · After Hours<span class="na-go">Abrir →</span></div>
+          <div class="na-item vio"><span class="na-ic">◆</span>Entrega próxima a expirar · Neon Alley<span class="na-go">Ver →</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============ DETALLE — GALERÍAS ============ -->
+<section class="screen" id="v-cliente-galerias">
+<div class="content">
+  <div class="gd-head">
+    <div class="cli-av" style="width:56px;height:56px;font-size:16px">CR</div>
+    <div class="gd-info"><h1>Catalina R. <span class="chip green"><i class="dot"></i>Cuenta activa</span></h1>
+      <div class="gd-facts"><span>3 galerías asociadas</span></div></div>
+    <div class="gd-actions"><button class="btn btn-p btn-sm">+ Nueva galería para este cliente</button></div>
+  </div>
+  <div class="tabbar">
+    <button>Resumen</button><button class="on">Galerías<span class="n">3</span></button>
+    <button>Actividad</button><button>Seguridad</button><button>Notas<span class="n">2</span></button>
+  </div>
+  <div class="block"><table class="tbl">
+    <thead><tr><th>Galería</th><th>Estado</th><th>Fotos</th><th>Selección</th><th>Vence</th><th>Actividad</th><th style="width:60px"></th></tr></thead>
+    <tbody>
+      <tr><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/64/88/64"></div><div><div class="t">Retratos Cata — After Hours</div><div class="c">Retrato</div></div></div></td><td><span class="chip blue"><i class="dot"></i>Sel. abierta</span></td><td class="mono">42</td><td class="count-cell"><b>8</b>/10</td><td class="mono" style="color:var(--amber-l)">18 Ago</td><td class="mono" style="color:var(--text-3)">hace 2h</td><td><div class="row-act"><button class="btn btn-g btn-sm always">⋯</button></div></td></tr>
+      <tr><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/1050/88/64"></div><div><div class="t">Neon Alley</div><div class="c">Conceptual</div></div></div></td><td><span class="chip green"><i class="dot"></i>Entrega</span></td><td class="mono">24</td><td class="mono" style="color:var(--text-3)">—</td><td class="mono" style="color:var(--amber-l)">30 Sep</td><td class="mono" style="color:var(--text-3)">hace 3h</td><td><div class="row-act"><button class="btn btn-g btn-sm always">⋯</button></div></td></tr>
+      <tr style="opacity:.5"><td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/1074/88/64"></div><div><div class="t">Bosque — Parejas</div><div class="c">Parejas</div></div></div></td><td><span class="chip gray"><i class="dot"></i>Archivada</span></td><td class="mono">30</td><td class="mono" style="color:var(--text-3)">—</td><td class="mono" style="color:var(--text-3)">Expiró</td><td class="mono" style="color:var(--text-3)">nov 2025</td><td><div class="row-act"><button class="btn btn-g btn-sm always">⋯</button></div></td></tr>
+    </tbody>
+  </table></div>
+</div>
+</section>
+
+<!-- ============ DETALLE — SEGURIDAD ============ -->
+<section class="screen" id="v-cliente-seguridad">
+<div class="content">
+  <div class="gd-head">
+    <div class="cli-av" style="width:56px;height:56px;font-size:16px">CR</div>
+    <div class="gd-info"><h1>Catalina R. <span class="chip green"><i class="dot"></i>Cuenta activa</span></h1>
+      <div class="gd-facts"><span>Acceso e invitaciones</span></div></div>
+  </div>
+  <div class="tabbar">
+    <button>Resumen</button><button>Galerías<span class="n">3</span></button>
+    <button>Actividad</button><button class="on">Seguridad</button><button>Notas<span class="n">2</span></button>
+  </div>
+  <div class="sec-grid">
+    <div style="display:flex;flex-direction:column;gap:20px">
+      <div class="info-block">
+        <div class="ib-h">Acceso al portal</div>
+        <div class="ib-b">
+          <div class="kv"><span class="k">Estado</span><span class="v"><span class="chip green" style="padding:3px 8px"><i class="dot"></i>Activa</span></span></div>
+          <div class="kv"><span class="k">Correo de acceso</span><span class="v">catalina@correo.com</span></div>
+          <div class="kv"><span class="k">Último inicio</span><span class="v">22 Jul 2026, 12:30</span></div>
+          <div class="kv"><span class="k">Activada</span><span class="v">30 Jul 2026</span></div>
+          <div class="kv"><span class="k">Sesiones activas</span><span class="v">1 · Chrome / macOS</span></div>
+          <div class="kv"><span class="k">Intentos fallidos</span><span class="v" style="color:var(--text-3)">Ninguno reciente</span></div>
+        </div>
+        <div class="act-btns">
+          <button class="btn btn-g btn-sm">Cambiar correo de acceso</button>
+          <button class="btn btn-g btn-sm">Cerrar todas las sesiones</button>
+          <button class="btn btn-red btn-sm">Desactivar acceso</button>
+        </div>
+      </div>
+      <div class="info-block">
+        <div class="ib-h">Contraseña</div>
+        <div class="ib-b"><div class="kv"><span class="k">Estado</span><span class="v">Definida por el cliente</span></div><div class="kv" style="border:none"><span class="k">Nunca se muestra la contraseña existente</span><span class="v"></span></div></div>
+        <div class="act-btns">
+          <button class="btn btn-g btn-sm">Enviar enlace para definir</button>
+          <button class="btn btn-g btn-sm">Generar temporal</button>
+          <button class="btn btn-g btn-sm">Forzar restablecimiento</button>
+        </div>
+      </div>
+    </div>
+    <div class="info-block">
+      <div class="ib-h">Invitación actual</div>
+      <div class="ib-b">
+        <div class="kv"><span class="k">Estado</span><span class="v"><span class="chip green" style="padding:3px 8px">Aceptada</span></span></div>
+        <div class="kv"><span class="k">Enviada</span><span class="v">28 Jul 2026, 12:20</span></div>
+        <div class="kv"><span class="k">Abierta</span><span class="v">30 Jul 2026, 09:15</span></div>
+        <div class="kv"><span class="k">Aceptada</span><span class="v">30 Jul 2026, 09:22</span></div>
+        <div class="kv"><span class="k">Expiración</span><span class="v" style="color:var(--text-3)">— (ya aceptada)</span></div>
+        <div class="kv"><span class="k">Enviada por</span><span class="v">admin</span></div>
+      </div>
+      <div class="act-btns">
+        <button class="btn btn-g btn-sm">Ver registro de invitación</button>
+        <button class="btn btn-g btn-sm">Generar nueva invitación</button>
+      </div>
+      <p class="meta" style="padding:0 18px 16px;color:var(--text-3)">El enlace fue consumido al aceptarse. Un enlace aceptado no puede reutilizarse.</p>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============ DETALLE — ACTIVIDAD (con filtros) ============ -->
+<section class="screen" id="v-cliente-actividad">
+<div class="content">
+  <div class="gd-head">
+    <div class="cli-av" style="width:56px;height:56px;font-size:16px">CR</div>
+    <div class="gd-info"><h1>Catalina R.</h1><div class="gd-facts"><span>Historial de acceso y proyectos</span></div></div>
+  </div>
+  <div class="tabbar">
+    <button>Resumen</button><button>Galerías<span class="n">3</span></button>
+    <button class="on">Actividad</button><button>Seguridad</button><button>Notas<span class="n">2</span></button>
+  </div>
+  <div class="toolbar">
+    <div class="tabs">
+      <button class="on">Todos</button><button>Acceso</button><button>Invitaciones</button>
+      <button>Galerías</button><button>Selecciones</button><button>Entregas</button><button>Seguridad</button>
+    </div>
+    <div class="tool-r"><span class="select">Galería: Todas <span class="ca">▾</span></span></div>
+  </div>
+  <div class="block"><table class="tbl act-tbl">
+    <thead><tr><th style="width:110px">Fecha</th><th>Evento</th><th>Galería</th><th>Detalle</th><th style="width:80px">Notif.</th></tr></thead>
+    <tbody>
+      <tr><td class="mono" style="color:var(--text-3)">14 Ago 19:42</td><td><span class="ev-ic vio">◆</span>Selección confirmada</td><td class="mono">After Hours</td><td class="mono" style="color:var(--text-2)">10 fotografías</td><td><span class="chip green" style="padding:3px 8px">Sí</span></td></tr>
+      <tr><td class="mono" style="color:var(--text-3)">14 Ago 19:20</td><td><span class="ev-ic">◉</span>Catalina seleccionó 6 fotografías</td><td class="mono">After Hours</td><td class="mono" style="color:var(--text-3)">agrupado</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+      <tr><td class="mono" style="color:var(--text-3)">11 Ago 11:05</td><td><span class="ev-ic">↗</span>Entrega vista</td><td class="mono">Neon Alley</td><td class="mono" style="color:var(--text-2)">Chrome / macOS</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+      <tr><td class="mono" style="color:var(--text-3)">11 Ago 11:02</td><td><span class="ev-ic blu">→</span>Inicio de sesión</td><td class="mono" style="color:var(--text-3)">—</td><td class="mono" style="color:var(--text-2)">Chrome · macOS · Santiago, CL</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+      <tr><td class="mono" style="color:var(--text-3)">30 Jul 09:22</td><td><span class="ev-ic vio">◆</span>Invitación aceptada</td><td class="mono" style="color:var(--text-3)">—</td><td class="mono" style="color:var(--text-2)">Cuenta activada</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+      <tr><td class="mono" style="color:var(--text-3)">30 Jul 09:15</td><td><span class="ev-ic">✉</span>Invitación abierta</td><td class="mono" style="color:var(--text-3)">—</td><td class="mono" style="color:var(--text-2)">—</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+      <tr><td class="mono" style="color:var(--text-3)">28 Jul 12:20</td><td><span class="ev-ic">✉</span>Invitación enviada</td><td class="mono" style="color:var(--text-3)">—</td><td class="mono" style="color:var(--text-2)">catalina@correo.com</td><td><span class="chip green" style="padding:3px 8px">Sí</span></td></tr>
+      <tr><td class="mono" style="color:var(--text-3)">28 Jul 11:58</td><td><span class="ev-ic">＋</span>Cliente creado</td><td class="mono" style="color:var(--text-3)">—</td><td class="mono" style="color:var(--text-2)">por admin</td><td class="mono" style="color:var(--text-3)">—</td></tr>
+    </tbody>
+  </table></div>
+</div>
+</section>
+
+<!-- ============ DETALLE — NOTAS ============ -->
+<section class="screen" id="v-cliente-notas">
+<div class="content">
+  <div class="gd-head">
+    <div class="cli-av" style="width:56px;height:56px;font-size:16px">CR</div>
+    <div class="gd-info"><h1>Catalina R.</h1><div class="gd-facts"><span>Notas internas · solo visibles para el estudio</span></div></div>
+    <div class="gd-actions"><button class="btn btn-p btn-sm">+ Añadir nota</button></div>
+  </div>
+  <div class="tabbar">
+    <button>Resumen</button><button>Galerías<span class="n">3</span></button>
+    <button>Actividad</button><button>Seguridad</button><button class="on">Notas<span class="n">2</span></button>
+  </div>
+  <div style="max-width:820px">
+    <div class="note-item pin">
+      <div class="nb">
+        <p><span class="pin-badge">Fijada</span> &nbsp;Prefiere entrega por Pic-Time. Solicitó copias en blanco y negro para la serie principal.</p>
+        <span class="nm">admin · 2 Ago 2026 · editada</span>
+      </div>
+      <div class="nact"><button class="btn btn-g btn-ic btn-sm">✎</button><button class="btn btn-g btn-ic btn-sm">⚲</button><button class="btn btn-red btn-ic btn-sm">×</button></div>
+    </div>
+    <div class="note-item">
+      <div class="nb">
+        <p>Contactar por WhatsApp antes de publicar cualquier entrega.</p>
+        <span class="nm">admin · 28 Jul 2026</span>
+      </div>
+      <div class="nact"><button class="btn btn-g btn-ic btn-sm">✎</button><button class="btn btn-g btn-ic btn-sm">⚲</button><button class="btn btn-red btn-ic btn-sm">×</button></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============ MODAL: ENVIAR INVITACIÓN ============ -->
+<section class="screen" id="v-m-invitar">
+<div class="content"><div class="phead"><div><h1>Catalina R.</h1></div></div></div>
+<div class="modal-wrap"><div class="modal wide">
+  <div class="modal-h"><h3>Enviar invitación</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b"><div class="split" style="gap:24px">
+    <div>
+      <div class="field"><label>Cliente</label><input type="text" value="Catalina R." disabled style="color:var(--text-2)"></div>
+      <div class="field"><label>Correo de acceso</label><input type="email" value="catalina@correo.com"></div>
+      <div class="field"><label>Plantilla</label><select><option>Invitación estándar</option><option>Bienvenida sesión</option></select></div>
+      <div class="field"><label>Expira en</label><select><option>7 días</option><option>14 días</option></select></div>
+      <div class="field"><label>Acceso a galerías</label><select><option>After Hours + Neon Alley</option><option>Todas las del cliente</option><option>Ninguna por ahora</option></select></div>
+      <div class="field"><label>Mensaje personalizado</label><textarea rows="2" placeholder="Opcional…"></textarea></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Enviar copia al administrador</label></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Invalidar invitaciones anteriores</label></div>
+      </div>
+    </div>
+    <div>
+      <div class="pv-label meta" style="margin-bottom:12px;color:var(--text-3)">Vista previa del correo</div>
+      <div class="mail-preview">
+        <div class="mp-top"><span class="lg">TRASHPANDA<em>—</em>GARAGE</span></div>
+        <div class="mp-b">
+          <h4>Tu galería está lista</h4>
+          <p>Hola Catalina, creamos un espacio privado para que revises y selecciones tus fotografías de After Hours.</p>
+          <a class="mp-btn">Acceder a mi galería</a>
+          <div class="mp-foot">El enlace expira en 7 días · Soporte: hola@trashpandagarage.com</div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-g btn-sm">Copiar enlace</button><button class="btn btn-p btn-sm">Enviar invitación</button></div>
+</div></div>
+</section>
+
+<!-- ============ MODAL: REENVIAR ============ -->
+<section class="screen" id="v-m-reenviar">
+<div class="content"><div class="phead"><div><h1>M. Torres</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Reenviar invitación</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="consequence" style="margin-bottom:18px"><div class="kv" style="border:none;padding:4px 0"><span class="k">Última enviada</span><span class="v">10 Jul 2026 · sin abrir</span></div><div class="kv" style="border:none;padding:4px 0"><span class="k">Estado</span><span class="v"><span class="chip amber" style="padding:3px 8px">Expirada</span></span></div><div class="kv" style="border:none;padding:4px 0"><span class="k">Correo</span><span class="v">m.torres@correo.com</span></div></div>
+    <div class="field"><label>Nueva expiración</label><select><option>7 días</option><option>14 días</option></select></div>
+    <div class="field" style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Invalidar enlace anterior</label></div>
+    <div class="field"><label>Mensaje (opcional)</label><textarea rows="2" placeholder="Reenviamos tu acceso…"></textarea></div>
+  </div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-p btn-sm">Reenviar invitación</button></div>
+</div></div>
+</section>
+
+<!-- ============ MODAL: REVOCAR ============ -->
+<section class="screen" id="v-m-revocar">
+<div class="content"><div class="phead"><div><h1>M. Torres</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Revocar invitación</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="warn-box danger" style="margin-bottom:18px">⚠ El enlace actual dejará de funcionar inmediatamente.</div>
+    <div class="field"><label>Consecuencias</label>
+      <div class="consequence"><ul style="list-style:disc"><li>El cliente no podrá completar el registro con el enlace actual.</li><li>Deberá recibir una nueva invitación para acceder.</li><li>La acción quedará registrada en Actividad.</li></ul></div>
+    </div>
+  </div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-red btn-sm">Revocar invitación</button></div>
+</div></div>
+</section>
+
+<!-- ============ MODAL: CONTRASEÑA TEMPORAL ============ -->
+<section class="screen" id="v-m-temporal">
+<div class="content"><div class="phead"><div><h1>Catalina R.</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Generar contraseña temporal</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="field"><label>Correo de acceso</label><div class="pw-field" style="letter-spacing:0;font-family:'Geist'">catalina@correo.com</div></div>
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:16px">Se generará una contraseña de un solo uso. El cliente deberá cambiarla al iniciar sesión.</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Obligar a cambiarla al iniciar sesión</label></div>
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Notificar al cliente por correo</label></div>
+    </div>
+  </div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-p btn-sm">Generar contraseña</button></div>
+</div></div>
+</section>
+
+
+<!-- ============ MODAL: CONTRASEÑA GENERADA (después) ============ -->
+<section class="screen" id="v-m-temporal-ok">
+<div class="content"><div class="phead"><div><h1>Catalina R.</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Contraseña temporal generada</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="field"><label>Correo de acceso</label><div class="pw-field" style="letter-spacing:0;font-family:'Geist'">catalina@correo.com</div></div>
+    <div class="field"><label>Contraseña · visible una sola vez</label><div class="pw-field">Xk7·mPaís·92R<span class="cp">Copiar</span></div></div>
+    <div class="warn-box danger">⚠ No se almacena ni volverá a mostrarse después de cerrar. Cópiala ahora.</div>
+  </div>
+  <div class="modal-f"><button class="btn btn-p btn-sm">Copiar y cerrar</button></div>
+</div></div>
+</section>
+
+<!-- ============ MODAL: RESTABLECER CONTRASEÑA ============ -->
+<section class="screen" id="v-m-reset">
+<div class="content"><div class="phead"><div><h1>Catalina R.</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Restablecer contraseña</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="field"><label>Método</label>
+      <div class="radio-cards" style="grid-template-columns:1fr 1fr">
+        <div class="rcard on"><div class="rt"><span class="rr"></span>Enviar enlace</div><div class="rd">El cliente define una nueva contraseña.</div></div>
+        <div class="rcard"><div class="rt"><span class="rr"></span>Cambio manual</div><div class="rd">Solo emergencia. Requiere motivo.</div></div>
+      </div>
+    </div>
+    <div class="field"><label>Correo</label><input type="email" value="catalina@correo.com"></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Invalidar enlaces previos</label></div>
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Cerrar sesiones activas</label></div>
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Notificar al cliente</label></div>
+    </div>
+    <p class="meta" style="margin-top:14px;color:var(--text-3)">Quedará registrado en Actividad.</p>
+  </div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-p btn-sm">Enviar enlace de restablecimiento</button></div>
+</div></div>
+</section>
+
+<!-- ============ MODAL: CAMBIAR CORREO ============ -->
+<section class="screen" id="v-m-correo">
+<div class="content"><div class="phead"><div><h1>Catalina R.</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Cambiar correo de acceso</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="field"><label>Correo actual</label><input type="email" value="catalina@correo.com" disabled style="color:var(--text-2)"></div>
+    <div class="field"><label>Nuevo correo de acceso</label><input type="email" value="cata.ramirez@estudio.com"></div>
+    <div class="inline-warn" style="margin-bottom:16px">⚠ El correo de acceso diferirá del correo de contacto. El cliente iniciará sesión con el nuevo correo.</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Cerrar sesiones activas</label></div>
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Notificar al cliente en ambos correos</label></div>
+    </div>
+  </div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-p btn-sm">Confirmar cambio de correo</button></div>
+</div></div>
+</section>
+
+<!-- ============ MODAL: DESACTIVAR ACCESO ============ -->
+<section class="screen" id="v-m-desactivar">
+<div class="content"><div class="phead"><div><h1>Catalina R.</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Desactivar acceso</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="field"><label>Qué ocurre</label>
+      <div class="consequence"><ul style="list-style:disc"><li>El cliente conserva sus datos y galerías.</li><li>No podrá iniciar sesión en el portal.</li><li>Las invitaciones activas se invalidan.</li><li>Puedes reactivar la cuenta más adelante.</li></ul></div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:10px"><span class="cbx on">✓</span><label style="margin:0">Notificar al cliente</label></div>
+    <p class="meta" style="color:var(--text-3)">Quedará registrado en Actividad.</p>
+  </div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-red btn-sm">Desactivar acceso</button></div>
+</div></div>
+</section>
+
+<!-- ============ MODAL: REACTIVAR ============ -->
+<section class="screen" id="v-m-reactivar">
+<div class="content"><div class="phead"><div><h1>R. Díaz</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Reactivar cuenta</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="field"><label>Qué ocurre</label>
+      <div class="consequence"><ul style="list-style:disc"><li>La cuenta vuelve a estar habilitada.</li><li>Las credenciales existentes permanecen válidas — podrá iniciar sesión de inmediato.</li><li>Las galerías asociadas siguen intactas.</li></ul></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx">✓</span><label style="margin:0;font-size:13px">Cerrar sesiones activas al reactivar</label></div>
+      <div style="display:flex;align-items:center;gap:10px"><span class="cbx">✓</span><label style="margin:0;font-size:13px">Forzar restablecimiento de contraseña</label></div>
+    </div>
+    <p class="meta" style="margin-top:12px;color:var(--text-3)">Envía una nueva invitación solo si el cliente nunca completó el registro.</p>
+  </div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-green btn-sm">Reactivar cuenta</button></div>
+</div></div>
+</section>
+
+<!-- ============ MODAL: ARCHIVAR CLIENTE ============ -->
+<section class="screen" id="v-m-archivar">
+<div class="content"><div class="phead"><div><h1>Catalina R.</h1></div></div></div>
+<div class="modal-wrap"><div class="modal">
+  <div class="modal-h"><h3>Archivar cliente</h3><button class="icon-btn btn-ic">×</button></div>
+  <div class="modal-b">
+    <div class="warn-box danger" style="margin-bottom:16px">⚠ Este cliente tiene una <b>selección abierta</b> y una <b>entrega sin descargar</b>. Revisa antes de continuar.</div>
+    <div class="field"><label>Qué ocurre</label>
+      <div class="consequence"><ul style="list-style:disc"><li>Desaparece de las vistas activas.</li><li><b style="color:var(--red-l)">Desactiva el acceso al portal y cierra las sesiones activas.</b></li><li>Invalida las invitaciones pendientes.</li><li>Conserva su historial y galerías; las entregas activas dejan de ser accesibles para el cliente.</li><li>No podrá recibir invitaciones ni nuevas galerías sin restaurarlo. Reversible solo desde el archivo.</li></ul></div>
+    </div>
+    <div class="field" style="display:flex;align-items:center;gap:10px;margin-top:14px"><span class="cbx">✓</span><label style="margin:0;font-size:13px">Entiendo que hay operaciones en curso y aun así deseo archivar</label></div>
+  </div>
+  <div class="modal-f"><button class="btn btn-g btn-sm">Cancelar</button><button class="btn btn-red btn-sm" disabled>Archivar cliente</button></div>
+</div></div>
+</section>
+
+<!-- ============ CONFIRMACIÓN: INVITACIÓN ENVIADA ============ -->
+<section class="screen" id="v-invitacion-ok">
+<div class="content">
+  <div class="phead"><div><h1>Clientes</h1></div></div>
+  <div class="empty-admin" style="padding:64px 40px">
+    <div class="ef" style="border-color:var(--green);color:var(--green-l)">✓</div>
+    <h2>Invitación enviada a Catalina R.</h2>
+    <p>Se envió a catalina@correo.com. Puedes seguir su estado en la pestaña Seguridad del cliente.</p>
+    <div class="gd-facts" style="justify-content:center;margin-top:22px"><span>Enviada · 22 Jul 2026, 14:05</span><span>Expira · 29 Jul</span><span>Copia · admin</span></div>
+    <div class="ea-cta"><button class="btn btn-g">Copiar enlace</button><button class="btn btn-p">Ver cliente</button></div>
+  </div>
+</div>
+</section>
+
+<!-- ============ ESTADO: CORREO REBOTADO ============ -->
+<section class="screen" id="v-rebotado">
+<div class="content">
+  <div class="gd-head">
+    <div class="cli-av" style="width:56px;height:56px;font-size:16px;background:linear-gradient(135deg,var(--red),var(--amber))">MT</div>
+    <div class="gd-info"><h1>M. Torres <span class="chip red"><i class="dot"></i>Correo rebotado</span></h1>
+      <div class="gd-facts"><span>m.torres@correo.com</span><span>Invitación · <b style="color:var(--red-l)">Rebotada</b></span></div></div>
+    <div class="gd-actions"><button class="btn btn-g btn-sm">Editar correo</button><button class="btn btn-p btn-sm">Reenviar a otro correo</button></div>
+  </div>
+  <div class="tabbar"><button>Resumen</button><button>Galerías</button><button>Actividad</button><button class="on">Seguridad</button><button>Notas</button></div>
+  <div class="warn-box danger" style="max-width:720px;margin-bottom:20px">⚠ El correo de invitación no pudo entregarse (rebote permanente). Verifica la dirección o usa un correo alternativo.</div>
+  <div class="info-block" style="max-width:720px">
+    <div class="ib-h">Invitación actual</div>
+    <div class="ib-b">
+      <div class="kv"><span class="k">Estado</span><span class="v"><span class="chip red" style="padding:3px 8px"><i class="dot"></i>Rebotada</span></span></div>
+      <div class="kv"><span class="k">Enviada</span><span class="v">10 Jul 2026, 09:00</span></div>
+      <div class="kv"><span class="k">Motivo</span><span class="v" style="color:var(--red-l)">Mailbox no existe (550)</span></div>
+      <div class="kv"><span class="k">Correo</span><span class="v">m.torres@correo.com</span></div>
+    </div>
+    <div class="act-btns"><button class="btn btn-g btn-sm">Corregir correo</button><button class="btn btn-p btn-sm">Reenviar invitación</button></div>
+  </div>
+</div>
+</section>
+
+<!-- ============ ESTADO: CUENTA BLOQUEADA ============ -->
+<section class="screen" id="v-bloqueada">
+<div class="content">
+  <div class="gd-head">
+    <div class="cli-av" style="width:56px;height:56px;font-size:16px;background:linear-gradient(135deg,var(--red),#7a3b3b)">AF</div>
+    <div class="gd-info"><h1>A. Fuentes <span class="chip red"><i class="dot"></i>Cuenta bloqueada</span></h1>
+      <div class="gd-facts"><span>a.fuentes@correo.com</span><span>Bloqueada · <b style="color:var(--red-l)">demasiados intentos</b></span></div></div>
+    <div class="gd-actions"><button class="btn btn-g btn-sm">Cerrar sesiones</button><button class="btn btn-green btn-sm">Desbloquear cuenta</button></div>
+  </div>
+  <div class="tabbar"><button>Resumen</button><button>Galerías</button><button>Actividad</button><button class="on">Seguridad</button><button>Notas</button></div>
+  <div class="warn-box danger" style="max-width:720px;margin-bottom:20px">⚠ La cuenta se bloqueó automáticamente tras 5 intentos fallidos de inicio de sesión. El cliente no puede acceder hasta desbloquearla o restablecer la contraseña.</div>
+  <div class="info-block" style="max-width:720px">
+    <div class="ib-h">Acceso al portal</div>
+    <div class="ib-b">
+      <div class="kv"><span class="k">Estado</span><span class="v"><span class="chip red" style="padding:3px 8px"><i class="dot"></i>Bloqueada</span></span></div>
+      <div class="kv"><span class="k">Intentos fallidos</span><span class="v" style="color:var(--red-l)">5 · último hace 12 min</span></div>
+      <div class="kv"><span class="k">Origen</span><span class="v">Chrome · macOS · Santiago, CL</span></div>
+      <div class="kv"><span class="k">Último acceso válido</span><span class="v">18 Jul 2026</span></div>
+    </div>
+    <div class="act-btns"><button class="btn btn-green btn-sm">Desbloquear</button><button class="btn btn-g btn-sm">Restablecer contraseña</button><button class="btn btn-red btn-sm">Desactivar acceso</button></div>
+  </div>
+</div>
+</section>
+
+
+</div>
+</div>
+
+<script>
+const gals=[
+ {sel:1,img:64,name:'Retratos Cata — After Hours',cat:'Retrato',client:'Catalina R.',st:'blue',stl:'Sel. abierta',fotos:42,pick:'8/10',pk:80,created:'12 Jul',venc:'18 Ago',vc:'amber',act:'hace 2h'},
+ {sel:0,img:177,name:'Signal / Noise',cat:'Conceptual',client:'M. Torres',st:'blue',stl:'Sel. abierta',fotos:64,pick:'0/12',pk:2,created:'10 Jul',venc:'Mañana',vc:'red',act:'hace 5h'},
+ {sel:0,img:1062,name:'Midnight Ronin',cat:'Cosplay',client:'R. Díaz',st:'amber',stl:'En edición',fotos:38,pick:'10/10',pk:100,created:'28 Jun',venc:'—',vc:'',act:'ayer'},
+ {sel:1,img:1050,name:'Neon Alley',cat:'Conceptual',client:'Estudio Vera',st:'green',stl:'Entrega',fotos:24,pick:'—',pk:0,created:'14 May',venc:'30 Sep',vc:'amber',act:'hace 3h'},
+ {sel:0,img:203,name:'Quiet Hours',cat:'Retrato',client:'A. Fuentes',st:'violet',stl:'Confirmada',fotos:31,pick:'12/12',pk:100,created:'02 Jul',venc:'—',vc:'',act:'ayer'},
+ {sel:0,img:110,name:'The Armory',cat:'Cosplay',client:'Colectivo K',st:'gray',stl:'Borrador',fotos:0,pick:'—',pk:0,created:'21 Jul',venc:'—',vc:'',act:'hoy'},
+ {sel:0,img:1074,name:'Bosque — Parejas',cat:'Parejas',client:'L. & J.',st:'gray',stl:'Archivada',fotos:30,pick:'—',pk:0,created:'02 Nov',venc:'Expiró',vc:'',act:'nov 2025',dim:1},
+ {sel:0,img:145,name:'Doors Open',cat:'Evento',client:'Sala Norte',st:'green',stl:'Entrega',fotos:120,pick:'—',pk:0,created:'18 Jun',venc:'12 Ago',vc:'amber',act:'hace 1d'},
+];
+document.getElementById('gal-rows').innerHTML = gals.map(g=>`
+ <tr style="${g.dim?'opacity:.5':''}">
+   <td><span class="cbx ${g.sel?'on':''}">✓</span></td>
+   <td><div class="gname"><div class="thumb-sm"><img src="https://picsum.photos/id/${g.img}/88/64"></div><div><div class="t">${g.name}</div><div class="c">${g.cat}</div></div></div></td>
+   <td class="mono">${g.client}</td>
+   <td><span class="chip ${g.st}"><i class="dot"></i>${g.stl}</span></td>
+   <td class="mono">${g.fotos||'—'}</td>
+   <td class="count-cell">${g.pick==='—'?'<span class="mono" style="color:var(--text-3)">—</span>':`<b>${g.pick.split('/')[0]}</b>/${g.pick.split('/')[1]}<div class="mini-prog"><i style="width:${g.pk}%"></i></div>`}</td>
+   <td class="mono" style="color:${g.vc==='red'?'var(--red-l)':g.vc==='amber'?'var(--amber-l)':'var(--text-3)'}">${g.venc}</td>
+   <td><div class="row-act"><button class="btn btn-g btn-sm open-hover">Abrir</button><button class="btn btn-g btn-ic btn-sm always">⋯</button></div></td>
+ </tr>`).join('');
+
+const ids=[64,65,103,110,129,145,160,177,203,219,227,250,64,65,103,110,129,145];
+document.getElementById('pa-grid').innerHTML = ids.map((id,i)=>{
+  const client=[0,1,3,5,6,8,9,11].includes(i), cover=i===0, hidden=i===7, dl=i===3, err=i===13, up=i===12;
+  let flags='';
+  if(cover) flags+='<span class="flag cov">Portada</span>';
+  if(client) flags+='<span class="flag cli">Cliente</span>';
+  if(dl) flags+='<span class="flag dl">Entrega</span>';
+  if(hidden) flags+='<span class="flag hid">Oculta</span>';
+  return `<div class="pa ${[2,8].includes(i)?'sel':''} ${hidden?'hidden-ph':''} ${up?'upload':''}" tabindex="0">
+    <img src="https://picsum.photos/id/${id}/300/300">
+    <span class="cb">✓</span>
+    <div class="flags">${flags}</div>
+    <span class="fn">TPG-${String(405+i).padStart(4,'0')}</span>
+    ${err?'<div class="err"><span>Error de carga</span></div>':''}
+    ${up?'<div class="up"><div class="bar"><i style="width:48%"></i></div></div>':''}
+  </div>`;
+}).join('');
+
+const rsel=[64,65,110,145,160,177,203,227,250,103];
+document.getElementById('rev-grid').innerHTML = rsel.map((id,i)=>
+  `<div class="rev-item"><img src="https://picsum.photos/id/${id}/360/480"><div class="o"><span class="n">TPG-${String(405+i).padStart(4,'0')}</span><span class="r">#${String(i+1).padStart(2,'0')}</span></div></div>`
+).join('');
+
+
+const clis=[
+ {sel:1,ini:'CR',name:'Catalina R.',full:'Catalina Ramírez',mail:'catalina@correo.com',acc:'green',accl:'Activa',gal:3,inv:'green',invl:'Aceptada',act:'hace 2h'},
+ {sel:0,ini:'MT',name:'M. Torres',full:'Mauro Torres',mail:'m.torres@correo.com',acc:'amber',accl:'Sin activar',gal:1,inv:'red',invl:'Rebotada',act:'hace 5h'},
+ {sel:1,ini:'EV',name:'Estudio Vera',full:'',mail:'contacto@estudiovera.com',acc:'green',accl:'Activa',gal:2,inv:'green',invl:'Aceptada',act:'hace 3h'},
+ {sel:0,ini:'RD',name:'R. Díaz',full:'Rocío Díaz',mail:'rocio@correo.com',acc:'red',accl:'Desactivada',gal:1,inv:'gray',invl:'Revocada',act:'ayer',dim:1},
+ {sel:0,ini:'AF',name:'A. Fuentes',full:'Andrés Fuentes',mail:'a.fuentes@correo.com',acc:'red',accl:'Bloqueada',gal:1,inv:'green',invl:'Aceptada',act:'hace 12min'},
+ {sel:0,ini:'CK',name:'Colectivo K',full:'',mail:'hola@colectivok.cl',acc:'gray',accl:'Sin acceso',gal:1,inv:'gray',invl:'No enviada',act:'hoy'},
+ {sel:0,ini:'SN',name:'Sala Norte',full:'',mail:'prod@salanorte.cl',acc:'green',accl:'Activa',gal:1,inv:'green',invl:'Aceptada',act:'hace 1d'},
+ {sel:0,ini:'LJ',name:'L. & J.',full:'Lucía y Joaquín',mail:'lj@correo.com',acc:'grayd',accl:'Archivada',gal:1,inv:'gray',invl:'—',act:'nov 2025',dim:1},
+];
+function accChip(k,l){const map={green:'green',amber:'amber',red:'red',gray:'gray',grayd:'gray'};return `<span class="chip ${map[k]}" style="padding:4px 9px"><i class="dot"></i>${l}</span>`}
+const cr=document.getElementById('cli-rows');
+if(cr) cr.innerHTML=clis.map(c=>`
+ <tr style="${c.dim?'opacity:.5':''}">
+   <td><span class="cbx ${c.sel?'on':''}">✓</span></td>
+   <td><div class="cli-name"><div class="cli-av">${c.ini}</div><div><div class="t">${c.name}</div>${c.full?`<div class="c">${c.full}</div>`:''}</div></div></td>
+   <td class="mono">${c.mail}</td>
+   <td>${accChip(c.acc,c.accl)}</td>
+   <td class="gal-count"><b>${c.gal}</b> ${c.gal===1?'galería':'galerías'}</td>
+   <td><span class="chip ${c.inv==='gray'?'gray':c.inv}" style="padding:4px 9px">${c.invl}</span></td>
+   <td class="mono" style="color:var(--text-3)">${c.act}</td>
+   <td><div class="row-act"><button class="btn btn-g btn-sm open-hover">Abrir</button><button class="btn btn-g btn-ic btn-sm always">⋯</button></div></td>
+ </tr>`).join('');
+
+const pend=[
+ {ini:'MT',name:'M. Torres',mail:'m.torres@correo.com',inv:'red',invl:'Rebotada',sent:'10 Jul'},
+ {ini:'CK',name:'Colectivo K',mail:'hola@colectivok.cl',inv:'blue',invl:'Enviada',sent:'19 Jul'},
+ {ini:'NN',name:'N. Navarro',mail:'n.navarro@correo.com',inv:'amber',invl:'Expirada',sent:'02 Jul'},
+];
+const pr=document.getElementById('cli-pend-rows');
+if(pr) pr.innerHTML=pend.map(c=>`
+ <tr><td><span class="cbx on">✓</span></td>
+   <td><div class="cli-name"><div class="cli-av">${c.ini}</div><div class="t">${c.name}</div></div></td>
+   <td class="mono">${c.mail}</td>
+   <td><span class="chip amber" style="padding:4px 9px"><i class="dot"></i>Sin activar</span></td>
+   <td><span class="chip ${c.inv}" style="padding:4px 9px">${c.invl}</span></td>
+   <td class="mono" style="color:var(--text-3)">${c.sent}</td>
+   <td><div class="row-act"><button class="btn btn-g btn-sm open-hover">Abrir</button><button class="btn btn-g btn-ic btn-sm always">⋯</button></div></td>
+ </tr>`).join('');
+
+const view=new URLSearchParams(location.search).get('view')||'galerias';
+(document.getElementById('v-'+view)||document.getElementById('v-galerias')).classList.add('on');
+const crumbMap={
+  dashboard:'<a href="?view=dashboard">Admin</a> <span>/</span> <span class="cur">Dashboard</span>',
+  galerias:'<a href="?view=dashboard">Admin</a> <span>/</span> <span class="cur">Galerías</span>',
+  detalle:'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=galerias">Galerías</a> <span>/</span> <span class="cur">After Hours</span>',
+  revision:'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=galerias">Galerías</a> <span>/</span> <a href="?view=detalle">After Hours</a> <span>/</span> <span class="cur">Selección</span>',
+  'entrega-cfg':'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=galerias">Galerías</a> <span>/</span> <a href="#">Neon Alley</a> <span>/</span> <span class="cur">Entrega</span>',
+  importar:'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=galerias">Galerías</a> <span>/</span> <span class="cur">Importar</span>',
+  exportar:'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=galerias">Galerías</a> <span>/</span> <span class="cur">Exportar</span>',
+  estado:'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=galerias">Galerías</a> <span>/</span> <span class="cur">Estado</span>',
+
+  clientes:'<a href="?view=dashboard">Admin</a> <span>/</span> <span class="cur">Clientes</span>',
+  'clientes-pend':'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=clientes">Clientes</a> <span>/</span> <span class="cur">Invitación pendiente</span>',
+  'clientes-empty':'<a href="?view=dashboard">Admin</a> <span>/</span> <span class="cur">Clientes</span>',
+  'cliente-nuevo':'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=clientes">Clientes</a> <span>/</span> <span class="cur">Nuevo cliente</span>',
+  cliente:'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=clientes">Clientes</a> <span>/</span> <span class="cur">Catalina R.</span>',
+  'cliente-galerias':'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=clientes">Clientes</a> <span>/</span> <a href="?view=cliente">Catalina R.</a> <span>/</span> <span class="cur">Galerías</span>',
+  'cliente-actividad':'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=clientes">Clientes</a> <span>/</span> <a href="?view=cliente">Catalina R.</a> <span>/</span> <span class="cur">Actividad</span>',
+  'cliente-seguridad':'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=clientes">Clientes</a> <span>/</span> <a href="?view=cliente">Catalina R.</a> <span>/</span> <span class="cur">Seguridad</span>',
+  'cliente-notas':'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=clientes">Clientes</a> <span>/</span> <a href="?view=cliente">Catalina R.</a> <span>/</span> <span class="cur">Notas</span>',
+  actividad:'<a href="?view=dashboard">Admin</a> <span>/</span> <a href="?view=galerias">Galerías</a> <span>/</span> <a href="?view=detalle">After Hours</a> <span>/</span> <span class="cur">Actividad</span>',
+};
+if(crumbMap[view]) document.getElementById('crumbs').innerHTML=crumbMap[view];
+document.querySelectorAll('.sb-nav a').forEach(a=>a.classList.remove('on'));
+const navKey=view==='dashboard'?'dashboard':(view.startsWith('cliente')||['rebotado','bloqueada','invitacion-ok'].includes(view))?'clientes':'galerias';
+document.getElementById('nav-'+navKey)?.classList.add('on');
+
+// contextual primary CTA in topbar
+const ctaBtn=document.getElementById('tb-cta');
+if(ctaBtn){
+  if(navKey==='clientes') ctaBtn.textContent='+ Nuevo cliente';
+  else if(view==='dashboard') ctaBtn.textContent='+ Nueva galería';
+  else ctaBtn.textContent='+ Nueva galería';
+}
+
+</script>
+</body>
+</html>

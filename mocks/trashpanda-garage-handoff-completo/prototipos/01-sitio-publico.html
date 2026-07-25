@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trashpanda Garage — Photography</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============ DESIGN TOKENS ============ */
+:root{
+  --bg:#0B0D10;
+  --surface:#1C232B;
+  --text:#D7DEE5;
+  --text-2:#A9B4BF;
+  --accent:#5E4B8B;
+  --accent-bright:#8A73C4;
+  --steel:#5B6F8E;
+  --slate:#7686A8;
+  --line:rgba(215,222,229,.08);
+  --font:'Geist',ui-sans-serif,system-ui,sans-serif;
+  --mono:'Geist Mono',ui-monospace,monospace;
+  --max:1600px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font);
+  font-weight:300;
+  line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+img{display:block;width:100%;height:100%;object-fit:cover}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit}
+::selection{background:var(--accent);color:#fff}
+
+/* ============ TYPE SCALE ============ */
+.display-xl{font-size:clamp(40px,7vw,104px);font-weight:300;letter-spacing:.14em;line-height:1.08;text-transform:uppercase}
+.heading-xl{font-size:clamp(28px,4vw,56px);font-weight:300;letter-spacing:.02em;line-height:1.15}
+.heading-l{font-size:clamp(22px,2.6vw,34px);font-weight:400;letter-spacing:.01em}
+.heading-m{font-size:clamp(18px,2vw,22px);font-weight:400}
+.body-l{font-size:clamp(16px,1.4vw,19px);color:var(--text-2)}
+.meta{
+  font-family:var(--mono);
+  font-size:11px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--text-2);
+}
+.meta--accent{color:var(--accent-bright)}
+
+/* ============ NAV ============ */
+.nav{
+  position:fixed;inset:0 0 auto 0;z-index:100;
+  transition:background .5s var(--ease), backdrop-filter .5s var(--ease), border-color .5s var(--ease);
+  border-bottom:1px solid transparent;
+}
+.nav.scrolled{
+  background:rgba(11,13,16,.72);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border-bottom-color:var(--line);
+}
+.nav-inner{
+  max-width:var(--max);margin:0 auto;
+  padding:24px 40px;
+  display:flex;align-items:center;justify-content:space-between;gap:32px;
+}
+.logo{font-family:var(--mono);font-size:13px;letter-spacing:.3em;font-weight:500}
+.logo span{color:var(--accent-bright)}
+.nav-links{display:flex;align-items:center;gap:40px;list-style:none}
+.nav-links a{
+  font-size:13px;letter-spacing:.08em;color:var(--text-2);
+  transition:color .3s var(--ease);
+  position:relative;
+}
+.nav-links a:hover,.nav-links a:focus-visible{color:var(--text)}
+.nav-links a::after{
+  content:'';position:absolute;left:0;bottom:-6px;height:1px;width:0;
+  background:var(--accent-bright);transition:width .35s var(--ease);
+}
+.nav-links a:hover::after{width:100%}
+.btn{
+  display:inline-block;
+  font-size:13px;letter-spacing:.1em;
+  padding:12px 28px;
+  border:1px solid var(--text-2);
+  transition:all .35s var(--ease);
+}
+.btn:hover,.btn:focus-visible{border-color:var(--accent-bright);color:var(--accent-bright);background:rgba(94,75,139,.08)}
+.btn--solid{background:var(--text);color:var(--bg);border-color:var(--text)}
+.btn--solid:hover,.btn--solid:focus-visible{background:var(--accent-bright);border-color:var(--accent-bright);color:#fff}
+.burger{display:none;flex-direction:column;gap:5px;padding:8px}
+.burger span{display:block;width:22px;height:1px;background:var(--text);transition:transform .3s var(--ease),opacity .3s}
+
+/* ============ HERO ============ */
+.hero{position:relative;height:100vh;height:100svh;overflow:hidden}
+.hero-slide{
+  position:absolute;inset:0;opacity:0;
+  transition:opacity 1.8s var(--ease);
+}
+.hero-slide.active{opacity:1}
+.hero-slide img{
+  animation:kenburns 10s var(--ease) forwards;
+}
+@keyframes kenburns{from{transform:scale(1)}to{transform:scale(1.055)}}
+.hero-overlay{
+  position:absolute;inset:0;z-index:2;
+  background:linear-gradient(180deg,rgba(11,13,16,.35) 0%,rgba(11,13,16,.15) 40%,rgba(11,13,16,.65) 100%);
+}
+.hero-content{
+  position:absolute;inset:0;z-index:3;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:0 24px;
+}
+.hero-content .meta{margin-bottom:24px}
+.hero-content h1{margin-bottom:8px}
+.hero-sub{
+  font-size:15px;letter-spacing:.18em;color:var(--text-2);
+  text-transform:uppercase;font-weight:300;margin-bottom:48px;
+}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.hero-progress{
+  position:absolute;left:0;right:0;bottom:0;z-index:4;
+  height:2px;background:rgba(215,222,229,.1);
+}
+.hero-progress-bar{height:100%;width:0;background:var(--accent-bright);transition:width .2s linear}
+.hero-nav{
+  position:absolute;z-index:4;top:50%;transform:translateY(-50%);
+  font-size:22px;color:var(--text-2);padding:16px;
+  transition:color .3s var(--ease);
+  opacity:.6;
+}
+.hero-nav:hover{color:var(--text);opacity:1}
+.hero-nav.prev{left:16px}
+.hero-nav.next{right:16px}
+.hero-count{
+  position:absolute;z-index:4;bottom:32px;right:40px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--text-2);
+}
+.hero-caption{
+  position:absolute;z-index:4;bottom:32px;left:40px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--text-2);
+  text-transform:uppercase;
+}
+.scroll-hint{
+  position:absolute;z-index:4;bottom:80px;left:50%;transform:translateX(-50%);
+  width:1px;height:48px;overflow:hidden;
+}
+.scroll-hint::after{
+  content:'';position:absolute;left:0;top:-48px;width:1px;height:48px;
+  background:linear-gradient(180deg,transparent,var(--text-2));
+  animation:drop 2.4s var(--ease) infinite;
+}
+@keyframes drop{0%{top:-48px}60%{top:48px}100%{top:48px}}
+
+/* ============ SECTIONS ============ */
+.section{max-width:var(--max);margin:0 auto;padding:128px 40px}
+.section-head{margin-bottom:80px;max-width:640px}
+.section-head .meta{display:block;margin-bottom:20px}
+.section-head p{margin-top:20px}
+
+/* ============ FEATURED SESSIONS ============ */
+.sessions{display:flex;flex-direction:column;gap:96px}
+.session-card{
+  display:grid;grid-template-columns:7fr 5fr;gap:64px;align-items:end;
+  cursor:pointer;
+}
+.session-card:nth-child(even){grid-template-columns:5fr 7fr}
+.session-card:nth-child(even) .session-media{order:2}
+.session-media{
+  aspect-ratio:4/3;overflow:hidden;position:relative;background:var(--surface);
+}
+.session-media img{transition:transform 1.2s var(--ease),filter 1.2s var(--ease)}
+.session-card:hover .session-media img{transform:scale(1.03);filter:brightness(1.05)}
+.session-media .view-tag{
+  position:absolute;inset:auto 0 0 0;padding:20px 24px;
+  background:linear-gradient(180deg,transparent,rgba(11,13,16,.75));
+  font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--text);opacity:0;transform:translateY(8px);
+  transition:opacity .45s var(--ease),transform .45s var(--ease);
+}
+.session-card:hover .view-tag{opacity:1;transform:translateY(0)}
+.session-info .meta{display:block;margin-bottom:16px}
+.session-info h3{margin-bottom:16px}
+.session-info p{color:var(--text-2);font-size:15px;max-width:420px}
+.session-count{margin-top:24px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--steel)}
+
+/* ============ FILTERS ============ */
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:64px}
+.chip{
+  font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+  padding:10px 20px;color:var(--text-2);
+  border:1px solid var(--line);
+  transition:all .3s var(--ease);
+}
+.chip:hover{color:var(--text);border-color:var(--text-2)}
+.chip.active{color:var(--accent-bright);border-color:var(--accent)}
+
+/* ============ EDITORIAL GALLERY ============ */
+.gallery{
+  display:grid;
+  grid-template-columns:repeat(12,1fr);
+  gap:24px;
+  grid-auto-flow:dense;
+}
+.tile{
+  position:relative;overflow:hidden;background:var(--surface);
+  cursor:pointer;
+  animation:tileIn .7s var(--ease) both;
+}
+@keyframes tileIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.tile img{transition:transform .35s var(--ease),filter .35s var(--ease)}
+.tile:hover img,.tile:focus-visible img{transform:scale(1.03);filter:brightness(1.04)}
+.tile-label{
+  position:absolute;inset:auto 0 0 0;padding:16px 20px;
+  background:linear-gradient(180deg,transparent,rgba(11,13,16,.7));
+  opacity:0;transform:translateY(6px);
+  transition:opacity .35s var(--ease),transform .35s var(--ease);
+}
+.tile:hover .tile-label,.tile:focus-visible .tile-label{opacity:1;transform:none}
+.tile-label .t{font-size:14px;font-weight:400}
+.tile-label .c{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-2)}
+/* roles */
+.tile.statement{grid-column:2 / span 10;aspect-ratio:21/10;margin:64px 0}
+.tile.hero-img{grid-column:span 8;aspect-ratio:3/2}
+.tile.featured{grid-column:span 6;aspect-ratio:4/3}
+.tile.standard{grid-column:span 4;aspect-ratio:3/4}
+.tile.supporting{grid-column:span 3;aspect-ratio:1/1}
+.tile.hidden{display:none}
+.tile:focus-visible{outline:1px solid var(--accent-bright);outline-offset:4px}
+
+/* ============ SERVICES ============ */
+.services-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.service-card{
+  background:var(--surface);padding:48px 40px;
+  border:1px solid transparent;
+  transition:border-color .4s var(--ease),transform .4s var(--ease);
+  display:flex;flex-direction:column;gap:16px;
+}
+.service-card:hover{border-color:rgba(94,75,139,.5);transform:translateY(-4px)}
+.service-card .meta{color:var(--steel)}
+.service-card h3{font-size:22px;font-weight:400}
+.service-card p{font-size:14px;color:var(--text-2);flex:1}
+.service-specs{display:flex;flex-direction:column;gap:6px;padding:20px 0;border-top:1px solid var(--line)}
+.service-specs span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--text-2)}
+.service-card a{
+  font-size:13px;letter-spacing:.1em;color:var(--accent-bright);
+  transition:letter-spacing .3s var(--ease);
+}
+.service-card a:hover{letter-spacing:.18em}
+
+/* ============ ABOUT ============ */
+.about{display:grid;grid-template-columns:5fr 6fr;gap:96px;align-items:center}
+.about-media{aspect-ratio:4/5;overflow:hidden;background:var(--surface)}
+.about-text .meta{display:block;margin-bottom:24px}
+.about-text h2{margin-bottom:32px}
+.about-text p{color:var(--text-2);margin-bottom:20px;max-width:520px}
+.about-specs{
+  margin-top:40px;padding-top:32px;border-top:1px solid var(--line);
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;
+}
+.about-specs span{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--steel)}
+
+/* ============ CONTACT ============ */
+.contact{max-width:720px;margin:0 auto;text-align:center}
+.contact .meta{display:block;margin-bottom:24px}
+.contact h2{margin-bottom:24px}
+.contact > p{color:var(--text-2);margin-bottom:64px}
+.form{display:flex;flex-direction:column;gap:24px;text-align:left}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.field label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px}
+.field input,.field textarea,.field select{
+  width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);
+  color:var(--text);font-family:var(--font);font-size:15px;font-weight:300;
+  padding:12px 0;transition:border-color .3s var(--ease);
+}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-bottom-color:var(--accent-bright)}
+.field textarea{resize:vertical;min-height:120px}
+.form .btn--solid{align-self:flex-start;margin-top:16px}
+.contact-links{margin-top:64px;display:flex;gap:40px;justify-content:center;flex-wrap:wrap}
+.contact-links a{
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--text-2);transition:color .3s var(--ease);
+}
+.contact-links a:hover{color:var(--accent-bright)}
+
+/* ============ FOOTER ============ */
+footer{
+  border-top:1px solid var(--line);
+  margin-top:64px;
+}
+.footer-inner{
+  max-width:var(--max);margin:0 auto;padding:40px;
+  display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;
+}
+.footer-inner .meta{letter-spacing:.16em}
+
+/* ============ LIGHTBOX ============ */
+.lightbox{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(11,13,16,.96);
+  display:none;align-items:center;justify-content:center;
+  padding:64px 24px;
+}
+.lightbox.open{display:flex;animation:fadeIn .4s var(--ease)}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.lightbox img{max-width:min(1200px,92vw);max-height:80vh;width:auto;height:auto;object-fit:contain}
+.lb-caption{
+  position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--text-2);text-align:center;white-space:nowrap;
+}
+.lb-close{position:absolute;top:24px;right:32px;font-size:28px;color:var(--text-2);padding:8px}
+.lb-close:hover{color:var(--text)}
+.lb-arrow{position:absolute;top:50%;transform:translateY(-50%);font-size:26px;color:var(--text-2);padding:24px}
+.lb-arrow:hover{color:var(--text)}
+.lb-arrow.prev{left:8px}
+.lb-arrow.next{right:8px}
+
+/* ============ MOBILE ============ */
+.mobile-menu{
+  position:fixed;inset:0;z-index:150;background:var(--bg);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:32px;
+}
+.mobile-menu.open{display:flex}
+.mobile-menu a{font-size:22px;letter-spacing:.1em;font-weight:300;color:var(--text-2)}
+.mobile-menu a:hover{color:var(--text)}
+.mobile-menu .mm-close{position:absolute;top:24px;right:24px;font-size:28px}
+
+@media (max-width:1024px){
+  .gallery{grid-template-columns:repeat(8,1fr)}
+  .tile.statement{grid-column:1 / -1;margin:48px 0}
+  .tile.hero-img{grid-column:span 8}
+  .tile.featured{grid-column:span 4}
+  .tile.standard{grid-column:span 4}
+  .tile.supporting{grid-column:span 4;aspect-ratio:4/3}
+  .services-grid{grid-template-columns:1fr 1fr}
+  .about{grid-template-columns:1fr;gap:48px}
+  .session-card,.session-card:nth-child(even){grid-template-columns:1fr;gap:24px}
+  .session-card:nth-child(even) .session-media{order:0}
+}
+@media (max-width:680px){
+  .nav-inner{padding:20px 24px}
+  .nav-links,.nav .btn{display:none}
+  .burger{display:flex}
+  .section{padding:96px 24px}
+  .gallery{grid-template-columns:repeat(2,1fr);gap:16px}
+  .tile.statement{grid-column:1 / -1;aspect-ratio:16/10;margin:40px 0}
+  .tile.hero-img{grid-column:span 2;aspect-ratio:4/3}
+  .tile.featured{grid-column:span 2;aspect-ratio:4/3}
+  .tile.standard{grid-column:span 1;aspect-ratio:3/4}
+  .tile.supporting{grid-column:span 1;aspect-ratio:1/1}
+  .services-grid{grid-template-columns:1fr}
+  .form-row{grid-template-columns:1fr}
+  .hero-caption{display:none}
+  .hero-nav{display:none}
+}
+
+/* ============ REDUCED MOTION ============ */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  html{scroll-behavior:auto}
+  .hero-slide img{animation:none}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a href="#" class="logo">TRASHPANDA<span>—</span>GARAGE</a>
+    <ul class="nav-links">
+      <li><a href="#portfolio">Portfolio</a></li>
+      <li><a href="#services">Services</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <a href="#contact" class="btn">Book a Session</a>
+    <button class="burger" id="burger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="mobile-menu" id="mobileMenu">
+  <button class="mm-close" id="mmClose" aria-label="Close menu">×</button>
+  <a href="#portfolio">Portfolio</a>
+  <a href="#services">Services</a>
+  <a href="#about">About</a>
+  <a href="#contact">Contact</a>
+  <a href="#contact" style="color:var(--accent-bright)">Book a Session</a>
+</div>
+
+<!-- HERO -->
+<header class="hero" id="hero" aria-label="Featured photography">
+  <div class="hero-slide active"><img src="https://picsum.photos/id/1011/1920/1200?grayscale" alt="Cinematic portrait by lake"></div>
+  <div class="hero-slide"><img src="https://picsum.photos/id/1027/1920/1200?grayscale" alt="Editorial portrait"></div>
+  <div class="hero-slide"><img src="https://picsum.photos/id/1043/1920/1200?grayscale" alt="Atmospheric night scene"></div>
+  <div class="hero-slide"><img src="https://picsum.photos/id/1080/1920/1200?grayscale" alt="Creative still composition"></div>
+  <div class="hero-overlay"></div>
+
+  <div class="hero-content">
+    <span class="meta meta--accent">Est. MMXXIV · Photography Studio</span>
+    <h1 class="display-xl">Trashpanda<br>Garage</h1>
+    <p class="hero-sub">Cinematic Portraits · Cosplay · Creative Photography</p>
+    <div class="hero-actions">
+      <a href="#portfolio" class="btn btn--solid">View Portfolio</a>
+      <a href="#contact" class="btn">Book a Session</a>
+    </div>
+  </div>
+
+  <button class="hero-nav prev" id="heroPrev" aria-label="Previous image">←</button>
+  <button class="hero-nav next" id="heroNext" aria-label="Next image">→</button>
+  <span class="hero-caption" id="heroCaption">Portrait — 85mm — f/1.4</span>
+  <span class="hero-count" id="heroCount">01 / 04</span>
+  <div class="scroll-hint" aria-hidden="true"></div>
+  <div class="hero-progress"><div class="hero-progress-bar" id="heroBar"></div></div>
+</header>
+
+<!-- FEATURED SESSIONS -->
+<section class="section" id="sessions">
+  <div class="section-head">
+    <span class="meta meta--accent">01 — Featured Sessions</span>
+    <h2 class="heading-xl">Complete stories,<br>not single frames.</h2>
+  </div>
+
+  <div class="sessions">
+    <article class="session-card" tabindex="0">
+      <div class="session-media">
+        <img src="https://picsum.photos/id/1062/1200/900?grayscale" alt="Midnight Ronin session cover">
+        <span class="view-tag">View Session →</span>
+      </div>
+      <div class="session-info">
+        <span class="meta">Cosplay · Winter 2026</span>
+        <h3 class="heading-l">Midnight Ronin</h3>
+        <p>A character study in shadow and steel. One evening, one warehouse, and a costume two years in the making.</p>
+        <span class="session-count">24 photographs</span>
+      </div>
+    </article>
+
+    <article class="session-card" tabindex="0">
+      <div class="session-media">
+        <img src="https://picsum.photos/id/1035/1200/900?grayscale" alt="Quiet Hours session cover">
+        <span class="view-tag">View Session →</span>
+      </div>
+      <div class="session-info">
+        <span class="meta">Portrait · Spring 2026</span>
+        <h3 class="heading-l">Quiet Hours</h3>
+        <p>Environmental portraits shot at first light. No styling team, no set — only a person and the place they belong to.</p>
+        <span class="session-count">18 photographs</span>
+      </div>
+    </article>
+
+    <article class="session-card" tabindex="0">
+      <div class="session-media">
+        <img src="https://picsum.photos/id/1050/1200/900?grayscale" alt="Signal Noise session cover">
+        <span class="view-tag">View Session →</span>
+      </div>
+      <div class="session-info">
+        <span class="meta">Creative · 2025</span>
+        <h3 class="heading-l">Signal / Noise</h3>
+        <p>An experimental series built around practical light, reflection and long exposure. Made without a single composite.</p>
+        <span class="session-count">31 photographs</span>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- EDITORIAL GALLERY -->
+<section class="section" id="portfolio">
+  <div class="section-head">
+    <span class="meta meta--accent">02 — Editorial Gallery</span>
+    <h2 class="heading-xl">The gallery wall.</h2>
+    <p class="body-l">Curated, not generated. Every photograph placed the way it would hang in a room.</p>
+  </div>
+
+  <div class="filters" role="tablist" aria-label="Filter gallery">
+    <button class="chip active" data-filter="all">Everything</button>
+    <button class="chip" data-filter="portrait">Portrait</button>
+    <button class="chip" data-filter="cosplay">Cosplay</button>
+    <button class="chip" data-filter="creative">Creative</button>
+    <button class="chip" data-filter="events">Events</button>
+  </div>
+
+  <div class="gallery" id="gallery"></div>
+</section>
+
+<!-- SERVICES -->
+<section class="section" id="services">
+  <div class="section-head">
+    <span class="meta meta--accent">03 — Services</span>
+    <h2 class="heading-xl">Ways to work together.</h2>
+  </div>
+  <div class="services-grid">
+    <div class="service-card">
+      <span class="meta">S.01</span>
+      <h3>Individual Portraits</h3>
+      <p>Cinematic portrait sessions built around you — your character, your light, your story.</p>
+      <div class="service-specs">
+        <span>Delivery — 10 days</span>
+        <span>Images — 15 to 25</span>
+      </div>
+      <a href="#contact">Request details →</a>
+    </div>
+    <div class="service-card">
+      <span class="meta">S.02</span>
+      <h3>Cosplay</h3>
+      <p>Character-driven sessions with location scouting, lighting design and post-production that honors the craft of the costume.</p>
+      <div class="service-specs">
+        <span>Delivery — 14 days</span>
+        <span>Images — 20 to 35</span>
+      </div>
+      <a href="#contact">Request details →</a>
+    </div>
+    <div class="service-card">
+      <span class="meta">S.03</span>
+      <h3>Couples</h3>
+      <p>Quiet, honest sessions for two. No forced poses — just direction, patience and real moments.</p>
+      <div class="service-specs">
+        <span>Delivery — 10 days</span>
+        <span>Images — 20 to 30</span>
+      </div>
+      <a href="#contact">Request details →</a>
+    </div>
+    <div class="service-card">
+      <span class="meta">S.04</span>
+      <h3>Creative Projects</h3>
+      <p>Concept-first collaborations for artists and small brands. From moodboard to final selection.</p>
+      <div class="service-specs">
+        <span>Delivery — By project</span>
+        <span>Images — By project</span>
+      </div>
+      <a href="#contact">Request details →</a>
+    </div>
+    <div class="service-card">
+      <span class="meta">S.05</span>
+      <h3>Events</h3>
+      <p>Documentary coverage with an editorial eye. Conventions, launches and small gatherings.</p>
+      <div class="service-specs">
+        <span>Delivery — 7 days</span>
+        <span>Images — 60+</span>
+      </div>
+      <a href="#contact">Request details →</a>
+    </div>
+    <div class="service-card">
+      <span class="meta">S.06</span>
+      <h3>Groups</h3>
+      <p>Bands, teams, collectives. Coordinated sessions that keep individual character inside a shared frame.</p>
+      <div class="service-specs">
+        <span>Delivery — 12 days</span>
+        <span>Images — 25 to 40</span>
+      </div>
+      <a href="#contact">Request details →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="section" id="about">
+  <div class="about">
+    <div class="about-media">
+      <img src="https://picsum.photos/id/1074/900/1125?grayscale" alt="Environmental portrait of the photographer">
+    </div>
+    <div class="about-text">
+      <span class="meta meta--accent">04 — About</span>
+      <h2 class="heading-xl">Behind the lens.</h2>
+      <p>Trashpanda Garage started the way most good things do — in a garage, with borrowed light and too much curiosity.</p>
+      <p>Today it's a studio practice built on one belief: a photograph should feel like a frame from a film you want to keep watching. Every session is planned like a story — location, light and wardrobe working toward a single mood.</p>
+      <p>The process is slow on purpose. Fewer sessions, more attention. Every image that leaves the studio is finished by hand.</p>
+      <div class="about-specs">
+        <span>Full-frame mirrorless</span>
+        <span>Prime lenses · 35 / 50 / 85</span>
+        <span>Practical + strobe lighting</span>
+        <span>Hand-finished color grade</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="section" id="contact">
+  <div class="contact">
+    <span class="meta meta--accent">05 — Contact</span>
+    <h2 class="heading-xl">Let's make something.</h2>
+    <p class="body-l">Tell me about your idea. Sessions are limited each month — no rush, no pressure.</p>
+    <form class="form" onsubmit="event.preventDefault(); this.querySelector('button').textContent='Message sent ✓';">
+      <div class="form-row">
+        <div class="field">
+          <label for="f-name">Name</label>
+          <input id="f-name" type="text" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="f-email">Email</label>
+          <input id="f-email" type="email" autocomplete="email" required>
+        </div>
+      </div>
+      <div class="field">
+        <label for="f-type">Session type</label>
+        <select id="f-type">
+          <option>Portrait</option>
+          <option>Cosplay</option>
+          <option>Couples</option>
+          <option>Creative</option>
+          <option>Events</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-msg">Your idea</label>
+        <textarea id="f-msg" placeholder="Character, mood, references, dates…"></textarea>
+      </div>
+      <button type="submit" class="btn btn--solid">Send message</button>
+    </form>
+    <div class="contact-links">
+      <a href="#">Instagram</a>
+      <a href="#">WhatsApp</a>
+      <a href="#">Email</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <span class="logo">TRASHPANDA<span style="color:var(--accent-bright)">—</span>GARAGE</span>
+    <span class="meta">© 2026 · All photographs are original work</span>
+    <span class="meta"><a href="#">Privacy</a> · <a href="#">Instagram</a></span>
+  </div>
+</footer>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image viewer">
+  <button class="lb-close" id="lbClose" aria-label="Close viewer">×</button>
+  <button class="lb-arrow prev" id="lbPrev" aria-label="Previous image">←</button>
+  <img id="lbImg" src="" alt="">
+  <button class="lb-arrow next" id="lbNext" aria-label="Next image">→</button>
+  <div class="lb-caption" id="lbCaption"></div>
+</div>
+
+<script>
+/* ============ NAV SCROLL ============ */
+const nav = document.getElementById('nav');
+addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', scrollY > 40);
+}, {passive:true});
+
+/* ============ MOBILE MENU ============ */
+const mm = document.getElementById('mobileMenu');
+document.getElementById('burger').onclick = () => mm.classList.add('open');
+document.getElementById('mmClose').onclick = () => mm.classList.remove('open');
+mm.querySelectorAll('a').forEach(a => a.onclick = () => mm.classList.remove('open'));
+
+/* ============ HERO CAROUSEL ============ */
+const slides = [...document.querySelectorAll('.hero-slide')];
+const captions = ['Portrait — 85mm — f/1.4','Editorial — 50mm — f/2.0','Night — 35mm — f/1.8','Creative — 85mm — f/2.8'];
+const bar = document.getElementById('heroBar');
+const count = document.getElementById('heroCount');
+const captionEl = document.getElementById('heroCaption');
+const DURATION = 7500;
+let idx = 0, progress = 0, paused = false, last = performance.now();
+
+function show(i){
+  slides[idx].classList.remove('active');
+  idx = (i + slides.length) % slides.length;
+  const s = slides[idx];
+  s.classList.add('active');
+  const img = s.querySelector('img');
+  img.style.animation = 'none'; img.offsetHeight; img.style.animation = '';
+  count.textContent = String(idx+1).padStart(2,'0') + ' / ' + String(slides.length).padStart(2,'0');
+  captionEl.textContent = captions[idx];
+  progress = 0;
+}
+function tick(now){
+  const dt = now - last; last = now;
+  if(!paused && !document.hidden){
+    progress += dt;
+    if(progress >= DURATION) show(idx+1);
+    bar.style.width = (progress/DURATION*100) + '%';
+  }
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+const hero = document.getElementById('hero');
+hero.addEventListener('mouseenter', () => paused = true);
+hero.addEventListener('mouseleave', () => paused = false);
+document.getElementById('heroPrev').onclick = () => show(idx-1);
+document.getElementById('heroNext').onclick = () => show(idx+1);
+addEventListener('keydown', e => {
+  if(document.getElementById('lightbox').classList.contains('open')) return;
+  if(e.key === 'ArrowRight') show(idx+1);
+  if(e.key === 'ArrowLeft') show(idx-1);
+});
+/* touch swipe */
+let tx = 0;
+hero.addEventListener('touchstart', e => tx = e.touches[0].clientX, {passive:true});
+hero.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - tx;
+  if(Math.abs(dx) > 50) show(idx + (dx < 0 ? 1 : -1));
+}, {passive:true});
+
+/* ============ EDITORIAL GALLERY ============ */
+/* Curated sequence — roles follow the Editorial Composition Bible:
+   chapters of 8–12 images, each closed by a Statement. */
+const photos = [
+  {id:64,   role:'hero-img',  cat:'portrait', title:'First Light',        meta:'85mm · f/1.4'},
+  {id:65,   role:'standard',  cat:'portrait', title:'Between Takes',      meta:'50mm · f/2.0'},
+  {id:103,  role:'standard',  cat:'creative', title:'Static',             meta:'35mm · f/2.8'},
+  {id:110,  role:'featured',  cat:'cosplay',  title:'The Armory',         meta:'50mm · f/1.8'},
+  {id:129,  role:'supporting',cat:'creative', title:'Texture Study I',    meta:'85mm · f/4.0'},
+  {id:145,  role:'supporting',cat:'events',   title:'Backstage',          meta:'35mm · f/2.0'},
+  {id:160,  role:'standard',  cat:'portrait', title:'Silver Hour',        meta:'85mm · f/1.8'},
+  {id:1041, role:'statement', cat:'cosplay',  title:'Midnight Ronin — Final Frame', meta:'50mm · f/1.4'},
+  {id:177,  role:'hero-img',  cat:'creative', title:'Signal',             meta:'35mm · long exposure'},
+  {id:203,  role:'standard',  cat:'portrait', title:'Quiet Hours II',     meta:'50mm · f/2.0'},
+  {id:219,  role:'standard',  cat:'events',   title:'Doors Open',         meta:'35mm · f/2.8'},
+  {id:227,  role:'featured',  cat:'portrait', title:'North Window',       meta:'85mm · f/1.4'},
+  {id:250,  role:'supporting',cat:'cosplay',  title:'Detail — Gauntlet',  meta:'85mm · f/2.8'},
+  {id:257,  role:'supporting',cat:'creative', title:'Texture Study II',   meta:'50mm · f/4.0'},
+  {id:274,  role:'standard',  cat:'cosplay',  title:'The Long Watch',     meta:'50mm · f/1.8'},
+  {id:1067, role:'statement', cat:'portrait', title:'Quiet Hours — Closing Image', meta:'85mm · f/1.4'}
+];
+
+const ratio = {statement:[1470,700],'hero-img':[1200,800],featured:[900,675],standard:[600,800],supporting:[500,500]};
+const gallery = document.getElementById('gallery');
+let visible = [];
+
+function render(filter){
+  gallery.innerHTML = '';
+  visible = photos.filter(p => filter === 'all' || p.cat === filter);
+  visible.forEach((p, i) => {
+    const [w,h] = ratio[p.role];
+    const el = document.createElement('figure');
+    el.className = 'tile ' + p.role;
+    el.tabIndex = 0;
+    el.style.animationDelay = (i * 40) + 'ms';
+    el.innerHTML = `
+      <img loading="lazy" src="https://picsum.photos/id/${p.id}/${w}/${h}?grayscale" alt="${p.title}">
+      <figcaption class="tile-label">
+        <div class="t">${p.title}</div>
+        <div class="c">${p.cat} · ${p.meta}</div>
+      </figcaption>`;
+    el.onclick = () => openLb(i);
+    el.onkeydown = e => { if(e.key === 'Enter') openLb(i); };
+    gallery.appendChild(el);
+  });
+}
+render('all');
+
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.onclick = () => {
+    document.querySelector('.chip.active').classList.remove('active');
+    chip.classList.add('active');
+    render(chip.dataset.filter);
+  };
+});
+
+/* ============ LIGHTBOX ============ */
+const lb = document.getElementById('lightbox');
+const lbImg = document.getElementById('lbImg');
+const lbCap = document.getElementById('lbCaption');
+let lbIdx = 0;
+
+function openLb(i){
+  lbIdx = i;
+  updateLb();
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function updateLb(){
+  const p = visible[lbIdx];
+  lbImg.src = `https://picsum.photos/id/${p.id}/1600/1100?grayscale`;
+  lbImg.alt = p.title;
+  lbCap.textContent = `${p.title} — ${p.cat} — ${p.meta}`;
+}
+function closeLb(){
+  lb.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('lbClose').onclick = closeLb;
+document.getElementById('lbPrev').onclick = () => { lbIdx = (lbIdx-1+visible.length)%visible.length; updateLb(); };
+document.getElementById('lbNext').onclick = () => { lbIdx = (lbIdx+1)%visible.length; updateLb(); };
+lb.onclick = e => { if(e.target === lb) closeLb(); };
+addEventListener('keydown', e => {
+  if(!lb.classList.contains('open')) return;
+  if(e.key === 'Escape') closeLb();
+  if(e.key === 'ArrowRight') document.getElementById('lbNext').click();
+  if(e.key === 'ArrowLeft') document.getElementById('lbPrev').click();
+});
+</script>
+</body>
+</html>

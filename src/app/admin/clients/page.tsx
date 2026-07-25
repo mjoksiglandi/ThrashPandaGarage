@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { ClientTable } from "@/components/admin/ClientTable";
+import { requireAdmin } from "@/lib/auth";
 import { clientRepository } from "@/modules/clients/client.repository";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
+  await requireAdmin();
   const clients = await clientRepository.list();
   return (
     <AdminShell>

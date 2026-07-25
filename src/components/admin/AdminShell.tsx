@@ -6,13 +6,14 @@ export async function AdminShell({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     "use server";
+    await requireAdmin();
     await logoutAdmin();
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] text-[#f4efe7]">
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <AdminSidebar adminEmail={admin.email} onLogout={logout} />
-      <main className="mx-auto max-w-6xl p-5 md:ml-64 md:p-8">{children}</main>
+      <main className="mx-auto max-w-6xl p-5 md:ml-[230px] md:p-8">{children}</main>
     </div>
   );
 }

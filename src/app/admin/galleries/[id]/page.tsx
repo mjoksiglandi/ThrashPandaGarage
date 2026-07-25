@@ -4,16 +4,22 @@ import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { GalleryStatusBadge } from "@/components/admin/GalleryStatusBadge";
 import { GalleryPhotoManager } from "@/components/admin/GalleryPhotoManager";
-import { SelectedPhotoList } from "@/components/admin/SelectedPhotoList";
-import { SendGalleryEmailButton } from "@/components/admin/SendGalleryEmailButton";
-import { ExportSelectionButton } from "@/components/admin/ExportSelectionButton";
 import { FormField } from "@/components/ui/FormField";
+import { requireAdmin } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { clientRepository } from "@/modules/clients/client.repository";
-import { archiveGallery, updateGalleryFromForm } from "@/modules/galleries/gallery.service";
+import { archiveGallery, transitionGallery, updateGalleryFromForm } from "@/modules/galleries/gallery.service";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
-import { importGalleryPhotos } from "@/modules/photos/photo-import.service";
-import { sendGalleryEmail } from "@/modules/mail/mail.service";
+import { allowedGalleryTransitions } from "@/modules/galleries/gallery-workflow";
+import {
+  resendGalleryInvitation,
+  sendInitialGalleryInvitation,
+} from "@/modules/mail/mail.service";
+import {
+  canResendInvitation,
+  canSendInitialInvitation,
+} from "@/modules/mail/mail-workflow";
+import { importGalleryPhotosAction } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +30,7 @@ export default async function GalleryDetailPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ error?: string }>;
 }) {
+  await requireAdmin();
   const { id } = await params;
   const { error } = await searchParams;
   const [gallery, clients] = await Promise.all([galleryRepository.find(id), clientRepository.list()]);
@@ -31,9 +38,10 @@ export default async function GalleryDetailPage({
 
   async function update(formData: FormData) {
     "use server";
+    const admin = await requireAdmin();
     let redirectTarget = `/admin/galleries/${id}`;
     try {
-      await updateGalleryFromForm(id, formData);
+      await updateGalleryFromForm(id, formData, { actorId: admin.id });
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "No se pudo guardar la galeria";
       redirectTarget += `?error=${encodeURIComponent(message)}`;
@@ -41,25 +49,47 @@ export default async function GalleryDetailPage({
     redirect(redirectTarget);
   }
 
-  async function importPhotos() {
+  async function sendInitialInvitation() {
     "use server";
-    await importGalleryPhotos(id);
+    const admin = await requireAdmin();
+    await sendInitialGalleryInvitation({ galleryId: id, actorId: admin.id });
     redirect(`/admin/galleries/${id}`);
   }
 
-  async function sendEmail() {
+  async function resendInvitation() {
     "use server";
-    await sendGalleryEmail(id);
+    const admin = await requireAdmin();
+    await resendGalleryInvitation({ galleryId: id, actorId: admin.id });
     redirect(`/admin/galleries/${id}`);
   }
 
   async function archive() {
     "use server";
-    await archiveGallery(id);
+    const admin = await requireAdmin();
+    await archiveGallery(id, { actorId: admin.id });
     redirect("/admin/galleries");
   }
 
+  async function changeStatus(formData: FormData) {
+    "use server";
+    const admin = await requireAdmin();
+    const next = GalleryStatus[String(formData.get("status")) as keyof typeof GalleryStatus];
+    if (!next) throw new Error("Estado de galería inválido");
+    await transitionGallery(id, next, { actorId: admin.id });
+    redirect(`/admin/galleries/${id}`);
+  }
+
   const selected = gallery.selections.filter((selection) => selection.selected);
+  const transitions = allowedGalleryTransitions(gallery.status);
+  const selectionLimitLocked =
+    gallery.selectionConfirmedAt !== null ||
+    ([
+      GalleryStatus.SELECTION_CONFIRMED,
+      GalleryStatus.EDITING,
+      GalleryStatus.READY_FOR_DELIVERY,
+      GalleryStatus.DELIVERED,
+      GalleryStatus.ARCHIVED,
+    ] as GalleryStatus[]).includes(gallery.status);
 
   return (
     <AdminShell>
@@ -88,10 +118,7 @@ export default async function GalleryDetailPage({
           </FormField>
           <FormField label="Titulo"><input name="title" defaultValue={gallery.title} required /></FormField>
           <FormField label="Slug"><input name="slug" defaultValue={gallery.slug} /></FormField>
-          <FormField label="Estado">
-            <select name="status" defaultValue={gallery.status}>{Object.values(GalleryStatus).map((status) => <option key={status} value={status}>{status}</option>)}</select>
-          </FormField>
-          <FormField label="Limite seleccion"><input name="selectionLimit" type="number" min="1" defaultValue={gallery.selectionLimit ?? ""} /></FormField>
+          <FormField label="Limite seleccion"><input name="selectionLimit" type="number" min="1" defaultValue={gallery.selectionLimit ?? ""} readOnly={selectionLimitLocked} /></FormField>
           <FormField label="Expira"><input name="expiresAt" type="date" defaultValue={gallery.expiresAt?.toISOString().slice(0, 10) ?? ""} /></FormField>
           <FormField label="Proofing local path"><input name="proofingLocalPath" defaultValue={gallery.proofingLocalPath ?? ""} /></FormField>
           <FormField label="Thumb local path"><input name="thumbnailLocalPath" defaultValue={gallery.thumbnailLocalPath ?? ""} /></FormField>
@@ -102,11 +129,57 @@ export default async function GalleryDetailPage({
         </form>
 
         <aside className="grid content-start gap-3">
-          <form action={importPhotos}><button className="w-full" type="submit">Importar fotos</button></form>
-          <SendGalleryEmailButton onSend={sendEmail} />
-          <ExportSelectionButton galleryId={id} />
-          <form action={archive}><button className="secondary w-full" type="submit">Archivar</button></form>
-          <SelectedPhotoList selections={selected} />
+          <div className="grid gap-3 rounded-lg border border-zinc-800 bg-[#141417] p-4">
+            <div>
+              <h2 className="font-bold">Cambiar estado</h2>
+              <p className="mt-1 text-sm text-zinc-500">Estado actual: {gallery.status}</p>
+            </div>
+            {transitions.length > 0 ? (
+              <form action={changeStatus} className="grid gap-3">
+                <select name="status" required defaultValue="">
+                  <option value="" disabled>Selecciona una transición</option>
+                  {transitions.map((status) => <option key={status} value={status}>{status}</option>)}
+                </select>
+                <button type="submit">Aplicar transición</button>
+              </form>
+            ) : (
+              <p className="text-sm text-zinc-500">No hay transiciones disponibles.</p>
+            )}
+          </div>
+          {gallery.status !== GalleryStatus.ARCHIVED && (
+            <form action={importGalleryPhotosAction.bind(null, id)}>
+              <button className="w-full" type="submit">Importar fotos</button>
+            </form>
+          )}
+          {canSendInitialInvitation(gallery.status) && (
+            <form action={sendInitialInvitation}>
+              <button className="secondary w-full" type="submit">Enviar invitación</button>
+            </form>
+          )}
+          {canResendInvitation(gallery.status) && (
+            <form action={resendInvitation}>
+              <button className="secondary w-full" type="submit">Reenviar invitación</button>
+            </form>
+          )}
+          <div className="grid gap-2">
+            <a className="button secondary text-center" href={`/admin/galleries/${id}/export`}>Exportar seleccion TXT</a>
+            <a className="button secondary text-center" href={`/admin/galleries/${id}/export/csv`}>Exportar seleccion CSV</a>
+          </div>
+          {gallery.status !== GalleryStatus.ARCHIVED && (
+            <form action={archive}><button className="secondary w-full" type="submit">Archivar</button></form>
+          )}
+          <div className="rounded-lg border border-zinc-800 bg-[#141417] p-4">
+            <h2 className="font-bold">Seleccionadas</h2>
+            <p className="mt-1 text-sm text-zinc-500">{selected.length} fotos</p>
+            <ul className="mt-4 grid gap-2 text-sm">
+              {selected.map((selection) => (
+                <li key={selection.id} className="rounded border border-zinc-800 p-2">
+                  <strong>{selection.photo.baseName}</strong>
+                  {selection.comment && <p className="mt-1 text-zinc-400">{selection.comment}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
         </aside>
       </div>
 

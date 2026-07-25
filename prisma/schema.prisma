@@ -31,6 +31,12 @@ enum PhotoStatus {
   REJECTED
 }
 
+enum GalleryEventActorType {
+  ADMIN
+  GALLERY_TOKEN
+  SYSTEM
+}
+
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
@@ -42,24 +48,25 @@ model User {
 }
 
 model Client {
-  id        String    @id @default(cuid())
-  name      String
-  email     String?
-  phone     String?
-  notes     String?
-  galleries Gallery[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  email        String?
+  passwordHash String?
+  phone        String?
+  notes        String?
+  galleries    Gallery[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
 model Gallery {
-  id                   String        @id @default(cuid())
+  id                   String         @id @default(cuid())
   clientId             String
-  client               Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client               Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
   title                String
   slug                 String
-  accessToken          String        @unique
-  status               GalleryStatus @default(DRAFT)
+  accessToken          String         @unique
+  status               GalleryStatus  @default(DRAFT)
   selectionLimit       Int?
   expiresAt            DateTime?
   proofingLocalPath    String?
@@ -73,14 +80,14 @@ model Gallery {
   photos               Photo[]
   selections           Selection[]
   events               GalleryEvent[]
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
 }
 
 model Photo {
-  id           String     @id @default(cuid())
+  id           String      @id @default(cuid())
   galleryId    String
-  gallery      Gallery    @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  gallery      Gallery     @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   filename     String
   baseName     String
   thumbPath    String
@@ -111,10 +118,14 @@ model Selection {
 }
 
 model GalleryEvent {
-  id        String   @id @default(cuid())
+  id        String                @id @default(cuid())
   galleryId String
-  gallery   Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  gallery   Gallery               @relation(fields: [galleryId], references: [id], onDelete: Cascade)
   type      String
+  actorType GalleryEventActorType @default(SYSTEM)
+  actorId   String?
   metadata  Json?
-  createdAt DateTime @default(now())
+  createdAt DateTime              @default(now())
+
+  @@index([galleryId, createdAt])
 }

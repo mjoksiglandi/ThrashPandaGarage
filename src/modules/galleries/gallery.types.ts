@@ -1,5 +1,3 @@
-import type { GalleryStatus } from "@prisma/client";
-
 export type GalleryInput = {
   clientId: string;
   title: string;
@@ -11,5 +9,4 @@ export type GalleryInput = {
   previewLocalPath?: string | null;
   googleDriveFolderUrl?: string | null;
   deliveryDriveUrl?: string | null;
-  status?: GalleryStatus;
 };

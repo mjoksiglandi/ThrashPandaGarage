@@ -13,6 +13,10 @@ Web fullstack en Next.js + TypeScript para portfolio publico, galerias privadas 
 - Nodemailer
 - Docker Compose
 
+## Arquitectura
+
+Trashpanda Garage es un monolito modular: Next.js contiene las rutas y la composicion de UI, mientras que la logica de negocio vive en `src/modules`. La descripcion de limites, dependencias y flujos principales esta en [`docs/architecture.md`](docs/architecture.md).
+
 ## Desarrollo local
 
 1. Copia `.env.example` a `.env`.
@@ -45,7 +49,7 @@ npm run dev
 docker compose up --build
 ```
 
-El servicio `app` monta `/mnt/trashpanda/photos` en `/data/photos` y fuerza `DATABASE_URL` hacia el servicio `db`.
+El servicio `app` monta `D:/Lightroom/revelado/web` en `/data/photos` y fuerza `DATABASE_URL` hacia el servicio `db`.
 
 > **Primera vez:** el servicio `app` corre `npx prisma migrate deploy` al arrancar, pero este repo todavia no incluye ninguna migracion en `prisma/migrations/`. Si intentas `docker compose up --build` antes de generar la migracion inicial, el contenedor levanta con la base de datos vacia (sin tablas) y sin ningun error visible. Antes del primer `docker compose up`, genera la migracion inicial una vez:
 >
@@ -57,6 +61,18 @@ El servicio `app` monta `/mnt/trashpanda/photos` en `/data/photos` y fuerza `DAT
 > Ajusta la URL a las credenciales reales de tu `docker-compose.yml`. Luego commitea el directorio `prisma/migrations/` resultante. A partir de ahi, `docker compose up` aplicara esa migracion automaticamente en cada arranque via `migrate deploy`.
 
 ## Fotos
+
+### Sesiones públicas
+
+Las sesiones publicadas se administran desde `D:\Lightroom\revelado\web\sessions\`. Duplica `sessions\_template`, agrega JPG/JPEG a `cover\` y `content\`, edita su `session.md` y ejecuta:
+
+```powershell
+D:\Lightroom\revelado\web\scripts\process-web-images.ps1 -Session "slug-de-la-sesion"
+```
+
+La web solo publica los WebP generados por ese proceso. Si `cover\` no contiene un WebP, se usa la primera imagen procesada de `content\`.
+
+### Galerías privadas
 
 Estructura esperada:
 
@@ -77,12 +93,29 @@ npm run gallery:import -- <gallery-id-o-folder>
 npm run selection:export -- <gallery-id> [out.txt]
 ```
 
+## Accesos
+
+- `/admin/login`: acceso administrativo con las credenciales configuradas por `db:seed`.
+- `/portal/login`: acceso de clientes mediante email y contraseña, o mediante el código/enlace privado de una galería.
+- `/portal`: lista de galerías vigentes del cliente autenticado.
+- `/g/<accessToken>`: galería privada; los enlaces existentes siguen siendo compatibles.
+
+La contraseña inicial o una nueva contraseña de cliente se define desde **Admin > Clientes**. Se almacena únicamente como hash bcrypt y dejar el campo vacío al editar conserva la contraseña actual.
+
+Comprobaciones de calidad:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
 Ademas del `.txt`, la seleccion de una galeria tambien se puede exportar como `.csv` (con columnas `filename,baseName,comment`) desde el panel admin en `/admin/galleries/<id>/export/csv`.
 
 ## Rutas clave
 
 - `/`: home publica
-- `/work`, `/work/photo`, `/work/props`, `/work/fx`, `/work/builds`: portfolio base
+- `/work`, `/work/photo`: portfolio fotografico
 - `/contact`: contacto
 - `/g/[token]`: galeria privada
 - `/admin`: panel admin
@@ -96,3 +129,12 @@ Ademas del `.txt`, la seleccion de una galeria tambien se puede exportar como `.
 - Sirve thumbs/previews mediante endpoint controlado desde registros `Photo`.
 - No expone rutas absolutas del servidor.
 - El correo usa SMTP por variables de entorno.
+
+## Documentacion generada
+
+- `docs/architecture.md`: arquitectura mantenida por el equipo.
+- `docs/slice-0-implementation-spec.md`: contrato implementable para autorización, estados y selección antes de ampliar cuentas e invitaciones.
+- `graphify-out/GRAPH_REPORT.md`: auditoria del grafo generado.
+- `graphify-out/graph.html`: visualizacion interactiva.
+- `graphify-out/graph.json`: grafo persistente para consultas y GraphRAG.
+- `graphify-out/obsidian/graph.canvas`: canvas y notas para Obsidian.

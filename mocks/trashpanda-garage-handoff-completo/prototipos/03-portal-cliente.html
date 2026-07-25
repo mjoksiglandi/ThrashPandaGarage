@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal del Cliente — Trashpanda Garage</title>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0D0F12;--bg-deep:#090B0E;--surface:#14181E;--surface-2:#1B212A;
+  --text:#EAF0F6;--text-2:#9AA8B8;--line:rgba(234,240,246,.08);--line-2:rgba(234,240,246,.14);
+  --violet:#5E4B8B;--violet-b:#8A73C4;--blue:#3D7EFF;--blue-l:#8FB2FF;
+  --amber:#C4A15E;--amber-l:#E0C48E;--green:#5EC48A;--green-l:#96E0B6;
+  --red:#C45E5E;--red-l:#E09A9A;--gray:#77828F;
+  --mono:'Geist Mono',ui-monospace,monospace;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --r-s:6px;--r-m:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Geist',sans-serif;font-weight:300;font-size:15px;line-height:1.65;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;cursor:pointer;background:none;border:none;color:inherit}
+img{display:block;object-fit:cover}
+.meta{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-2)}
+.screen{display:none}
+.screen.on{display:block}
+
+/* ===== TOPBAR ===== */
+.topbar{border-bottom:1px solid var(--line);background:rgba(9,11,14,.82);backdrop-filter:blur(8px);position:sticky;top:0;z-index:50}
+.topbar-in{max-width:1280px;margin:0 auto;padding:20px 40px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.logo{font-family:var(--mono);font-size:13px;letter-spacing:.28em;font-weight:500}
+.logo em{color:var(--violet-b);font-style:normal}
+.tb-nav{display:flex;gap:36px;font-size:14px;color:var(--text-2)}
+.tb-nav a.on{color:var(--text)}
+.tb-nav a:hover{color:var(--text)}
+.tb-user{display:flex;align-items:center;gap:14px;font-size:14px;color:var(--text-2)}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--violet),var(--blue));display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:#fff}
+
+.wrap{max-width:1280px;margin:0 auto;padding:56px 40px 140px}
+
+/* ===== CHIPS DE ESTADO ===== */
+.chip{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:8px 14px;border-radius:var(--r-s);border:1px solid var(--line-2);color:var(--text-2);white-space:nowrap}
+.chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.blue{color:var(--blue-l);border-color:rgba(61,126,255,.4);background:rgba(61,126,255,.1)}
+.chip.violet{color:#BCA9E8;border-color:rgba(138,115,196,.45);background:rgba(94,75,139,.16)}
+.chip.amber{color:var(--amber-l);border-color:rgba(196,161,94,.4);background:rgba(196,161,94,.1)}
+.chip.green{color:var(--green-l);border-color:rgba(94,196,138,.4);background:rgba(94,196,138,.1)}
+.chip.red{color:var(--red-l);border-color:rgba(196,94,94,.4);background:rgba(196,94,94,.1)}
+.chip.gray{color:var(--gray);border-color:var(--line-2);background:rgba(119,130,143,.08)}
+
+/* ===== BOTONES (min 44px) ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:400;letter-spacing:.02em;min-height:46px;padding:0 26px;border-radius:var(--r-s);border:1px solid transparent;transition:all .3s var(--ease)}
+.btn-p{background:var(--violet);border-color:var(--violet-b);color:#F1EDFA}
+.btn-p:hover{background:var(--violet-b);color:#fff}
+.btn-g{border-color:var(--line-2);color:var(--text-2)}
+.btn-g:hover{border-color:var(--violet-b);color:var(--violet-b)}
+.btn-green{background:rgba(94,196,138,.16);border-color:rgba(94,196,138,.5);color:var(--green-l)}
+.btn-green:hover{background:rgba(94,196,138,.26)}
+.btn-block{width:100%}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+
+/* ===== DASHBOARD ===== */
+.greet{margin-bottom:44px}
+.greet .meta{display:block;margin-bottom:14px;color:var(--violet-b)}
+.greet h1{font-size:36px;font-weight:300;letter-spacing:.005em}
+.greet p{font-size:16px;color:var(--text-2);margin-top:8px}
+.pending{display:flex;gap:12px;margin-bottom:44px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line-2);border-radius:var(--r-m);padding:14px 22px;font-size:15px}
+.pill .dot{width:8px;height:8px;border-radius:50%}
+.pill.blue .dot{background:var(--blue)}
+.pill.green .dot{background:var(--green)}
+.pill b{font-weight:400}
+
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.gcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);overflow:hidden;display:flex;flex-direction:column;transition:border-color .3s var(--ease);position:relative}
+.gcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--sc,transparent);z-index:2}
+.gcard.s-blue{--sc:var(--blue)}
+.gcard.s-amber{--sc:var(--amber)}
+.gcard.s-green{--sc:var(--green)}
+.gcard.s-gray{--sc:transparent}
+.gcard:hover{border-color:var(--line-2)}
+.gcard .cover{position:relative;aspect-ratio:4/3;background:var(--surface-2)}
+.gcard .cover img{width:100%;height:100%;filter:grayscale(1) brightness(.92)}
+.gcard .cover .chip{position:absolute;top:16px;left:16px;background:rgba(9,11,14,.82);backdrop-filter:blur(4px)}
+.gcard .body{padding:24px;display:flex;flex-direction:column;gap:14px;flex:1}
+.gcard h3{font-size:21px;font-weight:400;line-height:1.3}
+.gcard .sub{font-size:13px;color:var(--text-2)}
+.gcard .info{font-size:15px}
+.gcard .info small{display:block;font-size:13px;color:var(--text-2);margin-top:2px}
+.progress{height:4px;background:var(--surface-2);border-radius:2px;overflow:hidden}
+.progress i{display:block;height:100%;background:var(--blue);border-radius:2px}
+.progress.violet i{background:var(--violet-b)}
+.gcard .cta{margin-top:auto;padding-top:6px}
+.gcard.dim .cover img{filter:grayscale(1) brightness(.55)}
+.gcard.dim h3{color:var(--text-2)}
+
+/* ===== EMPTY ===== */
+.empty{border:1px solid var(--line);border-radius:var(--r-m);background:var(--surface);padding:104px 40px;text-align:center;position:relative;overflow:hidden}
+.empty::before{content:'';position:absolute;inset:-40%;background:
+  radial-gradient(ellipse 40% 30% at 30% 40%,rgba(94,75,139,.14),transparent 70%),
+  radial-gradient(ellipse 35% 30% at 70% 60%,rgba(61,126,255,.09),transparent 70%)}
+.empty-frame{position:relative;width:128px;height:160px;margin:0 auto 44px;border:1px solid var(--line-2);border-radius:var(--r-s)}
+.empty-frame::before{content:'';position:absolute;inset:12px;border:1px solid var(--line);border-radius:2px}
+.empty-frame::after{content:'—';position:absolute;inset:0;display:grid;place-items:center;color:var(--text-2);font-family:var(--mono)}
+.empty h2{font-size:26px;font-weight:300;position:relative}
+.empty p{font-size:16px;color:var(--text-2);max-width:480px;margin:16px auto 0;position:relative}
+.empty .meta{display:block;margin-top:40px;position:relative}
+
+/* ===== GALLERY ===== */
+.ghead{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin-bottom:36px;flex-wrap:wrap}
+.ghead .meta{display:block;margin-bottom:14px;color:var(--violet-b)}
+.ghead h1{font-size:32px;font-weight:300}
+.ghead .desc{font-size:16px;color:var(--text-2);max-width:560px;margin-top:10px}
+.gmeta{display:flex;gap:8px 28px;flex-wrap:wrap;margin-top:18px}
+.gmeta span{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-2)}
+.counter-box{text-align:right;min-width:240px}
+.counter{font-size:38px;font-weight:300}
+.counter b{font-weight:400;color:var(--violet-b)}
+.counter-box .progress{margin:14px 0 10px;height:5px}
+.counter-box .meta{display:block}
+
+.filters{display:flex;gap:10px;margin-bottom:30px}
+.fchip{font-size:14px;padding:11px 20px;border:1px solid var(--line-2);border-radius:var(--r-s);color:var(--text-2);transition:all .25s var(--ease)}
+.fchip.on{color:#BCA9E8;border-color:var(--violet-b);background:rgba(94,75,139,.12)}
+.fchip:hover{color:var(--text)}
+
+.pgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding-bottom:110px}
+.ph{position:relative;aspect-ratio:3/4;border-radius:var(--r-s);overflow:hidden;background:var(--surface-2);cursor:pointer;border:2px solid transparent;transition:border-color .25s var(--ease)}
+.ph img{width:100%;height:100%;filter:grayscale(1) brightness(.94);transition:transform .3s var(--ease)}
+.ph:hover img{transform:scale(1.02)}
+.ph .file{position:absolute;left:12px;bottom:12px;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:rgba(234,240,246,.85);background:rgba(9,11,14,.65);padding:5px 9px;border-radius:4px}
+.ph .sel{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:var(--r-s);border:1.5px solid rgba(234,240,246,.6);background:rgba(9,11,14,.55);display:grid;place-items:center;font-size:15px;color:transparent;transition:all .25s var(--ease)}
+.ph:hover .sel{border-color:var(--text)}
+.ph.is-sel{border-color:var(--violet-b)}
+.ph.is-sel::before{content:'';position:absolute;inset:0;background:rgba(94,75,139,.18);z-index:1;pointer-events:none}
+.ph.is-sel .sel{background:var(--violet-b);border-color:var(--violet-b);color:#fff;z-index:2}
+.ph .idx{position:absolute;top:12px;left:12px;z-index:2;font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:#fff;background:var(--violet);padding:5px 9px;border-radius:4px;display:none}
+.ph.is-sel .idx{display:block}
+.ph.is-lock{cursor:not-allowed}
+.ph.is-lock img{filter:grayscale(1) brightness(.4)}
+.ph.is-lock .sel{border-style:dashed;border-color:rgba(234,240,246,.25)}
+.ph .zoom{position:absolute;right:12px;bottom:12px;height:32px;padding:0 12px;border-radius:var(--r-s);background:rgba(9,11,14,.72);border:1px solid var(--line-2);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text);opacity:0;transition:opacity .25s var(--ease)}
+.ph:hover .zoom{opacity:1}
+
+/* ===== CONFIRM BAR ===== */
+.confirmbar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:rgba(9,11,14,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line-2)}
+.confirmbar-in{max-width:1280px;margin:0 auto;padding:20px 40px;display:flex;align-items:center;justify-content:space-between;gap:28px}
+.confirmbar .left{display:flex;align-items:center;gap:24px}
+.confirmbar .txt{font-size:17px}
+.confirmbar .txt b{font-weight:400;color:var(--violet-b)}
+.confirmbar .progress{width:180px;height:5px}
+.confirmbar .actions{display:flex;align-items:center;gap:14px}
+.confirmbar .note{font-size:12px;color:var(--text-2);max-width:260px;text-align:right;line-height:1.5}
+
+/* ===== BANNER LÍMITE (positivo) ===== */
+.banner{display:flex;align-items:center;gap:18px;border:1px solid rgba(138,115,196,.5);background:linear-gradient(90deg,rgba(94,75,139,.18),rgba(94,75,139,.06));border-radius:var(--r-m);padding:20px 26px;margin-bottom:30px}
+.banner .bic{width:38px;height:38px;border-radius:50%;background:var(--violet);display:grid;place-items:center;color:#fff;font-size:16px;flex-shrink:0}
+.banner h4{font-size:17px;font-weight:400}
+.banner p{font-size:14px;color:var(--text-2);margin-top:2px}
+
+/* ===== PANEL / CONFIRMADA ===== */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:56px 64px}
+.panel.open{background:transparent;border:none;padding:24px 0}
+.check-ico{width:60px;height:60px;border-radius:50%;background:rgba(94,75,139,.22);border:1px solid var(--violet-b);display:grid;place-items:center;color:#BCA9E8;font-size:24px;margin-bottom:28px}
+.panel h1{font-size:30px;font-weight:300;margin:16px 0 12px}
+.panel .lead{font-size:16px;color:var(--text-2);max-width:600px}
+.next-box{border-left:2px solid var(--violet-b);background:rgba(94,75,139,.08);border-radius:0 var(--r-s) var(--r-s) 0;padding:16px 22px;margin-top:26px;max-width:600px;font-size:15px}
+.mini-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:18px;margin-top:44px}
+.mini{position:relative;aspect-ratio:1;border-radius:var(--r-s);overflow:hidden;border:1px solid var(--line)}
+.mini img{width:100%;height:100%;filter:grayscale(1) brightness(.92)}
+.mini .n{position:absolute;left:9px;bottom:9px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:rgba(234,240,246,.85);background:rgba(9,11,14,.65);padding:4px 7px;border-radius:3px}
+.panel-actions{margin-top:44px;display:flex;gap:14px;flex-wrap:wrap}
+
+/* ===== EN EDICIÓN ===== */
+.edit-facts{display:flex;gap:44px;flex-wrap:wrap;margin:36px 0 44px}
+.edit-facts div .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-2);margin-bottom:4px}
+.edit-facts div .v{font-size:17px}
+.timeline{margin:0 0 40px;max-width:640px}
+.tstep{display:flex;gap:20px;position:relative;padding-bottom:36px}
+.tstep:last-child{padding-bottom:0}
+.tstep::before{content:'';position:absolute;left:15px;top:34px;bottom:2px;width:2px;background:var(--line-2)}
+.tstep:last-child::before{display:none}
+.tstep.done::before{background:var(--violet)}
+.tmark{width:32px;height:32px;border-radius:50%;border:2px solid var(--line-2);background:var(--bg);display:grid;place-items:center;font-size:13px;flex-shrink:0;color:transparent}
+.tstep.done .tmark{background:var(--violet);border-color:var(--violet-b);color:#fff}
+.tstep.now .tmark{border-color:var(--amber);color:var(--amber);box-shadow:0 0 0 5px rgba(196,161,94,.14)}
+.tstep.now .tmark::after{content:'';width:10px;height:10px;border-radius:50%;background:var(--amber)}
+.tbody .t{font-size:18px;font-weight:400}
+.tstep.now .tbody .t{color:var(--amber-l)}
+.tbody .d{font-size:13px;color:var(--text-2);margin-top:2px}
+
+/* ===== ENTREGA ===== */
+.dl-hero{position:relative;border-radius:var(--r-m);overflow:hidden;border:1px solid var(--line);margin-bottom:36px}
+.dl-hero img{width:100%;aspect-ratio:21/9;filter:grayscale(1) brightness(.65)}
+.dl-hero .in{position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,11,14,.2),rgba(9,11,14,.85));display:flex;flex-direction:column;justify-content:flex-end;padding:44px 48px}
+.dl-hero .chip{align-self:flex-start;margin-bottom:18px;background:rgba(9,11,14,.7)}
+.dl-hero h1{font-size:38px;font-weight:300}
+.dl-hero p{font-size:17px;color:var(--text-2);margin-top:8px}
+.dl-row{display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap;margin-bottom:14px}
+.dl-specs{display:flex;gap:40px;flex-wrap:wrap}
+.dl-specs div .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-2);margin-bottom:3px}
+.dl-specs div .v{font-size:16px}
+.dl-actions{display:flex;gap:14px}
+.notice{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r-s);background:var(--surface);padding:16px 20px;font-size:14px;color:var(--text-2);margin:22px 0 40px;max-width:640px;line-height:1.6}
+.pgrid.dl .ph{cursor:default;aspect-ratio:3/4}
+.pgrid.dl .ph .dlb{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:var(--r-s);background:rgba(9,11,14,.7);border:1px solid var(--line-2);display:grid;place-items:center;font-size:14px;color:var(--text)}
+
+/* ===== LIGHTBOX ===== */
+.lb{position:fixed;inset:0;background:rgba(9,11,14,.97);display:flex;flex-direction:column;z-index:100}
+.lb-top{display:flex;align-items:center;justify-content:space-between;padding:20px 32px;border-bottom:1px solid var(--line)}
+.lb-top .file{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--text-2)}
+.lb-top .cnt{font-size:15px}
+.lb-top .cnt b{font-weight:400;color:var(--violet-b)}
+.lb-close{width:40px;height:40px;border:1px solid var(--line-2);border-radius:var(--r-s);display:grid;place-items:center;font-size:18px;color:var(--text-2)}
+.lb-main{flex:1;display:flex;align-items:center;justify-content:center;position:relative;padding:32px 96px;min-height:0}
+.lb-main img{max-width:100%;max-height:100%;border-radius:var(--r-s)}
+.lb-arrow{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;border:1px solid var(--line-2);border-radius:var(--r-s);display:grid;place-items:center;font-size:18px;color:var(--text-2);background:rgba(9,11,14,.5);transition:all .25s var(--ease)}
+.lb-arrow:hover{color:var(--text);border-color:var(--text-2)}
+.lb-arrow.prev{left:28px}
+.lb-arrow.next{right:28px}
+.lb-bottom{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 32px;border-top:1px solid var(--line)}
+.lb-thumbs{display:flex;gap:10px;overflow:hidden}
+.lb-th{width:52px;height:64px;border-radius:4px;overflow:hidden;border:2px solid transparent;opacity:.5;flex-shrink:0}
+.lb-th img{width:100%;height:100%;filter:grayscale(1)}
+.lb-th.cur{opacity:1;border-color:var(--text-2)}
+.lb-th.sel{opacity:1;border-color:var(--violet-b)}
+.lb-actions{display:flex;align-items:center;gap:14px;flex-shrink:0}
+.lb-zoom{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-2);display:flex;gap:18px}
+
+/* ===== CENTER SHELLS ===== */
+.center-shell{min-height:calc(100vh - 75px);display:grid;place-items:center;padding:64px 24px}
+.center-card{width:100%;max-width:500px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:52px 48px;text-align:center}
+.center-card .glyph{font-family:var(--mono);font-size:30px;color:var(--text-2);margin-bottom:22px}
+.center-card h2{font-size:24px;font-weight:300;margin-bottom:12px}
+.center-card p{font-size:15px;color:var(--text-2)}
+.center-card .field{margin:30px 0 0;text-align:left}
+.center-card label{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px}
+.center-card input{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line-2);color:var(--text);font-family:var(--mono);font-size:18px;letter-spacing:.3em;padding:12px 0;text-align:center}
+.center-card input:focus{outline:none;border-bottom-color:var(--violet-b)}
+.center-card .btn{width:100%;margin-top:26px}
+.center-card .foot-l{margin-top:24px;font-size:13px;color:var(--text-2)}
+.center-card .foot-l a:hover{color:var(--violet-b)}
+.exp-cover{aspect-ratio:16/9;border-radius:var(--r-s);overflow:hidden;position:relative;margin-bottom:30px;border:1px solid var(--line)}
+.exp-cover img{width:100%;height:100%;filter:grayscale(1) brightness(.32) blur(2px)}
+.exp-cover .chip{position:absolute;top:14px;left:14px}
+
+/* ===== MOBILE ===== */
+.mob-bar{display:none}
+@media (max-width:640px){
+  .topbar-in{padding:16px 20px}
+  .tb-nav{display:none}
+  .wrap{padding:36px 20px 150px}
+  .greet h1{font-size:30px}
+  .pending{flex-direction:row;overflow-x:auto;padding-bottom:4px}
+  .pill{white-space:nowrap;font-size:14px;padding:12px 18px}
+  .cards{grid-template-columns:1fr;gap:22px}
+  .ghead{flex-direction:column;align-items:flex-start;gap:24px}
+  .counter-box{text-align:left;width:100%}
+  .pgrid{grid-template-columns:repeat(2,1fr);gap:12px;padding-bottom:130px}
+  .ph{aspect-ratio:3/4}
+  .ph .zoom{display:none}
+  .mini-grid{grid-template-columns:repeat(3,1fr)}
+  .panel{padding:36px 24px}
+  .confirmbar-in{padding:14px 20px;gap:14px}
+  .confirmbar .note,.confirmbar .btn-g,.confirmbar .left .progress{display:none}
+  .confirmbar .left{gap:0}
+  .confirmbar .txt{font-size:15px}
+  .confirmbar .actions{flex:1;justify-content:flex-end}
+  .confirmbar .actions .btn-p{min-height:50px;font-size:15px;padding:0 22px}
+  .dl-hero h1{font-size:28px}
+  .dl-hero .in{padding:24px}
+  .dl-row{flex-direction:column;align-items:flex-start}
+  .dl-actions{width:100%;flex-direction:column}
+  .dl-actions .btn{width:100%}
+  .lb-main{padding:16px}
+  .lb-arrow.prev{left:10px}.lb-arrow.next{right:10px}
+  .lb-thumbs{display:none}
+  .lb-bottom{flex-direction:column;align-items:stretch}
+  .lb-actions{width:100%}
+  .lb-actions .btn{flex:1}
+}
+</style>
+</head>
+<body>
+
+<nav class="topbar" id="topbar">
+  <div class="topbar-in">
+    <span class="logo">TRASHPANDA<em>—</em>GARAGE</span>
+    <div class="tb-nav">
+      <a class="on" href="#">Mis galerías</a>
+      <a href="#">Actividad</a>
+      <a href="#">Cuenta</a>
+    </div>
+    <div class="tb-user">
+      <span>Catalina R.</span>
+      <span class="avatar">CR</span>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ DASHBOARD ============ -->
+<section class="screen" id="v-dashboard">
+<div class="wrap">
+  <div class="greet">
+    <span class="meta">Portal del cliente</span>
+    <h1>Hola, Catalina.</h1>
+  </div>
+
+  <div class="pending">
+    <span class="pill blue"><i class="dot"></i><b>1 selección pendiente</b>&nbsp;· hasta el 18 Ago</span>
+    <span class="pill green"><i class="dot"></i><b>1 entrega disponible</b>&nbsp;· Neon Alley</span>
+  </div>
+
+  <div class="cards">
+    <article class="gcard s-blue">
+      <div class="cover"><img loading="lazy" src="https://picsum.photos/id/64/720/540"><span class="chip blue"><i class="dot"></i>Selección abierta</span></div>
+      <div class="body">
+        <h3>Retratos Cata — After Hours</h3>
+        <div class="info">42 fotografías · 8 de 10 seleccionadas<small>Disponible hasta el 18 de agosto</small></div>
+        <div class="cta"><button class="btn btn-p btn-block">Continuar selección</button></div>
+      </div>
+    </article>
+
+    <article class="gcard s-amber">
+      <div class="cover"><img loading="lazy" src="https://picsum.photos/id/1062/720/540"><span class="chip amber"><i class="dot"></i>En edición</span></div>
+      <div class="body">
+        <h3>Midnight Ronin</h3>
+        <div class="info">10 fotografías en edición<small>Selección recibida el 2 de julio</small></div>
+        <div class="cta"><button class="btn btn-g btn-block">Ver estado</button></div>
+      </div>
+    </article>
+
+    <article class="gcard s-green">
+      <div class="cover"><img loading="lazy" src="https://picsum.photos/id/1050/720/540"><span class="chip green"><i class="dot"></i>Entrega disponible</span></div>
+      <div class="body">
+        <h3>Neon Alley</h3>
+        <div class="info">24 archivos listos para descargar<small>Disponible hasta el 30 de septiembre</small></div>
+        <div class="cta"><button class="btn btn-green btn-block">Ver entrega</button></div>
+      </div>
+    </article>
+
+    <article class="gcard s-gray dim">
+      <div class="cover"><img loading="lazy" src="https://picsum.photos/id/1074/720/540"><span class="chip gray"><i class="dot"></i>Archivada</span></div>
+      <div class="body">
+        <h3>Sesión Parejas — Bosque</h3>
+        <div class="info"><small>Entrega completada · Noviembre 2025</small></div>
+        <div class="cta"><button class="btn btn-g btn-block">Ver resumen</button></div>
+      </div>
+    </article>
+  </div>
+</div>
+</section>
+
+<!-- ============ EMPTY ============ -->
+<section class="screen" id="v-empty">
+<div class="wrap">
+  <div class="greet">
+    <span class="meta">Portal del cliente</span>
+    <h1>Hola, Catalina.</h1>
+  </div>
+  <div class="empty">
+    <div class="empty-frame"></div>
+    <h2>Todavía no tienes galerías disponibles.</h2>
+    <p>Cuando una sesión sea publicada, aparecerá aquí junto con su estado y las acciones disponibles.</p>
+    <span class="meta">¿Dudas? Escríbenos — hola@trashpandagarage.com</span>
+  </div>
+</div>
+</section>
+
+<!-- ============ SELECCIÓN ABIERTA ============ -->
+<section class="screen" id="v-seleccion">
+<div class="wrap">
+  <div class="ghead">
+    <div>
+      <span class="meta">Galería · Selección abierta</span>
+      <h1>Retratos Cata — After Hours</h1>
+      <p class="desc">Elige tus fotografías favoritas. Toca una imagen para ampliarla y revisar los detalles antes de decidir.</p>
+      <div class="gmeta"><span>12 Jul 2026</span><span>42 fotografías</span><span>Límite · 10</span><span>Hasta el 18 Ago</span></div>
+    </div>
+    <div class="counter-box">
+      <div class="counter"><b>8</b> / 10</div>
+      <div class="progress violet"><i style="width:80%"></i></div>
+      <span class="meta">Seleccionadas</span>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="fchip on">Todas</button>
+    <button class="fchip">Seleccionadas · 8</button>
+    <button class="fchip">Sin seleccionar</button>
+  </div>
+
+  <div class="pgrid" id="grid-sel"></div>
+</div>
+<div class="confirmbar">
+  <div class="confirmbar-in">
+    <div class="left">
+      <span class="txt"><b>8 de 10</b> seleccionadas</span>
+      <div class="progress violet"><i style="width:80%"></i></div>
+    </div>
+    <div class="actions">
+      <span class="note">Al confirmar, la selección no podrá modificarse desde el portal.</span>
+      <button class="btn btn-g">Revisar selección</button>
+      <button class="btn btn-p">Confirmar selección</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============ LIGHTBOX ============ -->
+<section class="screen" id="v-lightbox">
+<div class="lb">
+  <div class="lb-top">
+    <span class="file">TPG-0405.JPG · 4 de 42</span>
+    <span class="cnt">Seleccionadas: <b>8 / 10</b></span>
+    <button class="lb-close" aria-label="Cerrar">×</button>
+  </div>
+  <div class="lb-main">
+    <button class="lb-arrow prev" aria-label="Anterior">←</button>
+    <img loading="lazy" src="https://picsum.photos/id/64/1000/1250?grayscale" alt="TPG-0405">
+    <button class="lb-arrow next" aria-label="Siguiente">→</button>
+  </div>
+  <div class="lb-bottom">
+    <div class="lb-thumbs" id="lb-thumbs"></div>
+    <div class="lb-actions">
+      <span class="lb-zoom"><span>Zoom</span><span>Pantalla completa</span></span>
+      <button class="btn btn-p">✓ &nbsp;Seleccionada · quitar</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============ LÍMITE ALCANZADO ============ -->
+<section class="screen" id="v-limite">
+<div class="wrap">
+  <div class="ghead">
+    <div>
+      <span class="meta">Galería · Selección abierta</span>
+      <h1>Retratos Cata — After Hours</h1>
+      <div class="gmeta"><span>12 Jul 2026</span><span>42 fotografías</span><span>Límite · 10</span><span>Hasta el 18 Ago</span></div>
+    </div>
+    <div class="counter-box">
+      <div class="counter"><b>10</b> / 10</div>
+      <div class="progress violet"><i style="width:100%"></i></div>
+      <span class="meta">Selección completa</span>
+    </div>
+  </div>
+
+  <div class="banner">
+    <span class="bic">✓</span>
+    <div>
+      <h4>Selección completa: 10 de 10.</h4>
+      <p>Puedes confirmar ahora o desmarcar una fotografía para reemplazarla.</p>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="fchip on">Todas</button>
+    <button class="fchip">Seleccionadas · 10</button>
+    <button class="fchip">Sin seleccionar</button>
+  </div>
+
+  <div class="pgrid" id="grid-lim"></div>
+</div>
+<div class="confirmbar">
+  <div class="confirmbar-in">
+    <div class="left">
+      <span class="txt"><b>10 de 10</b> · Selección completa</span>
+      <div class="progress violet"><i style="width:100%"></i></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-g">Revisar selección</button>
+      <button class="btn btn-p" style="box-shadow:0 0 0 5px rgba(138,115,196,.18);min-height:50px;font-size:16px;padding:0 34px">Confirmar selección</button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============ CONFIRMADA ============ -->
+<section class="screen" id="v-confirmada">
+<div class="wrap">
+  <div class="panel open">
+    <div class="check-ico">✓</div>
+    <span class="chip violet"><i class="dot"></i>Selección confirmada</span>
+    <h1>Recibimos tus 10 fotografías seleccionadas.</h1>
+    <p class="lead">La galería ya no puede modificarse desde el portal.</p>
+    <div class="next-box">Tu selección fue enviada y la galería entró al proceso de edición. Te avisaremos por correo cuando la entrega esté disponible.</div>
+    <div class="gmeta" style="margin-top:26px"><span>Confirmada · 2 Ago 2026, 19:42</span><span>10 fotografías</span><span>Retratos Cata — After Hours</span></div>
+    <div class="mini-grid" id="grid-conf"></div>
+    <div class="panel-actions">
+      <button class="btn btn-g">Descargar lista de archivos</button>
+      <button class="btn btn-g">Solicitar una corrección</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-2);margin-top:14px">Las correcciones dependen de si la edición ya comenzó. Te responderemos lo antes posible.</p>
+  </div>
+</div>
+</section>
+
+<!-- ============ EN EDICIÓN ============ -->
+<section class="screen" id="v-edicion">
+<div class="wrap">
+  <div class="ghead">
+    <div>
+      <span class="meta">Galería</span>
+      <h1>Midnight Ronin</h1>
+      <div class="gmeta"><span>Cosplay · 28 Jun 2026</span></div>
+    </div>
+    <span class="chip amber"><i class="dot"></i>En edición</span>
+  </div>
+  <div class="panel">
+    <span class="chip amber" style="margin-bottom:20px"><i class="dot"></i>Estado actual</span>
+    <h1 style="margin-top:14px;font-size:34px">Edición en curso.</h1>
+    <p class="lead">Estamos trabajando en cada imagen a mano. No necesitas hacer nada — te avisaremos cuando la entrega esté lista.</p>
+    <div class="timeline" style="margin-top:40px">
+      <div class="tstep done"><span class="tmark">✓</span><div class="tbody"><div class="t">Selección recibida</div><div class="d">2 Ago 2026 · 10 fotografías confirmadas</div></div></div>
+      <div class="tstep now"><span class="tmark"></span><div class="tbody"><div class="t">Edición en curso</div><div class="d">Revelado, color y retoque de cada imagen</div></div></div>
+      <div class="tstep"><span class="tmark"></span><div class="tbody"><div class="t">Control de calidad</div><div class="d">Revisión final antes de exportar</div></div></div>
+      <div class="tstep"><span class="tmark"></span><div class="tbody"><div class="t">Entrega</div><div class="d">Te avisaremos por correo</div></div></div>
+    </div>
+    <div class="edit-facts" style="margin:0 0 8px">
+      <div><div class="k">Fotografías</div><div class="v">10 imágenes</div></div>
+      <div><div class="k">Entrega estimada</div><div class="v">20 – 27 de agosto</div></div>
+    </div>
+    <span class="meta">Cada fotografía se edita a mano · Sin apuros</span>
+  </div>
+</div>
+</section>
+
+<!-- ============ ENTREGA DISPONIBLE ============ -->
+<section class="screen" id="v-entrega">
+<div class="wrap">
+  <div class="dl-hero">
+    <img loading="lazy" src="https://picsum.photos/id/1050/1600/700">
+    <div class="in">
+      <span class="chip green"><i class="dot"></i>Entrega disponible</span>
+      <h1>Tu entrega está lista.</h1>
+      <p>Neon Alley · 24 fotografías editadas, listas para descargar.</p>
+    </div>
+  </div>
+
+  <div class="dl-row">
+    <div class="dl-specs">
+      <div><div class="k">Archivos</div><div class="v">24 fotografías</div></div>
+      <div><div class="k">Formato</div><div class="v">JPG · 6720 × 4480</div></div>
+      <div><div class="k">Peso total</div><div class="v">1.8 GB</div></div>
+      <div><div class="k">Disponible hasta</div><div class="v">30 Sep 2026</div></div>
+    </div>
+    <div class="dl-actions">
+      <button class="btn btn-g">Ver galería</button>
+      <button class="btn btn-green" style="min-height:50px;padding:0 32px;font-size:16px">↓ &nbsp;Descargar todas · ZIP</button>
+    </div>
+  </div>
+  <div class="notice">⚠ &nbsp;<span>Te recomendamos guardar una copia de respaldo. La entrega estará disponible hasta el 30 de septiembre; después de esa fecha los archivos dejarán de estar accesibles desde el portal.</span></div>
+
+  <div class="pgrid dl" id="grid-dl"></div>
+</div>
+</section>
+
+<!-- ============ EXPIRADA ============ -->
+<section class="screen" id="v-expirada">
+<div class="center-shell">
+  <div class="center-card" style="max-width:540px;text-align:left">
+    <div class="exp-cover"><img loading="lazy" src="https://picsum.photos/id/1035/800/450"><span class="chip red"><i class="dot"></i>Expirada</span></div>
+    <h2>Esta galería expiró el 18 de agosto.</h2>
+    <p><b style="font-weight:400;color:var(--text)">Quiet Hours</b> ya no puede visualizarse ni descargarse desde el portal. Puedes solicitar una reactivación y te responderemos lo antes posible.</p>
+    <button class="btn btn-p btn-block" style="margin-top:28px">Solicitar reactivación</button>
+    <div class="foot-l" style="text-align:center"><a href="#">← Volver al portal</a></div>
+  </div>
+</div>
+</section>
+
+<!-- ============ NO AUTORIZADO ============ -->
+<section class="screen" id="v-unauthorized">
+<div class="center-shell">
+  <div class="center-card">
+    <div class="glyph">⌀</div>
+    <h2>No pudimos validar este acceso.</h2>
+    <p>Revisa el enlace que recibiste o vuelve a ingresar el código de acceso de tu invitación.</p>
+    <div class="field">
+      <label for="code">Código de acceso</label>
+      <input id="code" type="text" placeholder="— — — — — —" maxlength="8">
+    </div>
+    <button class="btn btn-p">Volver a ingresar</button>
+    <div class="foot-l"><a href="#">← Volver al portal</a> &nbsp;·&nbsp; <a href="#">Soporte</a></div>
+  </div>
+</div>
+</section>
+
+<script>
+const ids = [64,65,103,110,129,145,160,177,203,219,227,250];
+const selectedIdx = [0,1,3,5,6,8,9,11];
+
+function tile(id,i,{sel=false,order=null,locked=false}={}){
+  const label = sel ? 'Fotografía seleccionada' : locked ? 'Límite alcanzado' : 'Sin seleccionar';
+  return `<div class="ph ${sel?'is-sel':''} ${locked?'is-lock':''}" tabindex="0" role="checkbox" aria-checked="${sel}" aria-label="TPG-${String(400+i).padStart(4,'0')} — ${label}">
+    <img loading="lazy" src="https://picsum.photos/id/${id}/560/747">
+    ${sel&&order?`<span class="idx">${String(order).padStart(2,'0')}</span>`:''}
+    <span class="file">TPG-${String(400+i).padStart(4,'0')}</span>
+    <span class="sel">✓</span>
+    <span class="zoom">⤢ Ver completa</span>
+  </div>`;
+}
+
+let o=0;
+document.getElementById('grid-sel').innerHTML = ids.map((id,i)=>{
+  const s = selectedIdx.includes(i);
+  return tile(id,i,{sel:s,order:s?++o:null});
+}).join('');
+
+const sel10 = [0,1,2,3,5,6,7,8,9,11]; o=0;
+document.getElementById('grid-lim').innerHTML = ids.map((id,i)=>{
+  const s = sel10.includes(i);
+  return tile(id,i,{sel:s,order:s?++o:null,locked:!s});
+}).join('');
+
+document.getElementById('grid-conf').innerHTML = sel10.map((idx,i)=>
+  `<div class="mini"><img loading="lazy" src="https://picsum.photos/id/${ids[idx]}/300/300"><span class="n">${String(i+1).padStart(2,'0')} · TPG-${String(400+idx).padStart(4,'0')}</span></div>`
+).join('');
+
+document.getElementById('grid-dl').innerHTML = ids.map((id,i)=>
+  `<div class="ph"><img loading="lazy" src="https://picsum.photos/id/${id}/560/747"><span class="file">NEON-${String(i+1).padStart(3,'0')}.jpg</span><span class="dlb">↓</span></div>`
+).join('');
+
+const lbSel=[0,1,3,5]; 
+document.getElementById('lb-thumbs').innerHTML = ids.slice(0,9).map((id,i)=>
+  `<span class="lb-th ${i===3?'cur':''} ${lbSel.includes(i)?'sel':''}"><img loading="lazy" src="https://picsum.photos/id/${id}/104/128"></span>`
+).join('');
+
+const view = new URLSearchParams(location.search).get('view') || 'dashboard';
+const el = document.getElementById('v-'+view);
+(el || document.getElementById('v-dashboard')).classList.add('on');
+if(view==='lightbox') document.getElementById('topbar').style.display='none';
+</script>
+</body>
+</html>
