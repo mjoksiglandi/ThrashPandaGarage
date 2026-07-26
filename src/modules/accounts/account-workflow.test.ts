@@ -9,11 +9,16 @@ import {
   canIssueInvitation,
   canTransitionAccount,
   isAccountLoginBlocked,
+  nextFailedLoginState,
+  successfulLoginState,
 } from "./account-workflow";
 import {
+  AccountInactiveError,
   AccountInvitationNotAllowedError,
+  AccountLockedError,
   AccountLoginNotAllowedError,
   AccountNotFoundError,
+  InvalidAccountPolicyError,
   InvalidAccountTransitionError,
 } from "./account.errors";
 import {
@@ -81,6 +86,139 @@ describe("account login policy", () => {
     const account = { status: "DISABLED" as const, lockedUntil: null };
     expect(canAccountLogin(account, now)).toBe(false);
     expect(() => assertAccountCanLogin(account, now)).toThrow(AccountLoginNotAllowedError);
+  });
+});
+
+describe("failed authentication and lock policy", () => {
+  const policy = { failedAttemptThreshold: 3, lockDurationMs: 60_000 };
+
+  it("increments attempts and locks exactly at the configured threshold", () => {
+    expect(
+      nextFailedLoginState(
+        {
+          status: "ACTIVE",
+          failedLoginAttempts: 1,
+          lockedUntil: null,
+        },
+        now,
+        policy
+      )
+    ).toEqual({
+      status: "ACTIVE",
+      failedLoginAttempts: 2,
+      lockedUntil: null,
+    });
+
+    expect(
+      nextFailedLoginState(
+        {
+          status: "ACTIVE",
+          failedLoginAttempts: 2,
+          lockedUntil: null,
+        },
+        now,
+        policy
+      )
+    ).toEqual({
+      status: "LOCKED",
+      failedLoginAttempts: 3,
+      lockedUntil: new Date("2026-07-25T12:01:00.000Z"),
+    });
+  });
+
+  it("rejects attempts before lock expiry and unlocks at the exact boundary", () => {
+    const locked = {
+      status: "LOCKED" as const,
+      failedLoginAttempts: 3,
+      lockedUntil: new Date("2026-07-25T12:00:01.000Z"),
+    };
+
+    expect(() => nextFailedLoginState(locked, now, policy)).toThrow(
+      AccountLockedError
+    );
+    expect(() =>
+      nextFailedLoginState(
+        locked,
+        new Date("2026-07-25T12:00:00.999Z"),
+        policy
+      )
+    ).toThrow(AccountLockedError);
+    expect(
+      nextFailedLoginState(
+        locked,
+        new Date("2026-07-25T12:00:01.000Z"),
+        policy
+      )
+    ).toEqual({
+      status: "ACTIVE",
+      failedLoginAttempts: 1,
+      lockedUntil: null,
+    });
+  });
+
+  it("resets attempts after successful authentication", () => {
+    expect(
+      successfulLoginState(
+        {
+          status: "ACTIVE",
+          failedLoginAttempts: 2,
+          lockedUntil: null,
+        },
+        now
+      )
+    ).toEqual({
+      status: "ACTIVE",
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    });
+  });
+
+  it("normalizes an expired lock after successful authentication", () => {
+    expect(
+      successfulLoginState(
+        {
+          status: "LOCKED",
+          failedLoginAttempts: 3,
+          lockedUntil: now,
+        },
+        now
+      )
+    ).toEqual({
+      status: "ACTIVE",
+      failedLoginAttempts: 0,
+      lockedUntil: null,
+    });
+  });
+
+  it.each(["INVITED", "DISABLED"] as const)(
+    "rejects failed and successful authentication for %s",
+    (status) => {
+      const state = { status, failedLoginAttempts: 0, lockedUntil: null };
+      expect(() => nextFailedLoginState(state, now, policy)).toThrow(
+        AccountInactiveError
+      );
+      expect(() => successfulLoginState(state, now)).toThrow(
+        AccountInactiveError
+      );
+    }
+  );
+
+  it.each([
+    { failedAttemptThreshold: 0, lockDurationMs: 60_000 },
+    { failedAttemptThreshold: 3, lockDurationMs: 0 },
+    { failedAttemptThreshold: 1.5, lockDurationMs: 60_000 },
+  ])("rejects invalid lock configuration", (invalidPolicy) => {
+    expect(() =>
+      nextFailedLoginState(
+        {
+          status: "ACTIVE",
+          failedLoginAttempts: 0,
+          lockedUntil: null,
+        },
+        now,
+        invalidPolicy
+      )
+    ).toThrow(InvalidAccountPolicyError);
   });
 });
 

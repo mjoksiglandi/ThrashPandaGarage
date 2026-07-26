@@ -18,14 +18,14 @@ export type InvitationAccountState = {
   status: AccountStatusValue;
 };
 
-export function isInvitationExpired(expiresAt: Date, now: Date = new Date()): boolean {
+export function isInvitationExpired(expiresAt: Date, now: Date): boolean {
   return expiresAt <= now;
 }
 
 export function isInvitationUsable(
   invitation: InvitationWorkflowState,
   account: InvitationAccountState | null,
-  now: Date = new Date()
+  now: Date
 ): boolean {
   return (
     invitation.acceptedAt === null &&
@@ -38,7 +38,7 @@ export function isInvitationUsable(
 export function assertInvitationUsable(
   invitation: InvitationWorkflowState,
   account: InvitationAccountState | null,
-  now: Date = new Date()
+  now: Date
 ): void {
   if (invitation.acceptedAt !== null) {
     throw new InvitationAlreadyAcceptedError();
@@ -60,7 +60,7 @@ export function assertInvitationUsable(
 export function assertCanAcceptInvitation(
   invitation: InvitationWorkflowState,
   account: InvitationAccountState | null,
-  now: Date = new Date()
+  now: Date
 ): void {
   assertInvitationUsable(invitation, account, now);
 }

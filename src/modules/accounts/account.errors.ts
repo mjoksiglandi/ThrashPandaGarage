@@ -28,6 +28,27 @@ export class AccountNotFoundError extends Error {
   }
 }
 
+export class AccountInactiveError extends Error {
+  constructor() {
+    super("Account is inactive");
+    this.name = "AccountInactiveError";
+  }
+}
+
+export class AccountLockedError extends Error {
+  constructor() {
+    super("Account is locked");
+    this.name = "AccountLockedError";
+  }
+}
+
+export class InvalidCredentialsError extends Error {
+  constructor() {
+    super("Invalid credentials");
+    this.name = "InvalidCredentialsError";
+  }
+}
+
 export class InvalidAccountCreationError extends Error {
   constructor() {
     super("Initial account status and password hash are inconsistent");
@@ -35,9 +56,16 @@ export class InvalidAccountCreationError extends Error {
   }
 }
 
+export class InvalidAccountPolicyError extends Error {
+  constructor() {
+    super("Account policy configuration is invalid");
+    this.name = "InvalidAccountPolicyError";
+  }
+}
+
 export class InvalidAccountEmailError extends Error {
   constructor() {
-    super("Account email cannot be empty after normalization");
+    super("Account email is invalid or non-canonical");
     this.name = "InvalidAccountEmailError";
   }
 }

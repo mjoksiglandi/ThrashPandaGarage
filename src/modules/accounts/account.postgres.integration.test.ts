@@ -478,7 +478,7 @@ describe("Slice 1 account migration with PostgreSQL", () => {
     const indexes = await db.$queryRaw<Array<{ indexname: string }>>(Prisma.sql`
       SELECT indexname
       FROM pg_indexes
-      WHERE schemaname = 'public'
+      WHERE schemaname = current_schema()
         AND tablename IN ('Account', 'Invitation', 'AccountSession')
     `);
     expect(indexes.map(({ indexname }) => indexname)).toEqual(
@@ -531,7 +531,7 @@ describe("Slice 1 account migration with PostgreSQL", () => {
       JOIN information_schema.referential_constraints AS rc
         ON rc.constraint_schema = tc.constraint_schema
        AND rc.constraint_name = tc.constraint_name
-      WHERE tc.constraint_schema = 'public'
+      WHERE tc.constraint_schema = current_schema()
         AND tc.table_name IN ('Account', 'Invitation', 'AccountSession')
         AND tc.constraint_type = 'FOREIGN KEY'
     `);
