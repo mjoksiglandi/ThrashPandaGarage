@@ -1,5 +1,9 @@
 import { AccountNotFoundError } from "@/modules/accounts/account.errors";
-import type { AccountServiceStore } from "@/modules/accounts/account-service.repository";
+import type {
+  AccountRecord,
+  AccountServiceStore,
+  AccountServiceTransaction,
+} from "@/modules/accounts/account-service.repository";
 import type { Clock } from "@/modules/accounts/service-dependencies";
 import { expiresAfter } from "@/modules/accounts/service-dependencies";
 import type {
@@ -24,34 +28,43 @@ type AccountSessionServiceDependencies = {
 export function createAccountSessionService(
   dependencies: AccountSessionServiceDependencies
 ) {
+  async function createWithinTransaction(
+    transaction: AccountServiceTransaction,
+    account: AccountRecord,
+    now: Date
+  ) {
+    assertAccountCanCreateSession(account.status);
+    const expiresAt = expiresAfter(now, dependencies.sessionDurationMs);
+    const token = dependencies.tokenGenerator.generate();
+    const tokenHash = dependencies.tokenHasher.digest(token);
+    const session = await transaction.createSession({
+      accountId: account.id,
+      tokenHash,
+      expiresAt,
+      createdAt: now,
+    });
+    return {
+      sessionId: session.id,
+      accountId: account.id,
+      expiresAt: session.expiresAt,
+      token,
+    };
+  }
+
   return {
     async create(accountId: string) {
       const now = dependencies.clock.now();
-      const expiresAt = expiresAfter(now, dependencies.sessionDurationMs);
 
       return dependencies.store.transaction(async (transaction) => {
         const account = await transaction.lockAccountById(accountId);
         if (!account) {
           throw new AccountNotFoundError();
         }
-        assertAccountCanCreateSession(account.status);
-
-        const token = dependencies.tokenGenerator.generate();
-        const tokenHash = dependencies.tokenHasher.digest(token);
-        const session = await transaction.createSession({
-          accountId,
-          tokenHash,
-          expiresAt,
-          createdAt: now,
-        });
-        return {
-          sessionId: session.id,
-          accountId,
-          expiresAt: session.expiresAt,
-          token,
-        };
+        return createWithinTransaction(transaction, account, now);
       });
     },
+
+    createWithinTransaction,
 
     async validate(token: string) {
       const now = dependencies.clock.now();
@@ -104,3 +117,7 @@ export function createAccountSessionService(
     },
   };
 }
+
+export type AccountSessionService = ReturnType<
+  typeof createAccountSessionService
+>;

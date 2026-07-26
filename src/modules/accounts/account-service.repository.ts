@@ -1,6 +1,7 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import { db } from "@/lib/db";
 import type { TokenHash } from "@/lib/token-hash";
+import type { NormalizedAccountEmail } from "./account-email";
 import type { AccountStatusValue } from "./account.types";
 
 export type AccountRecord = {
@@ -10,6 +11,10 @@ export type AccountRecord = {
   failedLoginAttempts: number;
   lockedUntil: Date | null;
   lastLoginAt: Date | null;
+};
+
+export type AuthenticationAccountRecord = AccountRecord & {
+  passwordHash: string | null;
 };
 
 export type InvitationRecord = {
@@ -49,6 +54,9 @@ export type AccountUpdate = {
 
 export interface AccountServiceTransaction {
   lockAccountById(id: string): Promise<AccountRecord | null>;
+  lockAuthenticationAccountById(
+    id: string
+  ): Promise<AuthenticationAccountRecord | null>;
   lockAccountByEmail(email: string): Promise<AccountRecord | null>;
   lockInvitationByTokenHash(
     tokenHash: TokenHash
@@ -81,6 +89,9 @@ export interface AccountServiceTransaction {
 }
 
 export interface AccountServiceStore {
+  findAuthenticationAccountByEmail(
+    email: NormalizedAccountEmail
+  ): Promise<AuthenticationAccountRecord | null>;
   transaction<T>(
     work: (transaction: AccountServiceTransaction) => Promise<T>
   ): Promise<T>;
@@ -117,6 +128,21 @@ function mapAccount(row: {
     failedLoginAttempts: row.failedLoginAttempts,
     lockedUntil: row.lockedUntil,
     lastLoginAt: row.lastLoginAt,
+  };
+}
+
+function mapAuthenticationAccount(row: {
+  id: string;
+  email: string;
+  passwordHash: string | null;
+  status: AccountStatusValue;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
+  lastLoginAt: Date | null;
+}): AuthenticationAccountRecord {
+  return {
+    ...mapAccount(row),
+    passwordHash: row.passwordHash,
   };
 }
 
@@ -180,6 +206,25 @@ class PrismaAccountServiceTransaction implements AccountServiceTransaction {
       FOR UPDATE
     `;
     return rows[0] ?? null;
+  }
+
+  async lockAuthenticationAccountById(
+    id: string
+  ): Promise<AuthenticationAccountRecord | null> {
+    const rows = await this.client.$queryRaw<AuthenticationAccountRecord[]>`
+      SELECT
+        id,
+        email,
+        "passwordHash",
+        status,
+        "failedLoginAttempts",
+        "lockedUntil",
+        "lastLoginAt"
+      FROM "Account"
+      WHERE id = ${id}
+      FOR UPDATE
+    `;
+    return rows[0] ? mapAuthenticationAccount(rows[0]) : null;
   }
 
   async lockAccountByEmail(email: string): Promise<AccountRecord | null> {
@@ -334,6 +379,21 @@ export function createPrismaAccountServiceStore(
   client: PrismaClient = db
 ): AccountServiceStore {
   return {
+    async findAuthenticationAccountByEmail(email) {
+      const account = await client.account.findUnique({
+        where: { email },
+        select: {
+          id: true,
+          email: true,
+          passwordHash: true,
+          status: true,
+          failedLoginAttempts: true,
+          lockedUntil: true,
+          lastLoginAt: true,
+        },
+      });
+      return account ? mapAuthenticationAccount(account) : null;
+    },
     transaction(work) {
       return client.$transaction((transactionClient) =>
         work(new PrismaAccountServiceTransaction(transactionClient))

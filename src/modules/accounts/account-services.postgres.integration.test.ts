@@ -138,6 +138,9 @@ function failDuringInvitationAcceptance(
   baseStore: AccountServiceStore
 ): AccountServiceStore {
   return {
+    findAuthenticationAccountByEmail(email) {
+      return baseStore.findAuthenticationAccountByEmail(email);
+    },
     transaction(work) {
       return baseStore.transaction((transaction) => {
         const failingTransaction = new Proxy(transaction, {
