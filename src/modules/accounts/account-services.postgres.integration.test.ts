@@ -13,6 +13,7 @@ import {
 import { createAccountSessionService } from "@/modules/account-sessions/account-session.service";
 import { createAuthenticationAttemptService } from "./authentication-attempt.service";
 import {
+  InvitationAccountStatusError,
   InvalidPasswordHashError,
   InvitationAlreadyAcceptedError,
   PasswordHashingError,
@@ -309,8 +310,8 @@ describe("transactional invitation services with PostgreSQL", () => {
     const serviceB = invitationService(storeB, clock, "unused-b");
 
     const results = await Promise.allSettled([
-      serviceA.accept({ token: issued.token, password: "password-a" }),
-      serviceB.accept({ token: issued.token, password: "password-b" }),
+      serviceA.accept({ token: issued.token, password: "password-a-secure" }),
+      serviceB.accept({ token: issued.token, password: "password-b-secure" }),
     ]);
 
     expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(
@@ -324,9 +325,43 @@ describe("transactional invitation services with PostgreSQL", () => {
         where: { id: issued.invitationId, acceptedAt: { not: null } },
       })
     ).toBe(1);
+    const activatedAccount = await db.account.findUniqueOrThrow({
+      where: { id: account.id },
+    });
+    expect(activatedAccount).toMatchObject({ status: "ACTIVE" });
+    expect([
+      "fake-hash:password-a-secure",
+      "fake-hash:password-b-secure",
+    ]).toContain(activatedAccount.passwordHash);
+  });
+
+  it("does not overwrite the password of an already active account", async () => {
+    const { account } = await createActiveAccount("active_acceptance_guard");
+    const clock = new FixedClock(new Date("2026-07-25T15:30:00.000Z"));
+    const token = canonicalTestToken("active-account-invitation");
+    const invitation = await db.invitation.create({
+      data: {
+        accountId: account.id,
+        tokenHash: sha256TokenHasher.digest(token),
+        expiresAt: new Date(clock.value.getTime() + 60_000),
+        createdAt: clock.value,
+        createdByActorId: "fixture-admin",
+      },
+    });
+    const service = invitationService(primaryStore, clock, "unused");
+
+    await expect(
+      service.accept({ token, password: "replacement-password" })
+    ).rejects.toBeInstanceOf(InvitationAccountStatusError);
     expect(
       await db.account.findUniqueOrThrow({ where: { id: account.id } })
-    ).toMatchObject({ status: "ACTIVE" });
+    ).toMatchObject({
+      status: "ACTIVE",
+      passwordHash: "existing-fake-hash",
+    });
+    expect(
+      await db.invitation.findUniqueOrThrow({ where: { id: invitation.id } })
+    ).toMatchObject({ acceptedAt: null, revokedAt: null });
   });
 
   it("rolls back account activation when a later update fails", async () => {
@@ -389,7 +424,7 @@ describe("transactional invitation services with PostgreSQL", () => {
     });
 
     await expect(
-      service.accept({ token: issued.token, password: "password" })
+      service.accept({ token: issued.token, password: "password-secure" })
     ).rejects.toBeInstanceOf(PasswordHashingError);
     expect(
       await db.account.findUniqueOrThrow({ where: { id: account.id } })

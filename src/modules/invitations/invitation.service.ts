@@ -13,6 +13,8 @@ import type {
   PasswordHasher,
   TokenHasher,
 } from "@/modules/accounts/secure-token";
+import { InvalidTokenError } from "@/modules/accounts/secure-token";
+import type { TokenHash } from "@/lib/token-hash";
 import { assertCanIssueInvitation } from "@/modules/accounts/account-workflow";
 import {
   InvalidPasswordHashError,
@@ -21,10 +23,14 @@ import {
 } from "./invitation.errors";
 import { assertCanAcceptInvitation } from "./invitation-workflow";
 
-// Temporary defensive limits for PR 3. PR 4 owns the final password policy
-// and real hashing algorithm. Values are measured as JavaScript UTF-16 units.
-export const ACCEPTANCE_PASSWORD_MAX_LENGTH = 1024;
+// The password is never trimmed or otherwise transformed before hashing.
+// bcrypt consumes at most 72 UTF-8 bytes, so longer inputs are rejected rather
+// than silently colliding after the algorithm's truncation boundary.
+export const ACCEPTANCE_PASSWORD_MIN_LENGTH = 12;
+export const ACCEPTANCE_PASSWORD_MAX_LENGTH = 72;
+export const ACCEPTANCE_PASSWORD_MAX_BYTES = 72;
 export const PASSWORD_HASH_MAX_LENGTH = 1024;
+const invalidLookupHash = "0".repeat(64) as TokenHash;
 
 export type AccountSelector =
   | { accountId: string; email?: never }
@@ -38,6 +44,11 @@ type InvitationServiceDependencies = {
   passwordHasher: PasswordHasher;
   invitationDurationMs: number;
 };
+
+type InvitationAcceptanceServiceDependencies = Pick<
+  InvitationServiceDependencies,
+  "store" | "clock" | "tokenHasher" | "passwordHasher"
+>;
 
 async function lockSelectedAccount(
   transaction: AccountServiceTransaction,
@@ -56,9 +67,10 @@ function assertAcceptancePassword(
 ): asserts password is string {
   if (
     typeof password !== "string" ||
-    password.length === 0 ||
+    password.length < ACCEPTANCE_PASSWORD_MIN_LENGTH ||
     password.trim().length === 0 ||
-    password.length > ACCEPTANCE_PASSWORD_MAX_LENGTH
+    password.length > ACCEPTANCE_PASSWORD_MAX_LENGTH ||
+    Buffer.byteLength(password, "utf8") > ACCEPTANCE_PASSWORD_MAX_BYTES
   ) {
     throw new InvalidCredentialsError();
   }
@@ -77,51 +89,29 @@ function assertPasswordHash(
   }
 }
 
-export function createInvitationService(
-  dependencies: InvitationServiceDependencies
+export function createInvitationAcceptanceService(
+  dependencies: InvitationAcceptanceServiceDependencies
 ) {
   return {
-    async issue(input: AccountSelector & { createdByActorId: string }) {
-      const now = dependencies.clock.now();
-      const expiresAt = expiresAfter(now, dependencies.invitationDurationMs);
-
-      return dependencies.store.transaction(async (transaction) => {
-        const account = await lockSelectedAccount(transaction, input);
-        if (!account) {
-          throw new AccountNotFoundError();
-        }
-        assertCanIssueInvitation(account);
-
-        await transaction.revokePendingInvitations(account.id, now);
-
-        const token = dependencies.tokenGenerator.generate();
-        const tokenHash = dependencies.tokenHasher.digest(token);
-        const invitation = await transaction.createInvitation({
-          accountId: account.id,
-          tokenHash,
-          expiresAt,
-          createdAt: now,
-          createdByActorId: input.createdByActorId,
-        });
-
-        return {
-          invitationId: invitation.id,
-          accountId: account.id,
-          expiresAt: invitation.expiresAt,
-          token,
-        };
-      });
-    },
-
     async accept(input: { token: string; password: string }) {
       assertAcceptancePassword(input.password);
       const now = dependencies.clock.now();
-      const tokenHash = dependencies.tokenHasher.digest(input.token);
+      let structurallyValid = true;
+      let tokenHash = invalidLookupHash;
+      try {
+        tokenHash = dependencies.tokenHasher.digest(input.token);
+      } catch (error) {
+        if (error instanceof InvalidTokenError) {
+          structurallyValid = false;
+        } else {
+          throw error;
+        }
+      }
 
       return dependencies.store.transaction(async (transaction) => {
         const invitation =
           await transaction.lockInvitationByTokenHash(tokenHash);
-        if (!invitation) {
+        if (!structurallyValid || !invitation) {
           throw new InvitationNotFoundError();
         }
 
@@ -155,5 +145,46 @@ export function createInvitationService(
         };
       });
     },
+  };
+}
+
+export function createInvitationService(
+  dependencies: InvitationServiceDependencies
+) {
+  const acceptanceService = createInvitationAcceptanceService(dependencies);
+
+  return {
+    async issue(input: AccountSelector & { createdByActorId: string }) {
+      const now = dependencies.clock.now();
+      const expiresAt = expiresAfter(now, dependencies.invitationDurationMs);
+
+      return dependencies.store.transaction(async (transaction) => {
+        const account = await lockSelectedAccount(transaction, input);
+        if (!account) {
+          throw new AccountNotFoundError();
+        }
+        assertCanIssueInvitation(account);
+
+        await transaction.revokePendingInvitations(account.id, now);
+
+        const token = dependencies.tokenGenerator.generate();
+        const tokenHash = dependencies.tokenHasher.digest(token);
+        const invitation = await transaction.createInvitation({
+          accountId: account.id,
+          tokenHash,
+          expiresAt,
+          createdAt: now,
+          createdByActorId: input.createdByActorId,
+        });
+
+        return {
+          invitationId: invitation.id,
+          accountId: account.id,
+          expiresAt: invitation.expiresAt,
+          token,
+        };
+      });
+    },
+    accept: acceptanceService.accept,
   };
 }

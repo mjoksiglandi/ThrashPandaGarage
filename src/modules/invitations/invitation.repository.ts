@@ -13,7 +13,16 @@ export const invitationRepository = {
     assertTokenHash(tokenHash);
     return client.invitation.findUnique({
       where: { tokenHash },
-      include: { account: true },
+      select: {
+        acceptedAt: true,
+        revokedAt: true,
+        expiresAt: true,
+        account: {
+          select: {
+            status: true,
+          },
+        },
+      },
     });
   },
   create(input: CreateInvitationInput, client: DbClient = db) {
