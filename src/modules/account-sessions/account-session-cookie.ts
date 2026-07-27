@@ -1,5 +1,14 @@
 export const ACCOUNT_SESSION_COOKIE_NAME = "tpg_account_session";
 
+function accountSessionCookieSecurityOptions(secure?: boolean) {
+  return {
+    httpOnly: true,
+    secure: secure ?? process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+  };
+}
+
 export function accountSessionCookie(
   token: string,
   expiresAt: Date,
@@ -18,12 +27,23 @@ export function accountSessionCookie(
     name: ACCOUNT_SESSION_COOKIE_NAME,
     value: token,
     options: {
-      httpOnly: true,
-      secure: options.secure ?? process.env.NODE_ENV === "production",
-      sameSite: "lax" as const,
-      path: "/",
+      ...accountSessionCookieSecurityOptions(options.secure),
       expires: expiresAt,
       maxAge: Math.max(1, Math.floor(remainingMs / 1000)),
+    },
+  };
+}
+
+export function clearedAccountSessionCookie(
+  options: { secure?: boolean } = {}
+) {
+  return {
+    name: ACCOUNT_SESSION_COOKIE_NAME,
+    value: "",
+    options: {
+      ...accountSessionCookieSecurityOptions(options.secure),
+      expires: new Date(0),
+      maxAge: 0,
     },
   };
 }

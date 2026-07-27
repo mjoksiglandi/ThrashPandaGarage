@@ -1,10 +1,14 @@
 import { GalleryStatus } from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { logoutClient, requireClient } from "@/lib/client-auth";
 import { isGalleryAccessible } from "@/modules/galleries/gallery.service";
+import {
+  logoutPortalActor,
+  requirePortalClient,
+} from "@/modules/portal/portal-access";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const statusLabels: Record<GalleryStatus, string> = {
   DRAFT: "Preparación", EMAIL_SENT: "Invitación enviada", PROOFING: "Selección abierta",
@@ -13,12 +17,12 @@ const statusLabels: Record<GalleryStatus, string> = {
 };
 
 export default async function ClientPortalPage() {
-  const client = await requireClient();
+  const { client } = await requirePortalClient();
   const galleries = client.galleries.filter(isGalleryAccessible);
 
   async function logout() {
     "use server";
-    await logoutClient();
+    await logoutPortalActor();
     redirect("/portal/login");
   }
 

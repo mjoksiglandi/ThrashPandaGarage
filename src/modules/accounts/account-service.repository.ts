@@ -41,7 +41,9 @@ export type AccountSessionRecord = {
 };
 
 export type AccountSessionWithAccountRecord = AccountSessionRecord & {
-  account: AccountRecord;
+  account: AccountRecord & {
+    clientId: string;
+  };
 };
 
 export type AccountUpdate = {
@@ -106,6 +108,7 @@ type LockedInvitationRow = InvitationRecord & {
 };
 
 type LockedSessionRow = AccountSessionRecord & {
+  accountClientId: string;
   accountEmail: string;
   accountStatus: AccountStatusValue;
   accountFailedLoginAttempts: number;
@@ -180,6 +183,7 @@ function mapSessionWithAccount(
     createdAt: row.createdAt,
     account: {
       id: row.accountId,
+      clientId: row.accountClientId,
       email: row.accountEmail,
       status: row.accountStatus,
       failedLoginAttempts: row.accountFailedLoginAttempts,
@@ -279,6 +283,7 @@ class PrismaAccountServiceTransaction implements AccountServiceTransaction {
         session."expiresAt",
         session."revokedAt",
         session."createdAt",
+        account."clientId" AS "accountClientId",
         account.email AS "accountEmail",
         account.status AS "accountStatus",
         account."failedLoginAttempts" AS "accountFailedLoginAttempts",
