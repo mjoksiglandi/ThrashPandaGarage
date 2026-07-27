@@ -3,6 +3,10 @@ import { db } from "@/lib/db";
 import type { TokenHash } from "@/lib/token-hash";
 import type { NormalizedAccountEmail } from "@/modules/accounts/account-email";
 import type { AccountStatusValue } from "@/modules/accounts/account.types";
+import {
+  PrismaAccountServiceTransaction,
+  type AccountServiceTransaction,
+} from "@/modules/accounts/account-service.repository";
 
 export type PasswordRecoveryAccount = {
   id: string;
@@ -19,6 +23,10 @@ export type PasswordRecoveryRecord = {
   consumedAt: Date | null;
   revokedAt: Date | null;
   createdAt: Date;
+};
+
+export type PasswordResetRecord = PasswordRecoveryRecord & {
+  account: PasswordRecoveryAccount;
 };
 
 export interface PasswordRecoveryTransaction {
@@ -42,6 +50,49 @@ export interface PasswordRecoveryStore {
   revokeAfterDeliveryFailure(id: string, revokedAt: Date): Promise<void>;
 }
 
+export interface PasswordResetTransaction
+  extends Pick<
+    AccountServiceTransaction,
+    "updateAccount" | "revokeAllSessions"
+  > {
+  lockRequestByTokenHash(
+    tokenHash: TokenHash
+  ): Promise<PasswordResetRecord | null>;
+  consumeRequest(id: string, consumedAt: Date): Promise<boolean>;
+  revokeOpenRequests(
+    accountId: string,
+    revokedAt: Date,
+    exceptRequestId: string
+  ): Promise<number>;
+}
+
+export interface PasswordResetStore {
+  findByTokenHash(
+    tokenHash: TokenHash
+  ): Promise<PasswordResetRecord | null>;
+  transaction<T>(
+    work: (transaction: PasswordResetTransaction) => Promise<T>
+  ): Promise<T>;
+}
+
+async function revokeOpenRequests(
+  client: Prisma.TransactionClient,
+  accountId: string,
+  revokedAt: Date,
+  exceptRequestId?: string
+): Promise<number> {
+  const result = await client.accountPasswordRecovery.updateMany({
+    where: {
+      accountId,
+      consumedAt: null,
+      revokedAt: null,
+      ...(exceptRequestId ? { id: { not: exceptRequestId } } : {}),
+    },
+    data: { revokedAt },
+  });
+  return result.count;
+}
+
 class PrismaPasswordRecoveryTransaction
   implements PasswordRecoveryTransaction
 {
@@ -63,16 +114,7 @@ class PrismaPasswordRecoveryTransaction
     accountId: string,
     revokedAt: Date
   ): Promise<number> {
-    const result =
-      await this.client.accountPasswordRecovery.updateMany({
-        where: {
-          accountId,
-          consumedAt: null,
-          revokedAt: null,
-        },
-        data: { revokedAt },
-      });
-    return result.count;
+    return revokeOpenRequests(this.client, accountId, revokedAt);
   }
 
   async createRequest(input: {
@@ -87,6 +129,84 @@ class PrismaPasswordRecoveryTransaction
       ...request,
       tokenHash: request.tokenHash as TokenHash,
     };
+  }
+}
+
+class PrismaPasswordResetTransaction
+  extends PrismaAccountServiceTransaction
+  implements PasswordResetTransaction
+{
+  constructor(private readonly resetClient: Prisma.TransactionClient) {
+    super(resetClient);
+  }
+
+  async lockRequestByTokenHash(
+    tokenHash: TokenHash
+  ): Promise<PasswordResetRecord | null> {
+    const rows = await this.resetClient.$queryRaw<
+      Array<
+        PasswordRecoveryRecord & {
+          accountEmail: string;
+          accountPasswordHash: string | null;
+          accountStatus: AccountStatusValue;
+        }
+      >
+    >`
+      SELECT
+        recovery.id,
+        recovery."accountId",
+        recovery."tokenHash",
+        recovery."expiresAt",
+        recovery."consumedAt",
+        recovery."revokedAt",
+        recovery."createdAt",
+        account.email AS "accountEmail",
+        account."passwordHash" AS "accountPasswordHash",
+        account.status AS "accountStatus"
+      FROM "AccountPasswordRecovery" AS recovery
+      JOIN "Account" AS account ON account.id = recovery."accountId"
+      WHERE recovery."tokenHash" = ${tokenHash}
+      FOR UPDATE OF account, recovery
+    `;
+    const row = rows[0];
+    return row
+      ? {
+          id: row.id,
+          accountId: row.accountId,
+          tokenHash: row.tokenHash,
+          expiresAt: row.expiresAt,
+          consumedAt: row.consumedAt,
+          revokedAt: row.revokedAt,
+          createdAt: row.createdAt,
+          account: {
+            id: row.accountId,
+            email: row.accountEmail,
+            passwordHash: row.accountPasswordHash,
+            status: row.accountStatus,
+          },
+        }
+      : null;
+  }
+
+  async consumeRequest(id: string, consumedAt: Date): Promise<boolean> {
+    const result = await this.resetClient.accountPasswordRecovery.updateMany({
+      where: { id, consumedAt: null, revokedAt: null },
+      data: { consumedAt },
+    });
+    return result.count === 1;
+  }
+
+  revokeOpenRequests(
+    accountId: string,
+    revokedAt: Date,
+    exceptRequestId: string
+  ): Promise<number> {
+    return revokeOpenRequests(
+      this.resetClient,
+      accountId,
+      revokedAt,
+      exceptRequestId
+    );
   }
 }
 
@@ -116,6 +236,39 @@ export function createPrismaPasswordRecoveryStore(
         },
         data: { revokedAt },
       });
+    },
+  };
+}
+
+export function createPrismaPasswordResetStore(
+  client: PrismaClient = db
+): PasswordResetStore {
+  return {
+    async findByTokenHash(tokenHash) {
+      const recovery = await client.accountPasswordRecovery.findUnique({
+        where: { tokenHash },
+        include: {
+          account: {
+            select: {
+              id: true,
+              email: true,
+              passwordHash: true,
+              status: true,
+            },
+          },
+        },
+      });
+      return recovery
+        ? {
+            ...recovery,
+            tokenHash: recovery.tokenHash as TokenHash,
+          }
+        : null;
+    },
+    transaction(work) {
+      return client.$transaction((transactionClient) =>
+        work(new PrismaPasswordResetTransaction(transactionClient))
+      );
     },
   };
 }

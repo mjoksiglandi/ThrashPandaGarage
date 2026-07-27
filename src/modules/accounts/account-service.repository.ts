@@ -193,7 +193,7 @@ function mapSessionWithAccount(
   };
 }
 
-class PrismaAccountServiceTransaction implements AccountServiceTransaction {
+export class PrismaAccountServiceTransaction implements AccountServiceTransaction {
   constructor(private readonly client: Prisma.TransactionClient) {}
 
   async lockAccountById(id: string): Promise<AccountRecord | null> {

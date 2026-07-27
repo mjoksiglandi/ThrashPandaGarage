@@ -1,6 +1,8 @@
 export const LOGIN_EMAIL_MAX_LENGTH = 254;
-export const LOGIN_PASSWORD_MAX_LENGTH = 72;
-export const LOGIN_PASSWORD_MAX_BYTES = 72;
+export {
+  ACCOUNT_PASSWORD_MAX_BYTES as LOGIN_PASSWORD_MAX_BYTES,
+  ACCOUNT_PASSWORD_MAX_LENGTH as LOGIN_PASSWORD_MAX_LENGTH,
+} from "./account-password-policy";
 export const ACCOUNT_LOGIN_LOCK_POLICY = {
   failedAttemptThreshold: 5,
   lockDurationMs: 15 * 60 * 1000,

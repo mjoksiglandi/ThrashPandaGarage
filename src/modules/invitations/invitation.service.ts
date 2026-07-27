@@ -1,4 +1,10 @@
-import { AccountNotFoundError, InvalidCredentialsError } from "@/modules/accounts/account.errors";
+import { AccountNotFoundError } from "@/modules/accounts/account.errors";
+import {
+  ACCOUNT_PASSWORD_MAX_BYTES,
+  ACCOUNT_PASSWORD_MAX_LENGTH,
+  ACCOUNT_PASSWORD_MIN_LENGTH,
+  assertNewAccountPassword,
+} from "@/modules/accounts/account-password-policy";
 import { normalizeAccountEmail } from "@/modules/accounts/account-email";
 import type {
   AccountServiceStore,
@@ -26,9 +32,9 @@ import { assertCanAcceptInvitation } from "./invitation-workflow";
 // The password is never trimmed or otherwise transformed before hashing.
 // bcrypt consumes at most 72 UTF-8 bytes, so longer inputs are rejected rather
 // than silently colliding after the algorithm's truncation boundary.
-export const ACCEPTANCE_PASSWORD_MIN_LENGTH = 12;
-export const ACCEPTANCE_PASSWORD_MAX_LENGTH = 72;
-export const ACCEPTANCE_PASSWORD_MAX_BYTES = 72;
+export const ACCEPTANCE_PASSWORD_MIN_LENGTH = ACCOUNT_PASSWORD_MIN_LENGTH;
+export const ACCEPTANCE_PASSWORD_MAX_LENGTH = ACCOUNT_PASSWORD_MAX_LENGTH;
+export const ACCEPTANCE_PASSWORD_MAX_BYTES = ACCOUNT_PASSWORD_MAX_BYTES;
 export const PASSWORD_HASH_MAX_LENGTH = 1024;
 const invalidLookupHash = "0".repeat(64) as TokenHash;
 
@@ -62,20 +68,6 @@ async function lockSelectedAccount(
   );
 }
 
-function assertAcceptancePassword(
-  password: unknown
-): asserts password is string {
-  if (
-    typeof password !== "string" ||
-    password.length < ACCEPTANCE_PASSWORD_MIN_LENGTH ||
-    password.trim().length === 0 ||
-    password.length > ACCEPTANCE_PASSWORD_MAX_LENGTH ||
-    Buffer.byteLength(password, "utf8") > ACCEPTANCE_PASSWORD_MAX_BYTES
-  ) {
-    throw new InvalidCredentialsError();
-  }
-}
-
 function assertPasswordHash(
   passwordHash: unknown
 ): asserts passwordHash is string {
@@ -94,7 +86,7 @@ export function createInvitationAcceptanceService(
 ) {
   return {
     async accept(input: { token: string; password: string }) {
-      assertAcceptancePassword(input.password);
+      assertNewAccountPassword(input.password);
       const now = dependencies.clock.now();
       let structurallyValid = true;
       let tokenHash = invalidLookupHash;
