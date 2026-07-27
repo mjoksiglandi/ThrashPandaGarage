@@ -48,7 +48,7 @@ afterAll(async () => {
 });
 
 describe("Slice 1 account migration with PostgreSQL", () => {
-  it("has exactly the three expected successful migrations", async () => {
+  it("has exactly the four expected successful migrations", async () => {
     const migrations = await db.$queryRaw<
       Array<{
         migration_name: string;
@@ -65,6 +65,7 @@ describe("Slice 1 account migration with PostgreSQL", () => {
       "20260720233000_add_client_password",
       "20260723120000_harden_gallery_workflow",
       "20260725235807_add_account_invitation_sessions",
+      "20260726180000_add_account_password_recoveries",
     ]);
     expect(migrations.every(({ finished_at }) => finished_at !== null)).toBe(true);
     expect(migrations.every(({ rolled_back_at }) => rolled_back_at === null)).toBe(true);

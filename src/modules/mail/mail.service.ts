@@ -1,9 +1,9 @@
-import nodemailer from "nodemailer";
 import { GalleryStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { GalleryNotFoundError } from "@/modules/galleries/gallery.errors";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
+import { createMailTransport } from "./mail-transport";
 import {
   assertCanResendInvitation,
   assertCanSendInitialInvitation,
@@ -43,12 +43,7 @@ async function sendGalleryInvitation(
   operation: GalleryInvitationOperation
 ) {
   assertActorId(actorId);
-  const transport = nodemailer.createTransport({
-    host: env.SMTP_HOST,
-    port: env.SMTP_PORT,
-    secure: env.SMTP_PORT === 465,
-    auth: env.SMTP_USER && env.SMTP_PASS ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined,
-  });
+  const transport = createMailTransport();
 
   return db.$transaction(
     async (tx) => {
