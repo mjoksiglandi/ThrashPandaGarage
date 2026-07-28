@@ -10,6 +10,9 @@ const loginHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  experimental: {
+    authInterrupts: true,
+  },
   async headers() {
     return [
       {
