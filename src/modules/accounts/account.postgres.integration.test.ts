@@ -48,7 +48,7 @@ afterAll(async () => {
 });
 
 describe("Slice 1 account migration with PostgreSQL", () => {
-  it("has exactly the four expected successful migrations", async () => {
+  it("has exactly the expected successful migrations", async () => {
     const migrations = await db.$queryRaw<
       Array<{
         migration_name: string;
@@ -66,9 +66,28 @@ describe("Slice 1 account migration with PostgreSQL", () => {
       "20260723120000_harden_gallery_workflow",
       "20260725235807_add_account_invitation_sessions",
       "20260726180000_add_account_password_recoveries",
+      "20260728120000_expand_user_roles",
     ]);
     expect(migrations.every(({ finished_at }) => finished_at !== null)).toBe(true);
     expect(migrations.every(({ rolled_back_at }) => rolled_back_at === null)).toBe(true);
+  });
+
+  it("defines the official administrative roles", async () => {
+    const roles = await db.$queryRaw<Array<{ role: string }>>(Prisma.sql`
+      SELECT enumlabel AS role
+      FROM pg_enum
+      JOIN pg_type ON pg_type.oid = pg_enum.enumtypid
+      JOIN pg_namespace ON pg_namespace.oid = pg_type.typnamespace
+      WHERE pg_type.typname = 'UserRole'
+        AND pg_namespace.nspname = current_schema()
+      ORDER BY pg_enum.enumsortorder
+    `);
+
+    expect(roles.map(({ role }) => role)).toEqual([
+      "ADMIN",
+      "STAFF",
+      "CLIENT",
+    ]);
   });
 
   it("does not create an account when a client exists", async () => {

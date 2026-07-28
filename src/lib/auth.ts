@@ -1,10 +1,11 @@
 import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { signSessionValue, verifySessionValue } from "@/lib/session-token";
+import { canAccessAdministration } from "@/modules/authorization/admin-authorization-policy";
 
 const cookieName = "tpg_admin";
 
@@ -13,15 +14,6 @@ export type AuthenticatedAdmin = {
   email: string;
   role: UserRole;
 };
-
-export class ForbiddenError extends Error {
-  readonly statusCode = 403;
-
-  constructor() {
-    super("Forbidden");
-    this.name = "ForbiddenError";
-  }
-}
 
 const authenticatedAdminSelect = {
   id: true,
@@ -34,7 +26,7 @@ export async function loginAdmin(email: string, password: string) {
   if (!user?.passwordHash) return false;
 
   const ok = await bcrypt.compare(password, user.passwordHash);
-  if (!ok) return false;
+  if (!ok || !canAccessAdministration(user.role)) return false;
 
   const jar = await cookies();
   jar.set(cookieName, signSessionValue(user.id, env.AUTH_SECRET), {
@@ -64,14 +56,14 @@ async function getSessionUser(): Promise<AuthenticatedAdmin | null> {
 
 export async function getCurrentAdmin(): Promise<AuthenticatedAdmin | null> {
   const user = await getSessionUser();
-  return user?.role === UserRole.ADMIN ? user : null;
+  return user && canAccessAdministration(user.role) ? user : null;
 }
 
 export async function requireAdmin(): Promise<AuthenticatedAdmin> {
   const user = await getSessionUser();
   if (!user) redirect("/admin/login");
-  if (user.role !== UserRole.ADMIN) {
-    throw new ForbiddenError();
+  if (!canAccessAdministration(user.role)) {
+    forbidden();
   }
   return user;
 }
