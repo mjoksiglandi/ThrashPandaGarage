@@ -5,3 +5,8 @@ dist
 coverage
 *.log
 .claude/settings.local.json
+
+# Graphify local detection, cache and report output
+.graphify_*.json
+.graphify_uncached.txt
+graphify-out/
