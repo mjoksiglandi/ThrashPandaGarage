@@ -79,6 +79,8 @@ export function createAccountSessionService(
         return {
           sessionId: session.id,
           accountId: session.accountId,
+          clientId: session.account.clientId,
+          email: session.account.email,
           expiresAt: session.expiresAt,
         };
       });

@@ -58,12 +58,13 @@ describe("POST /api/account-login", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/"
+      "http://localhost:3000/portal"
     );
     expect(await response.text()).not.toContain("opaque-token-value");
     expect(setCookie).toContain(
       "tpg_account_session=opaque-token-value"
     );
+    expect(setCookie).toContain("tpg_client=");
     expect(setCookie).toContain("HttpOnly");
     expect(setCookie).toContain("Secure");
     expect(setCookie).toContain("SameSite=lax");
@@ -89,7 +90,7 @@ describe("POST /api/account-login", () => {
 
     expect(response.status).toBe(303);
     expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/"
+      "http://localhost:3000/portal"
     );
   });
 

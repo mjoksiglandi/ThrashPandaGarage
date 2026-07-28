@@ -96,11 +96,12 @@ npm run selection:export -- <gallery-id> [out.txt]
 ## Accesos
 
 - `/admin/login`: acceso administrativo con las credenciales configuradas por `db:seed`.
-- `/portal/login`: acceso de clientes mediante email y contraseña, o mediante el código/enlace privado de una galería.
+- `/login`: acceso de clientes mediante la cuenta activada y una sesión revocable.
+- `/portal/login`: redirección de compatibilidad hacia `/login`; `tpg_client` ya no autoriza acceso.
 - `/portal`: lista de galerías vigentes del cliente autenticado.
 - `/g/<accessToken>`: galería privada; los enlaces existentes siguen siendo compatibles.
 
-La contraseña inicial o una nueva contraseña de cliente se define desde **Admin > Clientes**. Se almacena únicamente como hash bcrypt y dejar el campo vacío al editar conserva la contraseña actual.
+La contraseña se define al aceptar una invitación. `Client.passwordHash` queda como dato histórico inerte hasta su migración destructiva.
 
 Comprobaciones de calidad:
 

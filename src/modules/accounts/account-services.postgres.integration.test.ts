@@ -523,6 +523,8 @@ describe("transactional account sessions with PostgreSQL", () => {
     expect(validated).toEqual({
       sessionId: created.sessionId,
       accountId: account.id,
+      clientId: account.clientId,
+      email: account.email,
       expiresAt: created.expiresAt,
     });
     expect(created).not.toHaveProperty("tokenHash");
@@ -628,6 +630,8 @@ describe("transactional account sessions with PostgreSQL", () => {
     await expect(sessions.validate(created.token)).resolves.toEqual({
       sessionId: created.sessionId,
       accountId: account.id,
+      clientId: account.clientId,
+      email: account.email,
       expiresAt: created.expiresAt,
     });
   });
