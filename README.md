@@ -136,13 +136,10 @@ Ademas del `.txt`, la seleccion de una galeria tambien se puede exportar como `.
 - No expone rutas absolutas del servidor.
 - El correo usa SMTP por variables de entorno.
 
-## Documentacion generada
+## Documentacion
 
 - `docs/architecture.md`: arquitectura mantenida por el equipo.
 - `docs/slice-1-pr1-model-and-policy.md`: modelo aditivo y politicas puras de cuentas, invitaciones y sesiones, todavia sin cutover del login legacy.
 - `docs/slice-1-pr4-invitation-acceptance.md`: ruta pública, contraseña inicial y consumo transaccional único de invitaciones.
 - `docs/slice-0-implementation-spec.md`: contrato implementable para autorización, estados y selección antes de ampliar cuentas e invitaciones.
-- `graphify-out/GRAPH_REPORT.md`: auditoria del grafo generado.
-- `graphify-out/graph.html`: visualizacion interactiva.
-- `graphify-out/graph.json`: grafo persistente para consultas y GraphRAG.
-- `graphify-out/obsidian/graph.canvas`: canvas y notas para Obsidian.
+- `docs/tooling-graphify-ponytail.md`: politica y ejecucion reproducible de las herramientas locales.

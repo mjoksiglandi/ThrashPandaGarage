@@ -22,7 +22,7 @@ La revision se concentro en codigo demostrablemente sin uso, responsabilidades m
 - Suite Vitest completa.
 - ESLint.
 - Build de produccion.
-- Regeneracion de Graphify sobre el arbol final.
+- Chequeo local de Graphify sobre el arbol final, sin versionar sus salidas.
 
 ## Fuera de alcance
 

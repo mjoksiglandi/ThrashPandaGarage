@@ -92,7 +92,7 @@ enlace explicito de cada galeria, no la identidad general del portal.
 - Elimina codigo solo cuando TypeScript, una busqueda de consumidores o Knip demuestre que no se usa.
 - No muevas reglas de negocio a componentes o rutas para ahorrar un archivo.
 - Conserva los componentes pequenos junto a su area; extrae un helper cuando separa calculo puro, infraestructura o una responsabilidad visual completa.
-- Actualiza este documento y regenera `graphify-out` cuando cambien limites, rutas o dependencias relevantes.
+- Actualiza este documento y ejecuta el chequeo local de Graphify descrito en `docs/tooling-graphify-ponytail.md` cuando cambien limites, rutas o dependencias relevantes.
 - Valida cada refactor con `npm run lint`, `npm test` y `npm run build`.
 
 ## Decisiones y compromisos
