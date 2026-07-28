@@ -11,15 +11,35 @@ import {
 import { db } from "@/lib/db";
 import { normalizeAccountEmail } from "@/modules/accounts/account-email";
 import {
+  createAccountLoginService,
+} from "@/modules/accounts/account-login.service";
+import {
   createPrismaAccountServiceStore,
 } from "@/modules/accounts/account-service.repository";
+import {
+  createAuthenticationAttemptService,
+} from "@/modules/accounts/authentication-attempt.service";
+import { InvalidCredentialsError } from "@/modules/accounts/account.errors";
 import { sha256TokenHasher } from "@/modules/accounts/secure-token";
+import {
+  ACCOUNT_SESSION_COOKIE_NAME,
+  LEGACY_CLIENT_COOKIE_NAME,
+} from "@/modules/account-sessions/account-session-cookie";
 import {
   AccountSessionRevokedError,
 } from "@/modules/account-sessions/account-session.errors";
 import {
   createAccountSessionService,
 } from "@/modules/account-sessions/account-session.service";
+import {
+  createCurrentAccountSessionService,
+} from "@/modules/account-sessions/current-account-session.service";
+import {
+  createInvitationService,
+} from "@/modules/invitations/invitation.service";
+import {
+  createPortalActorResolver,
+} from "@/modules/portal/portal-actor.service";
 import {
   createPasswordRecoveryService,
 } from "./password-recovery.service";
@@ -163,6 +183,161 @@ afterAll(async () => {
 });
 
 describe("password reset with PostgreSQL", () => {
+  it("completes invitation through reset and rejects old and legacy access", async () => {
+    sequence += 1;
+    const clock = new FixedClock(new Date("2026-07-27T11:00:00.000Z"));
+    const client = await db.client.create({
+      data: {
+        name: `${runId}_${sequence}_lifecycle`,
+        email: `${runId}_${sequence}@example.test`,
+      },
+    });
+    const account = await db.account.create({
+      data: {
+        clientId: client.id,
+        email: `${runId}_${sequence}_lifecycle@example.test`,
+        status: "INVITED",
+      },
+    });
+    const invitationToken = canonicalToken("lifecycle-invitation");
+    const recoveryToken = canonicalToken("lifecycle-recovery");
+    const sessionTokens = [
+      canonicalToken("lifecycle-session-old"),
+      canonicalToken("lifecycle-session-new"),
+    ];
+    const oldPassword = "old-password-secure";
+    const newPassword = "new-password-secure";
+    const accountStore = createPrismaAccountServiceStore(connectionA);
+    const invitations = createInvitationService({
+      store: accountStore,
+      clock,
+      tokenGenerator: { generate: () => invitationToken },
+      tokenHasher: sha256TokenHasher,
+      passwordHasher: {
+        hash: (password) => bcrypt.hash(password, 12),
+        verify: (password, passwordHash) =>
+          bcrypt.compare(password, passwordHash),
+      },
+      invitationDurationMs: 60 * 60 * 1000,
+    });
+
+    const invitation = await invitations.issue({
+      accountId: account.id,
+      createdByActorId: "lifecycle-admin",
+    });
+    await invitations.accept({
+      token: invitation.token,
+      password: oldPassword,
+    });
+
+    const authenticationAttempts = createAuthenticationAttemptService({
+      store: accountStore,
+      clock,
+      lockPolicy: {
+        failedAttemptThreshold: 5,
+        lockDurationMs: 15 * 60 * 1000,
+      },
+    });
+    const accountSessions = createAccountSessionService({
+      store: accountStore,
+      clock,
+      tokenGenerator: {
+        generate: () => sessionTokens.shift() as string,
+      },
+      tokenHasher: sha256TokenHasher,
+      sessionDurationMs: 60 * 60 * 1000,
+    });
+    const login = createAccountLoginService({
+      store: accountStore,
+      authenticationAttempts,
+      accountSessions,
+      passwordVerifier: {
+        verify: (password, passwordHash) =>
+          bcrypt.compare(password, passwordHash),
+      },
+      nonexistentAccountPasswordHash: "unused-sentinel",
+    });
+    const currentSessions = createCurrentAccountSessionService({
+      accountSessions,
+    });
+    const portalActors = createPortalActorResolver({
+      accountSessions: currentSessions,
+    });
+
+    const oldSession = await login.authenticate({
+      email: account.email,
+      password: oldPassword,
+    });
+    await expect(
+      portalActors.resolve(oldSession.token)
+    ).resolves.toMatchObject({
+      kind: "account",
+      accountId: account.id,
+      clientId: client.id,
+    });
+
+    let deliveredRecoveryToken: string | null = null;
+    const recovery = createPasswordRecoveryService({
+      store: createPrismaPasswordRecoveryStore(connectionB),
+      clock,
+      tokenGenerator: { generate: () => recoveryToken },
+      tokenHasher: sha256TokenHasher,
+      durationMs: 60 * 60 * 1000,
+      mailer: {
+        async send(input) {
+          deliveredRecoveryToken = input.token;
+        },
+      },
+      logger: { deliveryFailed: vi.fn() },
+    });
+    await recovery.request(normalizeAccountEmail(account.email));
+    expect(deliveredRecoveryToken).toBe(recoveryToken);
+
+    await resetService(resetStoreB, clock, (password) =>
+      bcrypt.hash(password, 12)
+    ).reset({
+      token: deliveredRecoveryToken,
+      password: newPassword,
+    });
+
+    await expect(currentSessions.resolve(oldSession.token)).resolves.toEqual({
+      kind: "unauthenticated",
+    });
+    const legacyOnlyCookies = new Map([
+      [LEGACY_CLIENT_COOKIE_NAME, client.id],
+    ]);
+    expect(legacyOnlyCookies.has(LEGACY_CLIENT_COOKIE_NAME)).toBe(true);
+    await expect(
+      portalActors.resolve(
+        legacyOnlyCookies.get(ACCOUNT_SESSION_COOKIE_NAME)
+      )
+    ).resolves.toEqual({ kind: "anonymous" });
+    await expect(
+      login.authenticate({
+        email: account.email,
+        password: oldPassword,
+      })
+    ).rejects.toBeInstanceOf(InvalidCredentialsError);
+
+    const newSession = await login.authenticate({
+      email: account.email,
+      password: newPassword,
+    });
+    await expect(currentSessions.resolve(newSession.token)).resolves.toEqual({
+      kind: "authenticated",
+      principal: {
+        accountId: account.id,
+        clientId: client.id,
+        email: account.email,
+      },
+    });
+    expect(
+      await db.accountSession.count({
+        where: { accountId: account.id, revokedAt: null },
+      })
+    ).toBe(1);
+  });
+
   it("uses bcrypt cost 12, replaces the old password, consumes once, and revokes sessions and alternate requests", async () => {
     const oldPassword = "old-password";
     const newPassword = "new-secure-password";
