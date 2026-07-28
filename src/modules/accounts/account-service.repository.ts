@@ -99,22 +99,7 @@ export interface AccountServiceStore {
   ): Promise<T>;
 }
 
-type LockedInvitationRow = InvitationRecord & {
-  accountEmail: string;
-  accountStatus: AccountStatusValue;
-  accountFailedLoginAttempts: number;
-  accountLockedUntil: Date | null;
-  accountLastLoginAt: Date | null;
-};
-
-type LockedSessionRow = AccountSessionRecord & {
-  accountClientId: string;
-  accountEmail: string;
-  accountStatus: AccountStatusValue;
-  accountFailedLoginAttempts: number;
-  accountLockedUntil: Date | null;
-  accountLastLoginAt: Date | null;
-};
+type SessionAccountRecord = AccountRecord & { clientId: string };
 
 function mapAccount(row: {
   id: string;
@@ -150,50 +135,26 @@ function mapAuthenticationAccount(row: {
 }
 
 function mapInvitationWithAccount(
-  row: LockedInvitationRow
+  invitation: InvitationRecord,
+  account: AccountRecord
 ): InvitationWithAccountRecord {
   return {
-    id: row.id,
-    accountId: row.accountId,
-    tokenHash: row.tokenHash,
-    expiresAt: row.expiresAt,
-    acceptedAt: row.acceptedAt,
-    revokedAt: row.revokedAt,
-    createdAt: row.createdAt,
-    account: {
-      id: row.accountId,
-      email: row.accountEmail,
-      status: row.accountStatus,
-      failedLoginAttempts: row.accountFailedLoginAttempts,
-      lockedUntil: row.accountLockedUntil,
-      lastLoginAt: row.accountLastLoginAt,
-    },
+    ...invitation,
+    account,
   };
 }
 
 function mapSessionWithAccount(
-  row: LockedSessionRow
+  session: AccountSessionRecord,
+  account: SessionAccountRecord
 ): AccountSessionWithAccountRecord {
   return {
-    id: row.id,
-    accountId: row.accountId,
-    tokenHash: row.tokenHash,
-    expiresAt: row.expiresAt,
-    revokedAt: row.revokedAt,
-    createdAt: row.createdAt,
-    account: {
-      id: row.accountId,
-      clientId: row.accountClientId,
-      email: row.accountEmail,
-      status: row.accountStatus,
-      failedLoginAttempts: row.accountFailedLoginAttempts,
-      lockedUntil: row.accountLockedUntil,
-      lastLoginAt: row.accountLastLoginAt,
-    },
+    ...session,
+    account,
   };
 }
 
-class PrismaAccountServiceTransaction implements AccountServiceTransaction {
+export class PrismaAccountServiceTransaction implements AccountServiceTransaction {
   constructor(private readonly client: Prisma.TransactionClient) {}
 
   async lockAccountById(id: string): Promise<AccountRecord | null> {
@@ -250,51 +211,85 @@ class PrismaAccountServiceTransaction implements AccountServiceTransaction {
   async lockInvitationByTokenHash(
     tokenHash: TokenHash
   ): Promise<InvitationWithAccountRecord | null> {
-    const rows = await this.client.$queryRaw<LockedInvitationRow[]>`
+    const candidate = await this.client.invitation.findUnique({
+      where: { tokenHash },
+      select: { accountId: true },
+    });
+    if (!candidate) {
+      return null;
+    }
+
+    // Global identity lock order: Account, then its child row.
+    const account = await this.lockAccountById(candidate.accountId);
+    if (!account) {
+      return null;
+    }
+
+    const invitations = await this.client.$queryRaw<InvitationRecord[]>`
       SELECT
-        invitation.id,
-        invitation."accountId",
-        invitation."tokenHash",
-        invitation."expiresAt",
-        invitation."acceptedAt",
-        invitation."revokedAt",
-        invitation."createdAt",
-        account.email AS "accountEmail",
-        account.status AS "accountStatus",
-        account."failedLoginAttempts" AS "accountFailedLoginAttempts",
-        account."lockedUntil" AS "accountLockedUntil",
-        account."lastLoginAt" AS "accountLastLoginAt"
-      FROM "Invitation" AS invitation
-      JOIN "Account" AS account ON account.id = invitation."accountId"
-      WHERE invitation."tokenHash" = ${tokenHash}
-      FOR UPDATE OF account, invitation
+        id,
+        "accountId",
+        "tokenHash",
+        "expiresAt",
+        "acceptedAt",
+        "revokedAt",
+        "createdAt"
+      FROM "Invitation"
+      WHERE "tokenHash" = ${tokenHash}
+        AND "accountId" = ${candidate.accountId}
+      FOR UPDATE
     `;
-    return rows[0] ? mapInvitationWithAccount(rows[0]) : null;
+    return invitations[0]
+      ? mapInvitationWithAccount(invitations[0], account)
+      : null;
   }
 
   async lockSessionByTokenHash(
     tokenHash: TokenHash
   ): Promise<AccountSessionWithAccountRecord | null> {
-    const rows = await this.client.$queryRaw<LockedSessionRow[]>`
+    const candidate = await this.client.accountSession.findUnique({
+      where: { tokenHash },
+      select: { accountId: true },
+    });
+    if (!candidate) {
+      return null;
+    }
+
+    // Global identity lock order: Account, then its child row.
+    const accounts = await this.client.$queryRaw<SessionAccountRecord[]>`
       SELECT
-        session.id,
-        session."accountId",
-        session."tokenHash",
-        session."expiresAt",
-        session."revokedAt",
-        session."createdAt",
-        account."clientId" AS "accountClientId",
-        account.email AS "accountEmail",
-        account.status AS "accountStatus",
-        account."failedLoginAttempts" AS "accountFailedLoginAttempts",
-        account."lockedUntil" AS "accountLockedUntil",
-        account."lastLoginAt" AS "accountLastLoginAt"
-      FROM "AccountSession" AS session
-      JOIN "Account" AS account ON account.id = session."accountId"
-      WHERE session."tokenHash" = ${tokenHash}
-      FOR UPDATE OF account, session
+        id,
+        "clientId",
+        email,
+        status,
+        "failedLoginAttempts",
+        "lockedUntil",
+        "lastLoginAt"
+      FROM "Account"
+      WHERE id = ${candidate.accountId}
+      FOR UPDATE
     `;
-    return rows[0] ? mapSessionWithAccount(rows[0]) : null;
+    const account = accounts[0];
+    if (!account) {
+      return null;
+    }
+
+    const sessions = await this.client.$queryRaw<AccountSessionRecord[]>`
+      SELECT
+        id,
+        "accountId",
+        "tokenHash",
+        "expiresAt",
+        "revokedAt",
+        "createdAt"
+      FROM "AccountSession"
+      WHERE "tokenHash" = ${tokenHash}
+        AND "accountId" = ${candidate.accountId}
+      FOR UPDATE
+    `;
+    return sessions[0]
+      ? mapSessionWithAccount(sessions[0], account)
+      : null;
   }
 
   async revokePendingInvitations(
