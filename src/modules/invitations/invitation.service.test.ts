@@ -57,6 +57,7 @@ function createFixture(hash: (password: string) => Promise<string>) {
     revokePendingInvitations: vi.fn(async () => 0),
   } as unknown as AccountServiceTransaction;
   const store: AccountServiceStore = {
+    findAuthenticationAccountByEmail: async () => null,
     transaction: (work) => work(transaction),
   };
   const passwordHasher = {
