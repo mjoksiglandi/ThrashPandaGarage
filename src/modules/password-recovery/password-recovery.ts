@@ -1,5 +1,8 @@
 import "server-only";
 
+import type {
+  NormalizedAccountEmail,
+} from "@/modules/accounts/account-email";
 import {
   cryptoTokenGenerator,
   sha256TokenHasher,
@@ -13,7 +16,6 @@ import {
 import {
   PASSWORD_RECOVERY_DURATION_MS,
   createPasswordRecoveryService,
-  parsePasswordRecoveryEmail,
 } from "./password-recovery.service";
 import {
   checkPasswordRecoveryRateLimit,
@@ -39,16 +41,20 @@ const service = createPasswordRecoveryService({
 });
 
 export async function requestAccountPasswordRecovery(input: {
-  email: unknown;
-  origin: string;
+  email: NormalizedAccountEmail;
+  origin: string | null;
 }): Promise<void> {
-  const email = parsePasswordRecoveryEmail(input.email);
-  if (!checkPasswordRecoveryRateLimit({ email, origin: input.origin })) {
+  if (
+    !checkPasswordRecoveryRateLimit({
+      email: input.email,
+      origin: input.origin,
+    })
+  ) {
     return;
   }
 
   try {
-    await service.request(email);
+    await service.request(input.email);
   } catch {
     console.error("Password recovery request failed");
   }

@@ -1,13 +1,15 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  InvalidAccountEmailError,
-} from "@/modules/accounts/account.errors";
 
 const mocks = vi.hoisted(() => ({
+  after: vi.fn(),
   requestRecovery: vi.fn(),
 }));
 
+vi.mock("next/server", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("next/server")>();
+  return { ...actual, after: mocks.after };
+});
 vi.mock("@/modules/password-recovery/password-recovery", () => ({
   requestAccountPasswordRecovery: mocks.requestRecovery,
 }));
@@ -17,6 +19,8 @@ import {
   PASSWORD_RECOVERY_PUBLIC_MESSAGE,
   POST,
 } from "./route";
+
+let afterCallbacks: Array<() => unknown> = [];
 
 function request(
   body: string,
@@ -33,11 +37,19 @@ function request(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  afterCallbacks = [];
+  mocks.after.mockImplementation((callback: () => unknown) => {
+    afterCallbacks.push(callback);
+  });
   mocks.requestRecovery.mockResolvedValue(undefined);
 });
 
+async function runAfterCallbacks() {
+  await Promise.all(afterCallbacks.map((callback) => callback()));
+}
+
 describe("POST /api/account-password-recovery", () => {
-  it("returns a generic non-cacheable response and passes the first client origin", async () => {
+  it("returns before account work and ignores untrusted forwarding headers", async () => {
     const response = await POST(
       request(JSON.stringify({ email: "Person@Example.TEST" }))
     );
@@ -54,9 +66,13 @@ describe("POST /api/account-password-recovery", () => {
       PASSWORD_RECOVERY_CACHE_CONTROL
     );
     expect(response.headers.get("referrer-policy")).toBe("no-referrer");
+    expect(mocks.requestRecovery).not.toHaveBeenCalled();
+    expect(afterCallbacks).toHaveLength(1);
+
+    await runAfterCallbacks();
     expect(mocks.requestRecovery).toHaveBeenCalledWith({
-      email: "Person@Example.TEST",
-      origin: "203.0.113.5",
+      email: "person@example.test",
+      origin: null,
     });
   });
 
@@ -67,18 +83,7 @@ describe("POST /api/account-password-recovery", () => {
       cacheControl: string | null;
       body: unknown;
     }> = [];
-    for (const outcome of [
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      new Error("SELECT tokenHash; opaque-secret"),
-    ]) {
-      if (outcome instanceof Error) {
-        mocks.requestRecovery.mockRejectedValueOnce(outcome);
-      } else {
-        mocks.requestRecovery.mockResolvedValueOnce(outcome);
-      }
+    for (let index = 0; index < 5; index += 1) {
       const response = await POST(
         request(JSON.stringify({ email: "person@example.test" }))
       );
@@ -95,18 +100,17 @@ describe("POST /api/account-password-recovery", () => {
     })).toBe(true);
     expect(JSON.stringify(responses)).not.toContain("opaque-secret");
     expect(JSON.stringify(responses)).not.toContain("tokenHash");
+    expect(mocks.requestRecovery).not.toHaveBeenCalled();
   });
 
   it("returns 400 for invalid JSON without calling the service", async () => {
     const response = await POST(request("{"));
     expect(response.status).toBe(400);
     expect(mocks.requestRecovery).not.toHaveBeenCalled();
+    expect(mocks.after).not.toHaveBeenCalled();
   });
 
   it("returns 400 for an invalid email", async () => {
-    mocks.requestRecovery.mockRejectedValueOnce(
-      new InvalidAccountEmailError()
-    );
     const response = await POST(
       request(JSON.stringify({ email: "not-an-email" }))
     );
@@ -115,6 +119,7 @@ describe("POST /api/account-password-recovery", () => {
       ok: false,
       error: "Ingresa un correo electrónico válido.",
     });
+    expect(mocks.after).not.toHaveBeenCalled();
   });
 
   it("never returns a token or recovery link", async () => {

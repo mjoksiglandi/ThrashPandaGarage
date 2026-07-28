@@ -17,7 +17,7 @@ function key(kind: "email" | "origin", value: string): string {
 // horizontally scaling the application.
 export function checkPasswordRecoveryRateLimit(input: {
   email: NormalizedAccountEmail;
-  origin: string;
+  origin: string | null;
   now?: number;
 }): boolean {
   const now = input.now ?? Date.now();
@@ -27,11 +27,13 @@ export function checkPasswordRecoveryRateLimit(input: {
     PASSWORD_RECOVERY_RATE_LIMIT.windowMs,
     now
   );
-  const originAllowed = checkRateLimit(
-    key("origin", input.origin),
-    PASSWORD_RECOVERY_RATE_LIMIT.origin,
-    PASSWORD_RECOVERY_RATE_LIMIT.windowMs,
-    now
-  );
+  const originAllowed =
+    input.origin === null ||
+    checkRateLimit(
+      key("origin", input.origin),
+      PASSWORD_RECOVERY_RATE_LIMIT.origin,
+      PASSWORD_RECOVERY_RATE_LIMIT.windowMs,
+      now
+    );
   return emailAllowed && originAllowed;
 }

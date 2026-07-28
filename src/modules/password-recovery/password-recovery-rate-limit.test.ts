@@ -75,4 +75,20 @@ describe("password recovery rate limiting", () => {
       })
     ).toBe(true);
   });
+
+  it("skips the origin dimension without a trusted proxy boundary", () => {
+    for (
+      let index = 0;
+      index <= PASSWORD_RECOVERY_RATE_LIMIT.origin;
+      index += 1
+    ) {
+      expect(
+        checkPasswordRecoveryRateLimit({
+          email: email(`untrusted-${index}`),
+          origin: null,
+          now: 0,
+        })
+      ).toBe(true);
+    }
+  });
 });
