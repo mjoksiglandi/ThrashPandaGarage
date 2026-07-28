@@ -37,10 +37,12 @@ const runId = `password_reset_${Date.now()}`;
 let sequence = 0;
 const connectionA = new PrismaClient();
 const connectionB = new PrismaClient();
+const connectionC = new PrismaClient();
 const resetStore = createPrismaPasswordResetStore();
 const resetStoreA = createPrismaPasswordResetStore(connectionA);
 const resetStoreB = createPrismaPasswordResetStore(connectionB);
 const accountStoreB = createPrismaAccountServiceStore(connectionB);
+const accountStoreC = createPrismaAccountServiceStore(connectionC);
 
 class FixedClock {
   constructor(public value: Date) {}
@@ -155,6 +157,7 @@ afterAll(async () => {
   await Promise.all([
     connectionA.$disconnect(),
     connectionB.$disconnect(),
+    connectionC.$disconnect(),
     db.$disconnect(),
   ]);
 });
@@ -435,37 +438,55 @@ describe("password reset with PostgreSQL", () => {
     }
   });
 
-  it("serializes reset against a new recovery request and leaves the old token unusable", async () => {
-    const { account } = await createAccount("request-race");
+  it("serializes reset against recovery requests over 12 independent races", async () => {
     const clock = new FixedClock(new Date("2026-07-27T17:00:00.000Z"));
-    const oldToken = canonicalToken("request-race-old");
-    const newToken = canonicalToken("request-race-new");
-    const oldRecovery = await createRecovery(
-      account.id,
-      oldToken,
-      clock.value
-    );
-    const reset = resetService(resetStoreA, clock);
-    const request = createPasswordRecoveryService({
-      store: createPrismaPasswordRecoveryStore(connectionB),
-      clock,
-      tokenGenerator: { generate: () => newToken },
-      tokenHasher: sha256TokenHasher,
-      durationMs: 60 * 60 * 1000,
-      mailer: { send: vi.fn(async () => undefined) },
-      logger: { deliveryFailed: vi.fn() },
-    });
 
-    const outcomes = await Promise.allSettled([
-      reset.reset({ token: oldToken, password: "valid-password" }),
-      request.request(normalizeAccountEmail(account.email)),
-    ]);
-    const oldState =
-      await db.accountPasswordRecovery.findUniqueOrThrow({
-        where: { id: oldRecovery.id },
+    for (let iteration = 0; iteration < 12; iteration += 1) {
+      clock.value = new Date(
+        `2026-07-27T17:${String(iteration).padStart(2, "0")}:00.000Z`
+      );
+      const { account } = await createAccount(`request-race-${iteration}`);
+      const oldToken = canonicalToken(`request-race-old-${iteration}`);
+      const newToken = canonicalToken(`request-race-new-${iteration}`);
+      const oldRecovery = await createRecovery(
+        account.id,
+        oldToken,
+        clock.value
+      );
+      const request = createPasswordRecoveryService({
+        store: createPrismaPasswordRecoveryStore(connectionB),
+        clock,
+        tokenGenerator: { generate: () => newToken },
+        tokenHasher: sha256TokenHasher,
+        durationMs: 60 * 60 * 1000,
+        mailer: { send: vi.fn(async () => undefined) },
+        logger: { deliveryFailed: vi.fn() },
       });
-    const open =
-      await db.accountPasswordRecovery.findMany({
+
+      const outcomes = await Promise.allSettled([
+        resetService(resetStoreA, clock).reset({
+          token: oldToken,
+          password: `valid-password-${iteration}`,
+        }),
+        request.request(normalizeAccountEmail(account.email)),
+      ]);
+      expect(outcomes[1].status).toBe("fulfilled");
+      if (outcomes[0].status === "rejected") {
+        expect(outcomes[0].reason).toBeInstanceOf(
+          PasswordResetUnavailableError
+        );
+      } else {
+        expect(outcomes[0].value).toMatchObject({
+          accountId: account.id,
+          recoveryId: oldRecovery.id,
+        });
+      }
+
+      const oldState =
+        await db.accountPasswordRecovery.findUniqueOrThrow({
+          where: { id: oldRecovery.id },
+        });
+      const open = await db.accountPasswordRecovery.findMany({
         where: {
           accountId: account.id,
           consumedAt: null,
@@ -474,47 +495,103 @@ describe("password reset with PostgreSQL", () => {
         },
       });
 
-    expect(
-      oldState.consumedAt !== null || oldState.revokedAt !== null
-    ).toBe(true);
-    expect(open).toHaveLength(1);
-    expect(open[0].tokenHash).toBe(sha256TokenHasher.digest(newToken));
-    expect(outcomes[1].status).toBe("fulfilled");
+      expect(
+        oldState.consumedAt !== null || oldState.revokedAt !== null
+      ).toBe(true);
+      expect(open).toHaveLength(1);
+      expect(open[0].tokenHash).toBe(
+        sha256TokenHasher.digest(newToken)
+      );
+    }
   });
 
-  it("serializes logout and session resolution against reset without reviving a session", async () => {
-    const { account } = await createAccount("session-race");
+  it("serializes reset against logout over 12 independent races", async () => {
     const clock = new FixedClock(new Date("2026-07-27T18:00:00.000Z"));
-    const resetToken = canonicalToken("session-race-reset");
-    const sessionToken = canonicalToken("session-race-session");
-    await createRecovery(account.id, resetToken, clock.value);
-    await createSession(account.id, sessionToken, clock.value);
-    const sessions = createAccountSessionService({
+    const logoutSessions = createAccountSessionService({
       store: accountStoreB,
       clock,
-      tokenGenerator: { generate: () => canonicalToken("unused") },
+      tokenGenerator: { generate: () => canonicalToken("unused-b") },
       tokenHasher: sha256TokenHasher,
       sessionDurationMs: 60 * 60 * 1000,
     });
 
-    const logoutRace = await Promise.allSettled([
-      resetService(resetStoreA, clock).reset({
-        token: resetToken,
-        password: "valid-password",
-      }),
-      sessions.revoke(sessionToken),
-      sessions.validate(sessionToken),
-    ]);
+    for (let iteration = 0; iteration < 12; iteration += 1) {
+      clock.value = new Date(
+        `2026-07-27T18:${String(iteration).padStart(2, "0")}:00.000Z`
+      );
+      const { account } = await createAccount(`session-race-${iteration}`);
+      const resetToken = canonicalToken(`session-reset-${iteration}`);
+      const sessionToken = canonicalToken(`session-token-${iteration}`);
+      await createRecovery(account.id, resetToken, clock.value);
+      await createSession(account.id, sessionToken, clock.value);
 
-    expect(logoutRace[0].status).toBe("fulfilled");
-    expect(logoutRace[1].status).toBe("fulfilled");
-    await expect(sessions.validate(sessionToken)).rejects.toBeInstanceOf(
-      AccountSessionRevokedError
-    );
-    expect(
-      await db.accountSession.count({
-        where: { accountId: account.id, revokedAt: null },
-      })
-    ).toBe(0);
+      const outcomes = await Promise.allSettled([
+        resetService(resetStoreA, clock).reset({
+          token: resetToken,
+          password: `valid-password-${iteration}`,
+        }),
+        logoutSessions.revoke(sessionToken),
+      ]);
+
+      expect(outcomes[0].status).toBe("fulfilled");
+      expect(outcomes[1].status).toBe("fulfilled");
+      await expect(
+        logoutSessions.validate(sessionToken)
+      ).rejects.toBeInstanceOf(AccountSessionRevokedError);
+      expect(
+        await db.accountSession.count({
+          where: { accountId: account.id, revokedAt: null },
+        })
+      ).toBe(0);
+    }
+  });
+
+  it("serializes reset against session resolution over 12 independent races", async () => {
+    const clock = new FixedClock(new Date("2026-07-27T19:00:00.000Z"));
+    const resolvingSessions = createAccountSessionService({
+      store: accountStoreC,
+      clock,
+      tokenGenerator: { generate: () => canonicalToken("unused-c") },
+      tokenHasher: sha256TokenHasher,
+      sessionDurationMs: 60 * 60 * 1000,
+    });
+
+    for (let iteration = 0; iteration < 12; iteration += 1) {
+      clock.value = new Date(
+        `2026-07-27T19:${String(iteration).padStart(2, "0")}:00.000Z`
+      );
+      const { account } = await createAccount(
+        `resolution-race-${iteration}`
+      );
+      const resetToken = canonicalToken(`resolution-reset-${iteration}`);
+      const sessionToken = canonicalToken(
+        `resolution-session-${iteration}`
+      );
+      await createRecovery(account.id, resetToken, clock.value);
+      await createSession(account.id, sessionToken, clock.value);
+
+      const outcomes = await Promise.allSettled([
+        resetService(resetStoreA, clock).reset({
+          token: resetToken,
+          password: `valid-password-${iteration}`,
+        }),
+        resolvingSessions.validate(sessionToken),
+      ]);
+
+      expect(outcomes[0].status).toBe("fulfilled");
+      if (outcomes[1].status === "rejected") {
+        expect(outcomes[1].reason).toBeInstanceOf(
+          AccountSessionRevokedError
+        );
+      }
+      await expect(
+        resolvingSessions.validate(sessionToken)
+      ).rejects.toBeInstanceOf(AccountSessionRevokedError);
+      expect(
+        await db.accountSession.count({
+          where: { accountId: account.id, revokedAt: null },
+        })
+      ).toBe(0);
+    }
   });
 });

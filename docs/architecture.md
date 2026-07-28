@@ -58,6 +58,13 @@ expirada o perteneciente a una cuenta inactiva no puede recuperar acceso
 mediante `Client.passwordHash` ni `tpg_client`. La cookie legacy se ignora y se
 expira defensivamente durante login y logout.
 
+Las transacciones de identidad siguen un orden global de locks:
+`Account` primero y luego `Invitation`, `AccountPasswordRecovery` o
+`AccountSession`. Los lookups por token previos al lock son solo candidatos y
+el registro hijo se vuelve a leer y validar bajo lock. El reset cambia la
+contrasena, consume el recovery y revoca sesiones y recoveries alternativos en
+la misma transaccion.
+
 `Client.passwordHash` permanece solo como dato historico inerte hasta una
 migracion destructiva separada. `Gallery.accessToken` sigue autorizando el
 enlace explicito de cada galeria, no la identidad general del portal.

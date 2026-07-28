@@ -16,6 +16,7 @@ import {
   InvitationAccountStatusError,
   InvalidPasswordHashError,
   InvitationAlreadyAcceptedError,
+  InvitationRevokedError,
   PasswordHashingError,
 } from "@/modules/invitations/invitation.errors";
 import {
@@ -23,6 +24,7 @@ import {
   AccountSessionRevokedError,
 } from "@/modules/account-sessions/account-session.errors";
 import {
+  AccountInvitationNotAllowedError,
   AccountLockedError,
   InvalidCredentialsError,
 } from "./account.errors";
@@ -336,6 +338,60 @@ describe("transactional invitation services with PostgreSQL", () => {
       "fake-hash:password-a-secure",
       "fake-hash:password-b-secure",
     ]).toContain(activatedAccount.passwordHash);
+  });
+
+  it("serializes invitation acceptance against issuance over 12 races", async () => {
+    const clock = new FixedClock(new Date("2026-07-25T15:15:00.000Z"));
+
+    for (let iteration = 0; iteration < 12; iteration += 1) {
+      clock.value = new Date(
+        `2026-07-25T15:${String(15 + iteration).padStart(2, "0")}:00.000Z`
+      );
+      const { account } = await createInvitedAccount(
+        `accept_issue_race_${iteration}`
+      );
+      const initial = invitationService(
+        primaryStore,
+        clock,
+        `initial-race-token-${iteration}`
+      );
+      const issued = await initial.issue({
+        accountId: account.id,
+        createdByActorId: "admin-initial",
+      });
+      const accepter = invitationService(
+        storeA,
+        clock,
+        `unused-race-token-${iteration}`
+      );
+      const issuer = invitationService(
+        storeB,
+        clock,
+        `replacement-race-token-${iteration}`
+      );
+
+      const outcomes = await Promise.allSettled([
+        accepter.accept({
+          token: issued.token,
+          password: `password-secure-${iteration}`,
+        }),
+        issuer.issue({
+          accountId: account.id,
+          createdByActorId: "admin-racing",
+        }),
+      ]);
+
+      expect(
+        outcomes.filter((outcome) => outcome.status === "fulfilled")
+      ).toHaveLength(1);
+      const rejected = outcomes.find(
+        (outcome) => outcome.status === "rejected"
+      ) as PromiseRejectedResult;
+      expect(
+        rejected.reason instanceof InvitationRevokedError ||
+          rejected.reason instanceof AccountInvitationNotAllowedError
+      ).toBe(true);
+    }
   });
 
   it("does not overwrite the password of an already active account", async () => {

@@ -143,47 +143,42 @@ class PrismaPasswordResetTransaction
   async lockRequestByTokenHash(
     tokenHash: TokenHash
   ): Promise<PasswordResetRecord | null> {
-    const rows = await this.resetClient.$queryRaw<
-      Array<
-        PasswordRecoveryRecord & {
-          accountEmail: string;
-          accountPasswordHash: string | null;
-          accountStatus: AccountStatusValue;
-        }
-      >
-    >`
-      SELECT
-        recovery.id,
-        recovery."accountId",
-        recovery."tokenHash",
-        recovery."expiresAt",
-        recovery."consumedAt",
-        recovery."revokedAt",
-        recovery."createdAt",
-        account.email AS "accountEmail",
-        account."passwordHash" AS "accountPasswordHash",
-        account.status AS "accountStatus"
-      FROM "AccountPasswordRecovery" AS recovery
-      JOIN "Account" AS account ON account.id = recovery."accountId"
-      WHERE recovery."tokenHash" = ${tokenHash}
-      FOR UPDATE OF account, recovery
-    `;
-    const row = rows[0];
-    return row
+    const candidate =
+      await this.resetClient.accountPasswordRecovery.findUnique({
+        where: { tokenHash },
+        select: { accountId: true },
+      });
+    if (!candidate) {
+      return null;
+    }
+
+    // Global identity lock order: Account, then its child row.
+    const account = await this.lockAuthenticationAccountById(
+      candidate.accountId
+    );
+    if (!account) {
+      return null;
+    }
+
+    const recoveries =
+      await this.resetClient.$queryRaw<PasswordRecoveryRecord[]>`
+        SELECT
+          id,
+          "accountId",
+          "tokenHash",
+          "expiresAt",
+          "consumedAt",
+          "revokedAt",
+          "createdAt"
+        FROM "AccountPasswordRecovery"
+        WHERE "tokenHash" = ${tokenHash}
+          AND "accountId" = ${candidate.accountId}
+        FOR UPDATE
+      `;
+    return recoveries[0]
       ? {
-          id: row.id,
-          accountId: row.accountId,
-          tokenHash: row.tokenHash,
-          expiresAt: row.expiresAt,
-          consumedAt: row.consumedAt,
-          revokedAt: row.revokedAt,
-          createdAt: row.createdAt,
-          account: {
-            id: row.accountId,
-            email: row.accountEmail,
-            passwordHash: row.accountPasswordHash,
-            status: row.accountStatus,
-          },
+          ...recoveries[0],
+          account,
         }
       : null;
   }
