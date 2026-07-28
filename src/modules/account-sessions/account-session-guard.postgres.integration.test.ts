@@ -1,4 +1,4 @@
-import { AccountStatus, GalleryStatus, PrismaClient } from "@prisma/client";
+import { AccountStatus, PrismaClient } from "@prisma/client";
 import { createHash } from "node:crypto";
 import {
   afterAll,
@@ -8,9 +8,6 @@ import {
   it,
 } from "vitest";
 import { db } from "@/lib/db";
-import { resolveLegacyClientId } from "@/lib/client-auth";
-import { env } from "@/lib/env";
-import { signSessionValue } from "@/lib/session-token";
 import {
   createPrismaAccountServiceStore,
   type AccountServiceStore,
@@ -21,10 +18,6 @@ import {
 import {
   createPortalActorResolver,
 } from "@/modules/portal/portal-actor.service";
-import {
-  confirmSelection,
-  updateSelectionFromClient,
-} from "@/modules/selections/selection.service";
 import {
   createAccountSessionService,
 } from "./account-session.service";
@@ -106,14 +99,7 @@ async function persistSession(input: {
 function portalActors(store: AccountServiceStore = primaryStore) {
   return createPortalActorResolver({
     accountSessions: currentSessions(store),
-    legacySessions: {
-      resolveClientId: resolveLegacyClientId,
-    },
   });
-}
-
-function legacyCookie(clientId: string) {
-  return signSessionValue(clientId, env.AUTH_SECRET);
 }
 
 afterEach(async () => {
@@ -296,20 +282,16 @@ describe("account logout and concurrency with PostgreSQL", () => {
   });
 });
 
-describe("portal actor cutover and legacy compatibility with PostgreSQL", () => {
-  it("uses the account-linked client and ignores a different legacy client", async () => {
+describe("account-only portal actor with PostgreSQL", () => {
+  it("uses the client linked to the account session", async () => {
     const linked = await createClientAccount("linked");
-    const legacy = await createClientAccount("different_legacy");
     const { token } = await persistSession({
       accountId: linked.account.id,
       label: "linked",
     });
 
     await expect(
-      portalActors().resolve({
-        accountSessionCookie: token,
-        legacyClientCookie: legacyCookie(legacy.client.id),
-      })
+      portalActors().resolve(token)
     ).resolves.toEqual({
       kind: "account",
       accountId: linked.account.id,
@@ -318,9 +300,8 @@ describe("portal actor cutover and legacy compatibility with PostgreSQL", () => 
     });
   });
 
-  it("blocks a different legacy identity after account-session revocation", async () => {
+  it("returns anonymous after account-session revocation", async () => {
     const accountOwner = await createClientAccount("revoked_owner");
-    const legacy = await createClientAccount("revoked_legacy");
     const { token } = await persistSession({
       accountId: accountOwner.account.id,
       label: "revoked_cutover",
@@ -328,16 +309,12 @@ describe("portal actor cutover and legacy compatibility with PostgreSQL", () => 
     });
 
     await expect(
-      portalActors().resolve({
-        accountSessionCookie: token,
-        legacyClientCookie: legacyCookie(legacy.client.id),
-      })
+      portalActors().resolve(token)
     ).resolves.toEqual({ kind: "anonymous" });
   });
 
-  it("blocks a different legacy identity after account-session expiry", async () => {
+  it("returns anonymous after account-session expiry", async () => {
     const accountOwner = await createClientAccount("expired_owner");
-    const legacy = await createClientAccount("expired_legacy");
     const { token } = await persistSession({
       accountId: accountOwner.account.id,
       label: "expired_cutover",
@@ -345,138 +322,28 @@ describe("portal actor cutover and legacy compatibility with PostgreSQL", () => 
     });
 
     await expect(
-      portalActors().resolve({
-        accountSessionCookie: token,
-        legacyClientCookie: legacyCookie(legacy.client.id),
-      })
+      portalActors().resolve(token)
     ).resolves.toEqual({ kind: "anonymous" });
   });
 
-  it("blocks a different legacy identity for an inactive account", async () => {
+  it("returns anonymous for an inactive account", async () => {
     const accountOwner = await createClientAccount(
       "inactive_owner",
       AccountStatus.DISABLED
     );
-    const legacy = await createClientAccount("inactive_legacy");
     const { token } = await persistSession({
       accountId: accountOwner.account.id,
       label: "inactive_cutover",
     });
 
     await expect(
-      portalActors().resolve({
-        accountSessionCookie: token,
-        legacyClientCookie: legacyCookie(legacy.client.id),
-      })
+      portalActors().resolve(token)
     ).resolves.toEqual({ kind: "anonymous" });
   });
 
-  it("does not derive legacy access from a revoked account session", async () => {
-    const accountOwner = await createClientAccount(
-      "revoked_without_legacy"
-    );
-    const { token } = await persistSession({
-      accountId: accountOwner.account.id,
-      label: "revoked_without_legacy",
-      revokedAt: new Date(now.getTime() - 1),
+  it("returns anonymous without an account session", async () => {
+    await expect(portalActors().resolve(undefined)).resolves.toEqual({
+      kind: "anonymous",
     });
-
-    await expect(
-      portalActors().resolve({
-        accountSessionCookie: token,
-      })
-    ).resolves.toEqual({ kind: "anonymous" });
-  });
-
-  it("preserves the existing legacy proofing and confirmation flow without an account cookie", async () => {
-    sequence += 1;
-    const client = await db.client.create({
-      data: {
-        name: `${runId}_${sequence}_legacy_flow`,
-        email: `${runId}_${sequence}@example.test`,
-      },
-    });
-    const gallery = await db.gallery.create({
-      data: {
-        clientId: client.id,
-        title: "Legacy proofing",
-        slug: `${runId}-${sequence}`,
-        accessToken: `${runId}_${sequence}_gallery`,
-        status: GalleryStatus.PROOFING,
-        selectionLimit: 1,
-        photos: {
-          create: {
-            filename: "legacy.jpg",
-            baseName: "legacy",
-            thumbPath: "legacy/thumb.webp",
-          },
-        },
-      },
-      include: { photos: true },
-    });
-
-    await expect(
-      portalActors().resolve({
-        legacyClientCookie: legacyCookie(client.id),
-      })
-    ).resolves.toEqual({
-      kind: "legacy",
-      clientId: client.id,
-    });
-    await updateSelectionFromClient(gallery.accessToken, {
-      photoId: gallery.photos[0].id,
-      selected: true,
-      comment: "legacy selection",
-    });
-    await expect(
-      confirmSelection(gallery.accessToken)
-    ).resolves.toMatchObject({
-      galleryId: gallery.id,
-      status: "confirmed",
-      selectedCount: 1,
-    });
-    expect(
-      await db.gallery.findUniqueOrThrow({
-        where: { id: gallery.id },
-      })
-    ).toMatchObject({
-      status: GalleryStatus.SELECTION_CONFIRMED,
-      selectionConfirmedAt: expect.any(Date),
-    });
-  });
-
-  it("never exposes another client's galleries through legacy fallback", async () => {
-    const linked = await createClientAccount("isolated_link");
-    const other = await createClientAccount("isolated_other");
-    const { token } = await persistSession({
-      accountId: linked.account.id,
-      label: "isolated_link",
-    });
-    await db.gallery.create({
-      data: {
-        clientId: other.client.id,
-        title: "Other gallery",
-        slug: `${runId}-other-${sequence}`,
-        accessToken: `${runId}_other_${sequence}`,
-        status: GalleryStatus.PROOFING,
-      },
-    });
-
-    const actor = await portalActors().resolve({
-      accountSessionCookie: token,
-      legacyClientCookie: legacyCookie(other.client.id),
-    });
-    expect(actor).toMatchObject({
-      kind: "account",
-      clientId: linked.client.id,
-    });
-    if (actor.kind !== "account") {
-      throw new Error("Expected an account portal actor");
-    }
-    expect(
-      await db.gallery.count({
-        where: { clientId: actor.clientId },
-      })
-    ).toBe(0);
   });
 });

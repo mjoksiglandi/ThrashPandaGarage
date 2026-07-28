@@ -5,7 +5,6 @@ export const clientSchema = z.object({
   email: z.string().trim().email().optional().or(z.literal("")),
   phone: z.string().trim().optional(),
   notes: z.string().trim().optional(),
-  password: z.string().min(8).optional().or(z.literal("")),
 });
 
 export const gallerySchema = z.object({

@@ -26,7 +26,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
       <form action={update} className="mt-6 grid max-w-xl gap-4">
         <FormField label="Nombre"><input name="name" defaultValue={client.name} required /></FormField>
         <FormField label="Email"><input name="email" type="email" defaultValue={client.email ?? ""} /></FormField>
-        <FormField label="Nueva contraseña del portal"><input name="password" type="password" minLength={8} autoComplete="new-password" placeholder="Dejar vacío para conservarla" /></FormField>
         <FormField label="Telefono"><input name="phone" defaultValue={client.phone ?? ""} /></FormField>
         <FormField label="Notas"><textarea name="notes" rows={4} defaultValue={client.notes ?? ""} /></FormField>
         <button type="submit">Guardar</button>

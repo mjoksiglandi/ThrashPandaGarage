@@ -45,16 +45,22 @@ La direccion de dependencia esperada es `app/components -> modules -> repositori
 
 El seed consume `ADMIN_EMAIL` y `ADMIN_PASSWORD` solo desde el entorno. La base de datos conserva un hash, no una contrasena recuperable.
 
-### Cuentas de cliente en preparacion
+### Cuentas de cliente
 
 El modelo aditivo de Slice 1 separa la identidad comercial `Client` de la
 identidad de acceso `Account`, junto con `Invitation` y `AccountSession`. Sus
 reglas puras estan documentadas en
 [`slice-1-pr1-model-and-policy.md`](slice-1-pr1-model-and-policy.md).
 
-Estos modelos todavia no tienen callers productivos. El login de clientes sigue
-leyendo `Client.passwordHash` y las galerias continuan autorizandose mediante
-`Gallery.accessToken` hasta los PRs de migracion, sesiones y acceso por cuenta.
+El portal acepta exclusivamente `AccountSession`. `/login` valida `Account`,
+emite `tpg_account_session` y redirige a `/portal`; una sesion revocada,
+expirada o perteneciente a una cuenta inactiva no puede recuperar acceso
+mediante `Client.passwordHash` ni `tpg_client`. La cookie legacy se ignora y se
+expira defensivamente durante login y logout.
+
+`Client.passwordHash` permanece solo como dato historico inerte hasta una
+migracion destructiva separada. `Gallery.accessToken` sigue autorizando el
+enlace explicito de cada galeria, no la identidad general del portal.
 
 ### Galeria privada
 
