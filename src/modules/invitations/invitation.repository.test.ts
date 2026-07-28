@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { InvalidTokenHashError, type TokenHash } from "@/lib/token-hash";
 
 const mocks = vi.hoisted(() => ({
@@ -17,7 +17,31 @@ vi.mock("@/lib/db", () => ({
 
 import { invitationRepository } from "./invitation.repository";
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("invitationRepository token boundary", () => {
+  it("queries only the fields needed by the public availability check", () => {
+    const tokenHash = "a".repeat(64) as TokenHash;
+
+    invitationRepository.findByTokenHash(tokenHash);
+
+    expect(mocks.findUnique).toHaveBeenCalledWith({
+      where: { tokenHash },
+      select: {
+        acceptedAt: true,
+        revokedAt: true,
+        expiresAt: true,
+        account: {
+          select: {
+            status: true,
+          },
+        },
+      },
+    });
+  });
+
   it("rejects a plain token before querying", () => {
     expect(() =>
       invitationRepository.findByTokenHash(
