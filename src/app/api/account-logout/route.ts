@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
-import { LEGACY_CLIENT_COOKIE_NAME } from "@/lib/client-auth";
 import {
   ACCOUNT_SESSION_CACHE_CONTROL,
   ACCOUNT_SESSION_TEMPORARY_MESSAGE,
@@ -8,6 +7,7 @@ import {
 import {
   ACCOUNT_SESSION_COOKIE_NAME,
   clearedAccountSessionCookie,
+  clearedLegacyClientCookie,
 } from "@/modules/account-sessions/account-session-cookie";
 import {
   logoutAccountSessionToken,
@@ -26,14 +26,12 @@ function applyPrivateAuthHeaders(response: NextResponse) {
 function clearSessionCookie(response: NextResponse) {
   const cookie = clearedAccountSessionCookie();
   response.cookies.set(cookie.name, cookie.value, cookie.options);
-  response.cookies.set(LEGACY_CLIENT_COOKIE_NAME, "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    expires: new Date(0),
-    maxAge: 0,
-  });
+  const legacyCookie = clearedLegacyClientCookie();
+  response.cookies.set(
+    legacyCookie.name,
+    legacyCookie.value,
+    legacyCookie.options
+  );
   return response;
 }
 

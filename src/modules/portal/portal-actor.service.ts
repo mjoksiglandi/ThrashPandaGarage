@@ -3,7 +3,7 @@ import type {
   CurrentAccountSessionService,
 } from "@/modules/account-sessions/current-account-session.service";
 
-export type PortalActor =
+type PortalActor =
   | {
       kind: "account";
       accountId: string;
@@ -11,18 +11,11 @@ export type PortalActor =
       email: string;
     }
   | {
-      kind: "legacy";
-      clientId: string;
-    }
-  | {
       kind: "anonymous";
     };
 
 type PortalActorResolverDependencies = {
   accountSessions: Pick<CurrentAccountSessionService, "resolve">;
-  legacySessions: {
-    resolveClientId(cookie: string): Promise<string | null>;
-  };
 };
 
 function accountActor(
@@ -40,34 +33,17 @@ export function createPortalActorResolver(
   dependencies: PortalActorResolverDependencies
 ) {
   return {
-    async resolve(input: {
-      accountSessionCookie?: string;
-      legacyClientCookie?: string;
-    }): Promise<PortalActor> {
-      if (input.accountSessionCookie !== undefined) {
-        const accountSession = await dependencies.accountSessions.resolve(
-          input.accountSessionCookie
-        );
-        if (accountSession.kind === "authenticated") {
-          return accountActor(accountSession);
-        }
-        return { kind: "anonymous" };
-      }
-
-      if (input.legacyClientCookie !== undefined) {
-        const clientId = await dependencies.legacySessions.resolveClientId(
-          input.legacyClientCookie
-        );
-        if (clientId) {
-          return { kind: "legacy", clientId };
-        }
+    async resolve(
+      accountSessionCookie: string | undefined
+    ): Promise<PortalActor> {
+      const accountSession = await dependencies.accountSessions.resolve(
+        accountSessionCookie
+      );
+      if (accountSession.kind === "authenticated") {
+        return accountActor(accountSession);
       }
 
       return { kind: "anonymous" };
     },
   };
 }
-
-export type PortalActorResolver = ReturnType<
-  typeof createPortalActorResolver
->;

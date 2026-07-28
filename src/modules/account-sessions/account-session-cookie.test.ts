@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   ACCOUNT_SESSION_COOKIE_NAME,
+  LEGACY_CLIENT_COOKIE_NAME,
   accountSessionCookie,
   clearedAccountSessionCookie,
+  clearedLegacyClientCookie,
 } from "./account-session-cookie";
 
 const now = new Date("2026-07-26T12:00:00.000Z");
@@ -74,6 +76,21 @@ describe("account session cookie policy", () => {
       path: "/",
       expires: new Date(0),
       maxAge: 0,
+    });
+  });
+
+  it("expires the legacy client cookie without authenticating it", () => {
+    expect(clearedLegacyClientCookie({ secure: true })).toEqual({
+      name: LEGACY_CLIENT_COOKIE_NAME,
+      value: "",
+      options: {
+        httpOnly: true,
+        secure: true,
+        sameSite: "lax",
+        path: "/",
+        expires: new Date(0),
+        maxAge: 0,
+      },
     });
   });
 });

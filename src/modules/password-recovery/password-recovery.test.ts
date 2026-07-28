@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  InvalidAccountEmailError,
-} from "@/modules/accounts/account.errors";
+import { normalizeAccountEmail } from "@/modules/accounts/account-email";
 
 const mocks = vi.hoisted(() => ({
-  parseEmail: vi.fn(),
   checkRateLimit: vi.fn(),
   serviceRequest: vi.fn(),
 }));
@@ -25,7 +22,6 @@ vi.mock("./password-recovery.service", () => ({
   createPasswordRecoveryService: vi.fn(() => ({
     request: mocks.serviceRequest,
   })),
-  parsePasswordRecoveryEmail: mocks.parseEmail,
 }));
 vi.mock("./password-recovery-rate-limit", () => ({
   checkPasswordRecoveryRateLimit: mocks.checkRateLimit,
@@ -35,7 +31,6 @@ import { requestAccountPasswordRecovery } from "./password-recovery";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mocks.parseEmail.mockReturnValue("person@example.test");
   mocks.checkRateLimit.mockReturnValue(true);
   mocks.serviceRequest.mockResolvedValue(undefined);
 });
@@ -43,31 +38,31 @@ beforeEach(() => {
 describe("requestAccountPasswordRecovery", () => {
   it("applies both rate limits before any account lookup", async () => {
     mocks.checkRateLimit.mockReturnValueOnce(false);
+    const email = normalizeAccountEmail("unknown@example.test");
 
     await requestAccountPasswordRecovery({
-      email: "unknown@example.test",
+      email,
       origin: "203.0.113.5",
     });
 
     expect(mocks.checkRateLimit).toHaveBeenCalledWith({
-      email: "person@example.test",
+      email,
       origin: "203.0.113.5",
     });
     expect(mocks.serviceRequest).not.toHaveBeenCalled();
   });
 
-  it("passes the canonical email to the service after rate limiting", async () => {
+  it("passes the normalized email to the service after rate limiting", async () => {
+    const email = normalizeAccountEmail("person@example.test");
     await requestAccountPasswordRecovery({
-      email: " Person@Example.TEST ",
+      email,
       origin: "203.0.113.5",
     });
 
     expect(mocks.checkRateLimit.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.serviceRequest.mock.invocationCallOrder[0]
     );
-    expect(mocks.serviceRequest).toHaveBeenCalledWith(
-      "person@example.test"
-    );
+    expect(mocks.serviceRequest).toHaveBeenCalledWith(email);
   });
 
   it("sanitizes internal failures", async () => {
@@ -79,7 +74,7 @@ describe("requestAccountPasswordRecovery", () => {
     );
 
     await requestAccountPasswordRecovery({
-      email: "person@example.test",
+      email: normalizeAccountEmail("person@example.test"),
       origin: "203.0.113.5",
     });
 
@@ -93,19 +88,5 @@ describe("requestAccountPasswordRecovery", () => {
       "person@example.test"
     );
     consoleError.mockRestore();
-  });
-
-  it("lets validation errors reach the route without consuming rate limit", async () => {
-    mocks.parseEmail.mockImplementationOnce(() => {
-      throw new InvalidAccountEmailError();
-    });
-
-    await expect(
-      requestAccountPasswordRecovery({
-        email: "invalid",
-        origin: "203.0.113.5",
-      })
-    ).rejects.toBeInstanceOf(InvalidAccountEmailError);
-    expect(mocks.checkRateLimit).not.toHaveBeenCalled();
   });
 });

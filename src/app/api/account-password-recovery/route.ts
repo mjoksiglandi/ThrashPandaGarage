@@ -1,8 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
+import { resolveTrustedClientIp } from "@/lib/client-origin";
+import { env } from "@/lib/env";
 import { InvalidAccountEmailError } from "@/modules/accounts/account.errors";
 import {
   requestAccountPasswordRecovery,
 } from "@/modules/password-recovery/password-recovery";
+import {
+  parsePasswordRecoveryEmail,
+} from "@/modules/password-recovery/password-recovery.service";
 
 export const PASSWORD_RECOVERY_PUBLIC_MESSAGE =
   "Si existe una cuenta asociada a ese correo, enviaremos instrucciones para recuperar el acceso.";
@@ -24,14 +29,6 @@ function response(
   });
 }
 
-function clientOrigin(request: NextRequest): string {
-  return (
-    request.headers.get("cf-connecting-ip") ??
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown"
-  );
-}
-
 export async function POST(request: NextRequest) {
   let body: unknown;
   try {
@@ -44,13 +41,18 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    await requestAccountPasswordRecovery({
-      email:
-        typeof body === "object" && body !== null && "email" in body
-          ? body.email
-          : undefined,
-      origin: clientOrigin(request),
-    });
+    const email = parsePasswordRecoveryEmail(
+      typeof body === "object" && body !== null && "email" in body
+        ? body.email
+        : undefined
+    );
+    const origin = resolveTrustedClientIp(
+      request.headers,
+      env.TRUSTED_CLIENT_IP_HEADER
+    );
+    after(() =>
+      requestAccountPasswordRecovery({ email, origin })
+    );
   } catch (error) {
     if (error instanceof InvalidAccountEmailError) {
       return response(
