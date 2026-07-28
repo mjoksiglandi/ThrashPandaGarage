@@ -68,19 +68,20 @@ model Client {
 }
 
 model Account {
-  id                  String           @id @default(cuid())
-  clientId            String           @unique
-  client              Client           @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  email               String           @unique
+  id                  String                    @id @default(cuid())
+  clientId            String                    @unique
+  client              Client                    @relation(fields: [clientId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  email               String                    @unique
   passwordHash        String?
-  status              AccountStatus    @default(INVITED)
-  failedLoginAttempts Int              @default(0)
+  status              AccountStatus             @default(INVITED)
+  failedLoginAttempts Int                       @default(0)
   lockedUntil         DateTime?
   lastLoginAt         DateTime?
   invitations         Invitation[]
   sessions            AccountSession[]
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  passwordRecoveries  AccountPasswordRecovery[]
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
 }
 
 model Invitation {
@@ -107,6 +108,20 @@ model AccountSession {
   createdAt DateTime  @default(now())
 
   @@index([accountId, expiresAt])
+}
+
+model AccountPasswordRecovery {
+  id         String    @id @default(cuid())
+  accountId  String
+  account    Account   @relation(fields: [accountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  consumedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([accountId, createdAt])
+  @@index([expiresAt])
 }
 
 model Gallery {

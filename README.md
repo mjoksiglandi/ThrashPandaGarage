@@ -28,6 +28,11 @@ Trashpanda Garage es un monolito modular: Next.js contiene las rutas y la compos
 npm install
 ```
 
+`TRUSTED_CLIENT_IP_HEADER` permanece en `none` salvo que el origen de la
+aplicación acepte tráfico exclusivamente desde un proxy que sobrescriba
+`cf-connecting-ip` o `x-forwarded-for`. Sin esa frontera, los headers enviados
+por el cliente se ignoran.
+
 5. Crea el esquema y el admin:
 
 ```bash

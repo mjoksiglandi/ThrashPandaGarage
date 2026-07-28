@@ -1,19 +1,13 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { loginAdmin } from "@/lib/auth";
+import { resolveTrustedClientIp } from "@/lib/client-origin";
+import { env } from "@/lib/env";
 import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
 import { LoginStage } from "@/components/auth/LoginStage";
 
 const LOGIN_RATE_LIMIT = 5;
 const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
-
-function resolveClientIp(headerList: Headers) {
-  return (
-    headerList.get("cf-connecting-ip") ??
-    headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    "unknown"
-  );
-}
 
 export default async function LoginPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const { error } = await searchParams;
@@ -21,7 +15,12 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   async function login(formData: FormData) {
     "use server";
     const headerList = await headers();
-    const rateLimitKey = `login:${resolveClientIp(headerList)}`;
+    const clientIp =
+      resolveTrustedClientIp(
+        headerList,
+        env.TRUSTED_CLIENT_IP_HEADER
+      ) ?? "untrusted";
+    const rateLimitKey = `login:${clientIp}`;
 
     if (!checkRateLimit(rateLimitKey, LOGIN_RATE_LIMIT, LOGIN_RATE_WINDOW_MS)) {
       redirect("/admin/login?error=rate_limit");
