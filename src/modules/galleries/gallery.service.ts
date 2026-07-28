@@ -31,8 +31,14 @@ const GALLERY_METADATA_FIELDS = [
   "deliveryDriveUrl",
 ] as const;
 
-export function isGalleryAccessible(gallery: { status: GalleryStatus; expiresAt: Date | null }): boolean {
-  return gallery.status !== GalleryStatus.ARCHIVED && (!gallery.expiresAt || gallery.expiresAt > new Date());
+export function isGalleryAccessible(
+  gallery: { status: GalleryStatus; expiresAt: Date | null },
+  now: Date
+): boolean {
+  return (
+    gallery.status !== GalleryStatus.ARCHIVED &&
+    (!gallery.expiresAt || gallery.expiresAt > now)
+  );
 }
 
 export function assertReadyForDeliveryAllowed(data: {

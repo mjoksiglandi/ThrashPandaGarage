@@ -1,5 +1,12 @@
 import { GalleryStatus } from "@prisma/client";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 const mocks = vi.hoisted(() => ({
   findByToken: vi.fn(),
@@ -34,6 +41,10 @@ beforeEach(() => {
   });
 });
 
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe("private gallery capability props", () => {
   it("opens controls only for an active PROOFING gallery", async () => {
     const result = await PrivateGalleryPage({
@@ -42,6 +53,35 @@ describe("private gallery capability props", () => {
 
     expect(result.props.selectionOpen).toBe(true);
     expect(result.props.alreadyConfirmed).toBe(false);
+    expect(mocks.findByToken).toHaveBeenCalledWith("token-1");
+  });
+
+  it.each([
+    {
+      label: "archived",
+      status: GalleryStatus.ARCHIVED,
+      expiresAt: null,
+    },
+    {
+      label: "expires exactly now",
+      status: GalleryStatus.PROOFING,
+      expiresAt: new Date("2030-01-02T03:04:05.000Z"),
+    },
+  ])("keeps public token access closed for $label galleries", async (state) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2030-01-02T03:04:05.000Z"));
+    mocks.findByToken.mockResolvedValueOnce({
+      ...gallery,
+      status: state.status,
+      expiresAt: state.expiresAt,
+    });
+
+    await expect(
+      PrivateGalleryPage({
+        params: Promise.resolve({ token: "token-1" }),
+      })
+    ).rejects.toThrow("NEXT_NOT_FOUND");
+    expect(mocks.findByToken).toHaveBeenCalledWith("token-1");
   });
 
   it.each([

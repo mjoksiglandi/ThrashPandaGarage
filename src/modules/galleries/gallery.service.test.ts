@@ -3,22 +3,28 @@ import { describe, expect, it } from "vitest";
 import { isGalleryAccessible, assertReadyForDeliveryAllowed } from "./gallery.service";
 
 describe("isGalleryAccessible", () => {
+  const now = new Date("2030-01-02T03:04:05.000Z");
+
   it("rejects archived galleries", () => {
-    expect(isGalleryAccessible({ status: GalleryStatus.ARCHIVED, expiresAt: null })).toBe(false);
+    expect(isGalleryAccessible({ status: GalleryStatus.ARCHIVED, expiresAt: null }, now)).toBe(false);
   });
 
   it("rejects expired galleries", () => {
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    expect(isGalleryAccessible({ status: GalleryStatus.PROOFING, expiresAt: yesterday })).toBe(false);
+    const expired = new Date(now.getTime() - 1);
+    expect(isGalleryAccessible({ status: GalleryStatus.PROOFING, expiresAt: expired }, now)).toBe(false);
+  });
+
+  it("treats expiresAt equal to now as expired", () => {
+    expect(isGalleryAccessible({ status: GalleryStatus.PROOFING, expiresAt: now }, now)).toBe(false);
   });
 
   it("allows active galleries with no expiry", () => {
-    expect(isGalleryAccessible({ status: GalleryStatus.PROOFING, expiresAt: null })).toBe(true);
+    expect(isGalleryAccessible({ status: GalleryStatus.PROOFING, expiresAt: null }, now)).toBe(true);
   });
 
   it("allows active galleries with a future expiry", () => {
-    const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    expect(isGalleryAccessible({ status: GalleryStatus.PROOFING, expiresAt: tomorrow })).toBe(true);
+    const future = new Date(now.getTime() + 1);
+    expect(isGalleryAccessible({ status: GalleryStatus.PROOFING, expiresAt: future }, now)).toBe(true);
   });
 });
 

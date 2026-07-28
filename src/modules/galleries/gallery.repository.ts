@@ -12,6 +12,25 @@ type GalleryEventInput = {
   metadata?: Prisma.InputJsonValue;
 };
 
+function availableForClient(
+  clientId: string,
+  now: Date
+): Prisma.GalleryWhereInput {
+  return {
+    clientId,
+    status: { not: "ARCHIVED" },
+    OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+  };
+}
+
+const portalGallerySelect = {
+  id: true,
+  title: true,
+  accessToken: true,
+  status: true,
+  createdAt: true,
+} satisfies Prisma.GallerySelect;
+
 export const galleryRepository = {
   list() {
     return db.gallery.findMany({
@@ -28,6 +47,22 @@ export const galleryRepository = {
         selections: { include: { photo: true } },
         events: { orderBy: { createdAt: "desc" } },
       },
+    });
+  },
+  listAvailableForClient(clientId: string, now: Date) {
+    return db.gallery.findMany({
+      where: availableForClient(clientId, now),
+      orderBy: { createdAt: "desc" },
+      select: portalGallerySelect,
+    });
+  },
+  findAvailableForClient(id: string, clientId: string, now: Date) {
+    return db.gallery.findFirst({
+      where: {
+        id,
+        ...availableForClient(clientId, now),
+      },
+      select: portalGallerySelect,
     });
   },
   async findForUpdate(id: string, client: DbClient = db) {

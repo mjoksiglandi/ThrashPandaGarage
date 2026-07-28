@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default async function PrivateGalleryPage({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const gallery = await galleryRepository.findByToken(token);
-  if (!gallery || !isGalleryAccessible(gallery)) notFound();
+  if (!gallery || !isGalleryAccessible(gallery, new Date())) notFound();
 
   const canShowDelivery =
     (gallery.status === GalleryStatus.READY_FOR_DELIVERY || gallery.status === GalleryStatus.DELIVERED) &&

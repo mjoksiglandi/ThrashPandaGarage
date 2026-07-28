@@ -12,12 +12,20 @@ import {
   resolveAccountSessionToken,
 } from "@/modules/account-sessions/current-account-session";
 import { clientRepository } from "@/modules/clients/client.repository";
+import { galleryRepository } from "@/modules/galleries/gallery.repository";
+import { createAccountClientAccessService } from "./account-client-access.service";
 import { createPortalActorResolver } from "./portal-actor.service";
 
 const portalActors = createPortalActorResolver({
   accountSessions: {
     resolve: resolveAccountSessionToken,
   },
+});
+
+const accountClientAccess = createAccountClientAccessService({
+  clients: clientRepository,
+  galleries: galleryRepository,
+  clock: { now: () => new Date() },
 });
 
 export async function resolveCurrentPortalActor() {
@@ -33,12 +41,12 @@ export async function requirePortalClient() {
     redirect("/login");
   }
 
-  const client = await clientRepository.find(actor.clientId);
-  if (!client) {
+  const access = await accountClientAccess.listGalleries(actor);
+  if (!access) {
     redirect("/login");
   }
 
-  return { actor, client };
+  return { actor, ...access };
 }
 
 export async function logoutPortalActor() {
