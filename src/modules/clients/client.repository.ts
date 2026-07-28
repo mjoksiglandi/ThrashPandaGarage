@@ -14,18 +14,6 @@ export const clientRepository = {
       include: { galleries: { orderBy: { createdAt: "desc" } } },
     });
   },
-  findIdentity(id: string) {
-    return db.client.findUnique({
-      where: { id },
-      select: { id: true },
-    });
-  },
-  findByEmail(email: string) {
-    return db.client.findFirst({
-      where: { email: { equals: email, mode: "insensitive" } },
-      include: { galleries: { orderBy: { createdAt: "desc" } } },
-    });
-  },
   create(data: ClientInput) {
     return db.client.create({ data });
   },

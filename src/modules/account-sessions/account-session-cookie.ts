@@ -1,4 +1,5 @@
 export const ACCOUNT_SESSION_COOKIE_NAME = "tpg_account_session";
+export const LEGACY_CLIENT_COOKIE_NAME = "tpg_client";
 
 function accountSessionCookieSecurityOptions(secure?: boolean) {
   return {
@@ -34,11 +35,12 @@ export function accountSessionCookie(
   };
 }
 
-export function clearedAccountSessionCookie(
+function clearedSessionCookie(
+  name: string,
   options: { secure?: boolean } = {}
 ) {
   return {
-    name: ACCOUNT_SESSION_COOKIE_NAME,
+    name,
     value: "",
     options: {
       ...accountSessionCookieSecurityOptions(options.secure),
@@ -46,4 +48,16 @@ export function clearedAccountSessionCookie(
       maxAge: 0,
     },
   };
+}
+
+export function clearedAccountSessionCookie(
+  options: { secure?: boolean } = {}
+) {
+  return clearedSessionCookie(ACCOUNT_SESSION_COOKIE_NAME, options);
+}
+
+export function clearedLegacyClientCookie(
+  options: { secure?: boolean } = {}
+) {
+  return clearedSessionCookie(LEGACY_CLIENT_COOKIE_NAME, options);
 }

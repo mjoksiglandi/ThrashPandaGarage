@@ -96,7 +96,7 @@ describe("login HTTP trust boundary", () => {
   });
 
   it("uses a fixed internal redirect without accepting a next value", () => {
-    expect(ACCOUNT_LOGIN_REDIRECT).toBe("/");
+    expect(ACCOUNT_LOGIN_REDIRECT).toBe("/portal");
     expect(ACCOUNT_LOGIN_REDIRECT.startsWith("/")).toBe(true);
     expect(ACCOUNT_LOGIN_REDIRECT.startsWith("//")).toBe(false);
   });

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import {
   accountSessionCookie,
+  clearedLegacyClientCookie,
 } from "@/modules/account-sessions/account-session-cookie";
 import { authenticateAccount } from "@/modules/accounts/account-login";
 import {
@@ -61,6 +62,12 @@ export async function POST(request: NextRequest) {
       session.expiresAt
     );
     response.cookies.set(cookie.name, cookie.value, cookie.options);
+    const legacyCookie = clearedLegacyClientCookie();
+    response.cookies.set(
+      legacyCookie.name,
+      legacyCookie.value,
+      legacyCookie.options
+    );
     return response;
   } catch (error) {
     const publicError = publicLoginError(error);
