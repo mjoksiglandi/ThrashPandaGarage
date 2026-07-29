@@ -5,6 +5,9 @@ const mocks = vi.hoisted(() => ({
   redirect: vi.fn((location: string) => {
     throw new Error(`redirect:${location}`);
   }),
+  notFound: vi.fn(() => {
+    throw new Error("not-found");
+  }),
   resolveAccount: vi.fn(),
   logoutAccount: vi.fn(),
   findLinkedClient: vi.fn(),
@@ -13,7 +16,10 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("next/headers", () => ({ cookies: mocks.cookies }));
-vi.mock("next/navigation", () => ({ redirect: mocks.redirect }));
+vi.mock("next/navigation", () => ({
+  redirect: mocks.redirect,
+  notFound: mocks.notFound,
+}));
 vi.mock("server-only", () => ({}));
 vi.mock("@/modules/account-sessions/current-account-session", () => ({
   resolveAccountSessionToken: mocks.resolveAccount,
@@ -34,6 +40,7 @@ vi.mock("@/modules/galleries/gallery.repository", () => ({
 import {
   logoutPortalActor,
   requirePortalClient,
+  requirePortalGallery,
   resolveCurrentPortalActor,
 } from "./portal-access";
 
@@ -175,5 +182,76 @@ describe("account-only portal access", () => {
         maxAge: 0,
       })
     );
+  });
+});
+
+describe("requirePortalGallery", () => {
+  it("returns the authorized gallery for a valid account session", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+    mocks.findAvailableGallery.mockResolvedValueOnce({
+      id: "gallery-1",
+      title: "Gallery",
+      accessToken: "gallery-token",
+      status: "PROOFING",
+      createdAt: new Date("2030-01-01T00:00:00.000Z"),
+    });
+
+    await expect(
+      requirePortalGallery("gallery-1")
+    ).resolves.toMatchObject({
+      actor: { kind: "account", accountId: "account-1" },
+      gallery: { id: "gallery-1" },
+    });
+    expect(mocks.findAvailableGallery).toHaveBeenCalledWith(
+      "gallery-1",
+      "account-client",
+      expect.any(Date)
+    );
+  });
+
+  it("redirects to login without querying the gallery when the session is anonymous", async () => {
+    mocks.cookies.mockResolvedValue(cookieStore({}));
+    mocks.resolveAccount.mockResolvedValueOnce({ kind: "unauthenticated" });
+
+    await expect(requirePortalGallery("gallery-1")).rejects.toThrow(
+      "redirect:/login"
+    );
+    expect(mocks.findAvailableGallery).not.toHaveBeenCalled();
+  });
+
+  it("returns not-found for a gallery belonging to another client", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+    mocks.findAvailableGallery.mockResolvedValueOnce(null);
+
+    await expect(requirePortalGallery("gallery-foreign")).rejects.toThrow(
+      "not-found"
+    );
+  });
+
+  it("returns the same not-found outcome for an unknown gallery id", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+    mocks.findAvailableGallery.mockResolvedValueOnce(null);
+
+    await expect(requirePortalGallery("gallery-missing")).rejects.toThrow(
+      "not-found"
+    );
+  });
+
+  it("returns not-found when the account has no linked client at all", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+    mocks.findLinkedClient.mockResolvedValueOnce(null);
+
+    await expect(requirePortalGallery("gallery-1")).rejects.toThrow(
+      "not-found"
+    );
+    expect(mocks.findAvailableGallery).not.toHaveBeenCalled();
   });
 });
