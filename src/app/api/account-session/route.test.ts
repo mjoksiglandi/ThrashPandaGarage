@@ -13,15 +13,17 @@ import { GET } from "./route";
 describe("GET /api/account-session", () => {
   it("returns only the minimal authenticated account principal", async () => {
     mocks.resolve.mockResolvedValueOnce({
+      sessionId: "session-internal",
       accountId: "account-1",
       clientId: "client-1",
       email: "person@example.test",
     });
 
     const response = await GET();
+    const body = await response.json();
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({
+    expect(body).toEqual({
       ok: true,
       account: {
         accountId: "account-1",
@@ -29,6 +31,7 @@ describe("GET /api/account-session", () => {
         email: "person@example.test",
       },
     });
+    expect(JSON.stringify(body)).not.toContain("session-internal");
     expect(response.headers.get("cache-control")).toBe(
       "private, no-cache, no-store, max-age=0, must-revalidate"
     );

@@ -11,6 +11,7 @@ import {
 } from "./account-session.errors";
 
 export type AccountSessionPrincipal = {
+  sessionId: string;
   accountId: string;
   clientId: string;
   email: string;
@@ -60,6 +61,7 @@ export function createCurrentAccountSessionService(
         return {
           kind: "authenticated",
           principal: {
+            sessionId: session.sessionId,
             accountId: session.accountId,
             clientId: session.clientId,
             email: session.email,

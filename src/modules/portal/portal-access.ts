@@ -41,11 +41,16 @@ export async function resolveCurrentPortalActor() {
   );
 }
 
-export async function requirePortalClient() {
+export async function requirePortalAccount() {
   const actor = await resolveCurrentPortalActor();
   if (actor.kind === "anonymous") {
     redirect("/login");
   }
+  return actor;
+}
+
+export async function requirePortalClient() {
+  const actor = await requirePortalAccount();
 
   const access = await accountClientAccess.listGalleries(actor);
   if (!access) {

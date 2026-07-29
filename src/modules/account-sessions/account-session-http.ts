@@ -1,3 +1,8 @@
+import { NextResponse } from "next/server";
+import {
+  clearedAccountSessionCookie,
+  clearedLegacyClientCookie,
+} from "./account-session-cookie";
 import type {
   AccountSessionPrincipal,
   AccountSessionResolution,
@@ -14,6 +19,33 @@ export class AccountAuthenticationRequiredError extends Error {
     super(ACCOUNT_AUTHENTICATION_MESSAGE);
     this.name = "AccountAuthenticationRequiredError";
   }
+}
+
+export function applyPrivateAccountSessionHeaders(
+  response: NextResponse
+) {
+  response.headers.set(
+    "Cache-Control",
+    ACCOUNT_SESSION_CACHE_CONTROL
+  );
+  response.headers.set("Referrer-Policy", "no-referrer");
+  return response;
+}
+
+export function clearAccountSessionCookies(response: NextResponse) {
+  const accountCookie = clearedAccountSessionCookie();
+  response.cookies.set(
+    accountCookie.name,
+    accountCookie.value,
+    accountCookie.options
+  );
+  const legacyCookie = clearedLegacyClientCookie();
+  response.cookies.set(
+    legacyCookie.name,
+    legacyCookie.value,
+    legacyCookie.options
+  );
+  return response;
 }
 
 export function requireAuthenticatedAccount(

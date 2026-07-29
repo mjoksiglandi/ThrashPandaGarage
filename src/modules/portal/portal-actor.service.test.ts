@@ -3,6 +3,7 @@ import type { AccountSessionResolution } from "@/modules/account-sessions/curren
 import { createPortalActorResolver } from "./portal-actor.service";
 
 const accountPrincipal = {
+  sessionId: "session-1",
   accountId: "account-1",
   clientId: "account-client",
   email: "account@example.test",
@@ -29,6 +30,7 @@ describe("account-only portal actor policy", () => {
       test.resolver.resolve("account-token")
     ).resolves.toEqual({
       kind: "account",
+      sessionId: "session-1",
       accountId: "account-1",
       clientId: "account-client",
       email: "account@example.test",

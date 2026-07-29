@@ -1,39 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { env } from "@/lib/env";
 import {
-  ACCOUNT_SESSION_CACHE_CONTROL,
   ACCOUNT_SESSION_TEMPORARY_MESSAGE,
+  applyPrivateAccountSessionHeaders,
+  clearAccountSessionCookies,
 } from "@/modules/account-sessions/account-session-http";
 import {
   ACCOUNT_SESSION_COOKIE_NAME,
-  clearedAccountSessionCookie,
-  clearedLegacyClientCookie,
 } from "@/modules/account-sessions/account-session-cookie";
 import {
   logoutAccountSessionToken,
 } from "@/modules/account-sessions/current-account-session";
 import { isTrustedLoginOrigin } from "@/modules/accounts/account-login-http";
-
-function applyPrivateAuthHeaders(response: NextResponse) {
-  response.headers.set(
-    "Cache-Control",
-    ACCOUNT_SESSION_CACHE_CONTROL
-  );
-  response.headers.set("Referrer-Policy", "no-referrer");
-  return response;
-}
-
-function clearSessionCookie(response: NextResponse) {
-  const cookie = clearedAccountSessionCookie();
-  response.cookies.set(cookie.name, cookie.value, cookie.options);
-  const legacyCookie = clearedLegacyClientCookie();
-  response.cookies.set(
-    legacyCookie.name,
-    legacyCookie.value,
-    legacyCookie.options
-  );
-  return response;
-}
 
 export async function POST(request: NextRequest) {
   if (
@@ -42,7 +20,7 @@ export async function POST(request: NextRequest) {
       configuredBaseUrl: env.APP_BASE_URL,
     })
   ) {
-    return applyPrivateAuthHeaders(
+    return applyPrivateAccountSessionHeaders(
       NextResponse.json(
         { ok: false, error: ACCOUNT_SESSION_TEMPORARY_MESSAGE },
         { status: 403 }
@@ -63,5 +41,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return clearSessionCookie(applyPrivateAuthHeaders(response));
+  return clearAccountSessionCookies(
+    applyPrivateAccountSessionHeaders(response)
+  );
 }
