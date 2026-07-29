@@ -326,6 +326,7 @@ describe("password reset with PostgreSQL", () => {
     await expect(currentSessions.resolve(newSession.token)).resolves.toEqual({
       kind: "authenticated",
       principal: {
+        sessionId: expect.any(String),
         accountId: account.id,
         clientId: client.id,
         email: account.email,

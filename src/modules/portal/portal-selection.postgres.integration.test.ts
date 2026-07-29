@@ -30,6 +30,7 @@ async function createAccountClient(label: string) {
     client,
     account,
     principal: {
+      sessionId: "session-fixture",
       accountId: account.id,
       clientId: client.id,
       email: account.email,
@@ -88,7 +89,12 @@ const portalPhotos = createPortalGalleryPhotosService({ photos: photoRepository 
  * request-scoped cookies(), which is unavailable outside an actual request.
  */
 async function authorizeForTest(
-  principal: { accountId: string; clientId: string; email: string },
+  principal: {
+    sessionId: string;
+    accountId: string;
+    clientId: string;
+    email: string;
+  },
   galleryId: string,
   photoId: string
 ) {

@@ -50,6 +50,7 @@ import {
   authorizePortalPhotoInGallery,
   listPortalGalleryPhotos,
   logoutPortalActor,
+  requirePortalAccount,
   requirePortalClient,
   requirePortalGallery,
   resolveCurrentPortalActor,
@@ -71,6 +72,7 @@ beforeEach(() => {
   mocks.resolveAccount.mockResolvedValue({
     kind: "authenticated",
     principal: {
+      sessionId: "session-1",
       accountId: "account-1",
       clientId: "account-client",
       email: "account@example.test",
@@ -97,6 +99,19 @@ beforeEach(() => {
 });
 
 describe("account-only portal access", () => {
+  it("returns the canonical account actor including its internal session ID", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+
+    await expect(requirePortalAccount()).resolves.toMatchObject({
+      kind: "account",
+      sessionId: "session-1",
+      accountId: "account-1",
+      clientId: "account-client",
+    });
+  });
+
   it("uses only the account cookie even when a legacy cookie exists", async () => {
     const jar = cookieStore({
       tpg_account_session: "account-token",

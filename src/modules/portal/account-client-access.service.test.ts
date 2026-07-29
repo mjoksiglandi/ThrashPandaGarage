@@ -4,6 +4,7 @@ import { createAccountClientAccessService } from "./account-client-access.servic
 
 const now = new Date("2030-01-02T03:04:05.000Z");
 const principal: AccountSessionPrincipal = {
+  sessionId: "session-a",
   accountId: "account-a",
   clientId: "client-a",
   email: "a@example.test",

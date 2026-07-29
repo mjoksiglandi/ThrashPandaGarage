@@ -17,6 +17,7 @@ import { requireAccountSession } from "./account-session-guard";
 describe("account session guard", () => {
   it("uses the canonical current-session resolver", async () => {
     const principal = {
+      sessionId: "session-1",
       accountId: "account-1",
       clientId: "client-1",
       email: "person@example.test",

@@ -38,7 +38,11 @@ export async function GET() {
     return sessionResponse(
       {
         ok: true,
-        account: principal,
+        account: {
+          accountId: principal.accountId,
+          clientId: principal.clientId,
+          email: principal.email,
+        },
       },
       200
     );

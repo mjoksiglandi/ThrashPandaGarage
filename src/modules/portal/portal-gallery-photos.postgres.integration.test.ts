@@ -28,6 +28,7 @@ async function createAccountClient(label: string) {
     client,
     account,
     principal: {
+      sessionId: "session-fixture",
       accountId: account.id,
       clientId: client.id,
       email: account.email,

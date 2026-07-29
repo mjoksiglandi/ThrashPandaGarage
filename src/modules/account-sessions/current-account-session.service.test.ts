@@ -39,6 +39,7 @@ describe("current account session resolution", () => {
     await expect(test.service.resolve("valid-token")).resolves.toEqual({
       kind: "authenticated",
       principal: {
+        sessionId: "session-internal",
         accountId: "account-1",
         clientId: "client-1",
         email: "person@example.test",
@@ -84,12 +85,12 @@ describe("current account session resolution", () => {
     );
   });
 
-  it("does not expose session IDs, tokens, digests, or password hashes", async () => {
+  it("exposes only the internal session ID, never tokens, digests, or password hashes", async () => {
     const test = fixture();
     const resolution = await test.service.resolve("valid-token");
     const serialized = JSON.stringify(resolution);
 
-    expect(serialized).not.toContain("session-internal");
+    expect(serialized).toContain("session-internal");
     expect(serialized).not.toContain("valid-token");
     expect(serialized).not.toContain("tokenHash");
     expect(serialized).not.toContain("passwordHash");

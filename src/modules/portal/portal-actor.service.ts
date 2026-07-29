@@ -6,6 +6,7 @@ import type {
 type PortalActor =
   | {
       kind: "account";
+      sessionId: string;
       accountId: string;
       clientId: string;
       email: string;
@@ -23,6 +24,7 @@ function accountActor(
 ): PortalActor {
   return {
     kind: "account",
+    sessionId: resolution.principal.sessionId,
     accountId: resolution.principal.accountId,
     clientId: resolution.principal.clientId,
     email: resolution.principal.email,

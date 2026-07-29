@@ -139,6 +139,7 @@ describe("current account session resolution with PostgreSQL", () => {
     expect(resolution).toEqual({
       kind: "authenticated",
       principal: {
+        sessionId: expect.any(String),
         accountId: account.id,
         clientId: client.id,
         email: account.email,
@@ -294,6 +295,7 @@ describe("account-only portal actor with PostgreSQL", () => {
       portalActors().resolve(token)
     ).resolves.toEqual({
       kind: "account",
+      sessionId: expect.any(String),
       accountId: linked.account.id,
       clientId: linked.client.id,
       email: linked.account.email,

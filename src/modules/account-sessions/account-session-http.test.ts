@@ -7,6 +7,7 @@ import {
 } from "./account-session-http";
 
 const principal = {
+  sessionId: "session-1",
   accountId: "account-1",
   clientId: "client-1",
   email: "person@example.test",
