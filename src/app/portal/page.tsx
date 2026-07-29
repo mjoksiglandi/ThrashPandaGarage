@@ -1,7 +1,6 @@
 import { GalleryStatus } from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { isGalleryAccessible } from "@/modules/galleries/gallery.service";
 import {
   logoutPortalActor,
   requirePortalClient,
@@ -17,8 +16,7 @@ const statusLabels: Record<GalleryStatus, string> = {
 };
 
 export default async function ClientPortalPage() {
-  const { client } = await requirePortalClient();
-  const galleries = client.galleries.filter(isGalleryAccessible);
+  const { client, galleries } = await requirePortalClient();
 
   async function logout() {
     "use server";

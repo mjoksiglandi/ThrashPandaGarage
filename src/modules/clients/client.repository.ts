@@ -14,6 +14,17 @@ export const clientRepository = {
       include: { galleries: { orderBy: { createdAt: "desc" } } },
     });
   },
+  async findLinkedToAccount(accountId: string, clientId: string) {
+    const account = await db.account.findFirst({
+      where: { id: accountId, clientId },
+      select: {
+        client: {
+          select: { id: true, name: true },
+        },
+      },
+    });
+    return account?.client ?? null;
+  },
   create(data: ClientInput) {
     return db.client.create({ data });
   },

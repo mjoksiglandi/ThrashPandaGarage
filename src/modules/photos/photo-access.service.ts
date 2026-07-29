@@ -9,9 +9,9 @@ type AccessCheckGallery = {
 
 export function canServePhoto(
   gallery: AccessCheckGallery,
-  options: { isAdmin: boolean; token: string | null }
+  options: { isAdmin: boolean; token: string | null; now: Date }
 ): boolean {
   if (options.isAdmin) return true;
   if (!options.token || options.token !== gallery.accessToken) return false;
-  return isGalleryAccessible(gallery);
+  return isGalleryAccessible(gallery, options.now);
 }

@@ -20,7 +20,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
   const admin = await getCurrentAdmin();
   const token = request.nextUrl.searchParams.get("token");
-  if (!canServePhoto(photo.gallery, { isAdmin: Boolean(admin), token })) {
+  if (!canServePhoto(photo.gallery, {
+    isAdmin: Boolean(admin),
+    token,
+    now: new Date(),
+  })) {
     return new NextResponse("Not found", { status: 404 });
   }
 

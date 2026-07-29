@@ -9,29 +9,30 @@ const expiredGallery = {
   expiresAt: new Date(Date.now() - 1000),
   accessToken: "tpg_abc123",
 };
+const now = new Date();
 
 describe("canServePhoto", () => {
   it("allows admins regardless of gallery state", () => {
-    expect(canServePhoto(archivedGallery, { isAdmin: true, token: null })).toBe(true);
+    expect(canServePhoto(archivedGallery, { isAdmin: true, token: null, now })).toBe(true);
   });
 
   it("allows a matching token on an active gallery", () => {
-    expect(canServePhoto(activeGallery, { isAdmin: false, token: "tpg_abc123" })).toBe(true);
+    expect(canServePhoto(activeGallery, { isAdmin: false, token: "tpg_abc123", now })).toBe(true);
   });
 
   it("rejects a missing token for non-admins", () => {
-    expect(canServePhoto(activeGallery, { isAdmin: false, token: null })).toBe(false);
+    expect(canServePhoto(activeGallery, { isAdmin: false, token: null, now })).toBe(false);
   });
 
   it("rejects a mismatched token", () => {
-    expect(canServePhoto(activeGallery, { isAdmin: false, token: "tpg_wrong" })).toBe(false);
+    expect(canServePhoto(activeGallery, { isAdmin: false, token: "tpg_wrong", now })).toBe(false);
   });
 
   it("rejects a matching token on an archived gallery", () => {
-    expect(canServePhoto(archivedGallery, { isAdmin: false, token: "tpg_abc123" })).toBe(false);
+    expect(canServePhoto(archivedGallery, { isAdmin: false, token: "tpg_abc123", now })).toBe(false);
   });
 
   it("rejects a matching token on an expired gallery", () => {
-    expect(canServePhoto(expiredGallery, { isAdmin: false, token: "tpg_abc123" })).toBe(false);
+    expect(canServePhoto(expiredGallery, { isAdmin: false, token: "tpg_abc123", now })).toBe(false);
   });
 });
