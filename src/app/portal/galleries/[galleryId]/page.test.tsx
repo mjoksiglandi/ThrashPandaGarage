@@ -77,8 +77,8 @@ describe("authenticated gallery detail page", () => {
 
   it("renders only the authorized gallery's photos in a deterministic order", async () => {
     mocks.listPortalGalleryPhotos.mockResolvedValueOnce([
-      { id: "photo-1", baseName: "beach-1" },
-      { id: "photo-2", baseName: "beach-2" },
+      { id: "photo-1", baseName: "beach-1", selected: false },
+      { id: "photo-2", baseName: "beach-2", selected: false },
     ]);
 
     const element = await PortalGalleryDetailPage({
@@ -107,7 +107,7 @@ describe("authenticated gallery detail page", () => {
 
   it("never renders the public token contract inside the authenticated portal", async () => {
     mocks.listPortalGalleryPhotos.mockResolvedValueOnce([
-      { id: "photo-1", baseName: "beach-1" },
+      { id: "photo-1", baseName: "beach-1", selected: false },
     ]);
 
     const element = await PortalGalleryDetailPage({
@@ -119,5 +119,49 @@ describe("authenticated gallery detail page", () => {
     expect(html).not.toContain("accessToken");
     expect(html).not.toContain("super-secret-token");
     expect(html).not.toContain("token=");
+  });
+
+  it("reflects the persisted selected state on the control for each photo", async () => {
+    mocks.listPortalGalleryPhotos.mockResolvedValueOnce([
+      { id: "photo-1", baseName: "selected-photo", selected: true },
+      { id: "photo-2", baseName: "unselected-photo", selected: false },
+    ]);
+
+    const element = await PortalGalleryDetailPage({
+      params: Promise.resolve({ galleryId: "gallery-1" }),
+    });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain('aria-pressed="true"');
+    expect(html).toContain('aria-pressed="false"');
+    expect(html).toContain("Seleccionada");
+  });
+
+  it("never renders accountId or clientId as manipulable fields", async () => {
+    mocks.listPortalGalleryPhotos.mockResolvedValueOnce([
+      { id: "photo-1", baseName: "beach-1", selected: false },
+    ]);
+
+    const element = await PortalGalleryDetailPage({
+      params: Promise.resolve({ galleryId: "gallery-1" }),
+    });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).not.toContain("accountId");
+    expect(html).not.toContain("clientId");
+  });
+
+  it("points the selection control at the authenticated route, not the public token endpoint", async () => {
+    mocks.listPortalGalleryPhotos.mockResolvedValueOnce([
+      { id: "photo-1", baseName: "beach-1", selected: false },
+    ]);
+
+    const element = await PortalGalleryDetailPage({
+      params: Promise.resolve({ galleryId: "gallery-1" }),
+    });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain("/api/portal/photos/photo-1");
+    expect(html).not.toContain("/api/galleries/");
   });
 });

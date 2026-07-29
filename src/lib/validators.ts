@@ -26,4 +26,8 @@ export const selectionSchema = z.object({
   comment: z.string().max(1000).optional(),
 });
 
+export const portalSelectionSchema = z.object({
+  selected: z.boolean(),
+});
+
 export const supportedImageExtensions = new Set(["jpg", "jpeg", "png", "webp"]);

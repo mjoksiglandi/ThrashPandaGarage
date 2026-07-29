@@ -92,6 +92,25 @@ export async function authorizePortalPhoto(photoId: string) {
   return photo;
 }
 
+export async function authorizePortalPhotoInGallery(galleryId: string, photoId: string) {
+  const actor = await resolveCurrentPortalActor();
+  if (actor.kind === "anonymous") {
+    return null;
+  }
+
+  const gallery = await accountClientAccess.findGallery(actor, galleryId);
+  if (!gallery) {
+    return null;
+  }
+
+  const photo = await photoRepository.find(photoId);
+  if (!photo || photo.status === "REJECTED" || photo.galleryId !== gallery.id) {
+    return null;
+  }
+
+  return { gallery, photo };
+}
+
 export async function logoutPortalActor() {
   const cookieStore = await cookies();
   const accountToken = cookieStore.get(
