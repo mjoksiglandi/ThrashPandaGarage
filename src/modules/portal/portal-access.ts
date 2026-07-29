@@ -13,8 +13,10 @@ import {
 } from "@/modules/account-sessions/current-account-session";
 import { clientRepository } from "@/modules/clients/client.repository";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
+import { photoRepository } from "@/modules/photos/photo.repository";
 import { createAccountClientAccessService } from "./account-client-access.service";
 import { createPortalActorResolver } from "./portal-actor.service";
+import { createPortalGalleryPhotosService } from "./portal-gallery-photos.service";
 
 const portalActors = createPortalActorResolver({
   accountSessions: {
@@ -26,6 +28,10 @@ const accountClientAccess = createAccountClientAccessService({
   clients: clientRepository,
   galleries: galleryRepository,
   clock: { now: () => new Date() },
+});
+
+const portalGalleryPhotos = createPortalGalleryPhotosService({
+  photos: photoRepository,
 });
 
 export async function resolveCurrentPortalActor() {
@@ -61,6 +67,29 @@ export async function requirePortalGallery(galleryId: string) {
   }
 
   return { actor, gallery };
+}
+
+export async function listPortalGalleryPhotos(galleryId: string) {
+  return portalGalleryPhotos.listForGallery(galleryId);
+}
+
+export async function authorizePortalPhoto(photoId: string) {
+  const actor = await resolveCurrentPortalActor();
+  if (actor.kind === "anonymous") {
+    return null;
+  }
+
+  const photo = await photoRepository.find(photoId);
+  if (!photo || photo.status === "REJECTED") {
+    return null;
+  }
+
+  const gallery = await accountClientAccess.findGallery(actor, photo.galleryId);
+  if (!gallery) {
+    return null;
+  }
+
+  return photo;
 }
 
 export async function logoutPortalActor() {

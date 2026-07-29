@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { portalGalleryStatusLabels } from "@/modules/portal/gallery-status-labels";
-import { requirePortalGallery } from "@/modules/portal/portal-access";
+import {
+  listPortalGalleryPhotos,
+  requirePortalGallery,
+} from "@/modules/portal/portal-access";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -12,6 +15,7 @@ export default async function PortalGalleryDetailPage({
 }) {
   const { galleryId } = await params;
   const { gallery } = await requirePortalGallery(galleryId);
+  const photos = await listPortalGalleryPhotos(gallery.id);
 
   return (
     <main className="portal-page">
@@ -34,12 +38,27 @@ export default async function PortalGalleryDetailPage({
           })}
         </p>
       </section>
-      <section className="portal-gallery-list">
-        <div className="portal-empty">
-          <h2>Fotografías próximamente</h2>
-          <p>Esta vista mostrará las fotografías de la galería una vez esté disponible su carga autenticada.</p>
-        </div>
-      </section>
+      {photos.length === 0 ? (
+        <section className="portal-gallery-list">
+          <div className="portal-empty">
+            <h2>Aún no hay fotografías disponibles.</h2>
+            <p>Cuando se carguen fotografías para esta galería aparecerán aquí.</p>
+          </div>
+        </section>
+      ) : (
+        <section className="portal-photo-grid">
+          {photos.map((photo) => (
+            <figure className="portal-photo-card" key={photo.id}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={`/api/portal/photos/${photo.id}?variant=thumb`}
+                alt={photo.baseName}
+                loading="lazy"
+              />
+            </figure>
+          ))}
+        </section>
+      )}
     </main>
   );
 }
