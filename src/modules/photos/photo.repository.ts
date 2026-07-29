@@ -11,7 +11,7 @@ export const photoRepository = {
     return db.photo.findMany({
       where: { galleryId, status: { not: PhotoStatus.REJECTED } },
       orderBy: { sortOrder: "asc" },
-      select: { id: true, baseName: true },
+      select: { id: true, baseName: true, selection: { select: { selected: true } } },
     });
   },
   async findImportState(galleryId: string, baseNames: string[], client: DbClient = db) {

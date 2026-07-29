@@ -4,6 +4,7 @@ import {
   listPortalGalleryPhotos,
   requirePortalGallery,
 } from "@/modules/portal/portal-access";
+import { PortalPhotoGrid } from "./PortalPhotoGrid";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -46,18 +47,7 @@ export default async function PortalGalleryDetailPage({
           </div>
         </section>
       ) : (
-        <section className="portal-photo-grid">
-          {photos.map((photo) => (
-            <figure className="portal-photo-card" key={photo.id}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`/api/portal/photos/${photo.id}?variant=thumb`}
-                alt={photo.baseName}
-                loading="lazy"
-              />
-            </figure>
-          ))}
-        </section>
+        <PortalPhotoGrid galleryId={gallery.id} photos={photos} />
       )}
     </main>
   );
