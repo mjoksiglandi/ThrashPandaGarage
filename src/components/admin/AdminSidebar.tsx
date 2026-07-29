@@ -4,7 +4,7 @@ const items = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/clients", label: "Clientes" },
   { href: "/admin/galleries", label: "Galerias" },
-  { href: "/work", label: "Portfolio" },
+  { href: "/work", label: "Portfolio", external: true },
 ];
 
 export function AdminSidebar({ adminEmail, onLogout }: { adminEmail: string; onLogout: () => Promise<void> }) {
@@ -21,6 +21,8 @@ export function AdminSidebar({ adminEmail, onLogout }: { adminEmail: string; onL
           <Link
             key={item.href}
             href={item.href}
+            target={item.external ? "_blank" : undefined}
+            rel={item.external ? "noopener noreferrer" : undefined}
             className={`flex items-center gap-3 rounded-[4px] px-3 py-2.5 ${
               index === 0 ? "bg-white/[0.05] text-[var(--foreground)]" : "text-[var(--muted)] hover:bg-white/[0.04]"
             }`}

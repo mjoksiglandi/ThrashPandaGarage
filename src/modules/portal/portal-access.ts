@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import {
   ACCOUNT_SESSION_COOKIE_NAME,
   clearedAccountSessionCookie,
@@ -47,6 +47,20 @@ export async function requirePortalClient() {
   }
 
   return { actor, ...access };
+}
+
+export async function requirePortalGallery(galleryId: string) {
+  const actor = await resolveCurrentPortalActor();
+  if (actor.kind === "anonymous") {
+    redirect("/login");
+  }
+
+  const gallery = await accountClientAccess.findGallery(actor, galleryId);
+  if (!gallery) {
+    notFound();
+  }
+
+  return { actor, gallery };
 }
 
 export async function logoutPortalActor() {
