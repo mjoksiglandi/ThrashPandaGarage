@@ -1,3 +1,4 @@
+import { PhotoStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import type { DbClient } from "@/modules/galleries/gallery.repository";
 import type { ImportedPhoto } from "./photo.types";
@@ -5,6 +6,13 @@ import type { ImportedPhoto } from "./photo.types";
 export const photoRepository = {
   find(id: string) {
     return db.photo.findUnique({ where: { id }, include: { gallery: true } });
+  },
+  listAvailableForGallery(galleryId: string) {
+    return db.photo.findMany({
+      where: { galleryId, status: { not: PhotoStatus.REJECTED } },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, baseName: true },
+    });
   },
   async findImportState(galleryId: string, baseNames: string[], client: DbClient = db) {
     return client.photo.findMany({

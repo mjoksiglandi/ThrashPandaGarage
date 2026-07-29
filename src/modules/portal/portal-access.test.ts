@@ -13,6 +13,8 @@ const mocks = vi.hoisted(() => ({
   findLinkedClient: vi.fn(),
   listAvailableGalleries: vi.fn(),
   findAvailableGallery: vi.fn(),
+  findPhoto: vi.fn(),
+  listAvailablePhotos: vi.fn(),
 }));
 
 vi.mock("next/headers", () => ({ cookies: mocks.cookies }));
@@ -36,8 +38,16 @@ vi.mock("@/modules/galleries/gallery.repository", () => ({
     findAvailableForClient: mocks.findAvailableGallery,
   },
 }));
+vi.mock("@/modules/photos/photo.repository", () => ({
+  photoRepository: {
+    find: mocks.findPhoto,
+    listAvailableForGallery: mocks.listAvailablePhotos,
+  },
+}));
 
 import {
+  authorizePortalPhoto,
+  listPortalGalleryPhotos,
   logoutPortalActor,
   requirePortalClient,
   requirePortalGallery,
@@ -81,6 +91,8 @@ beforeEach(() => {
     },
   ]);
   mocks.findAvailableGallery.mockResolvedValue(null);
+  mocks.findPhoto.mockResolvedValue(null);
+  mocks.listAvailablePhotos.mockResolvedValue([]);
 });
 
 describe("account-only portal access", () => {
@@ -252,6 +264,101 @@ describe("requirePortalGallery", () => {
     await expect(requirePortalGallery("gallery-1")).rejects.toThrow(
       "not-found"
     );
+    expect(mocks.findAvailableGallery).not.toHaveBeenCalled();
+  });
+});
+
+describe("listPortalGalleryPhotos", () => {
+  it("delegates to the photo repository scoped to the given gallery id", async () => {
+    mocks.listAvailablePhotos.mockResolvedValueOnce([
+      { id: "photo-1", baseName: "photo-1" },
+    ]);
+
+    await expect(
+      listPortalGalleryPhotos("gallery-1")
+    ).resolves.toEqual([{ id: "photo-1", baseName: "photo-1" }]);
+    expect(mocks.listAvailablePhotos).toHaveBeenCalledWith("gallery-1");
+  });
+});
+
+describe("authorizePortalPhoto", () => {
+  it("returns the photo when its gallery is authorized for the account", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+    mocks.findPhoto.mockResolvedValueOnce({
+      id: "photo-1",
+      galleryId: "gallery-1",
+      status: "PROOF",
+      thumbPath: "thumb.jpg",
+      previewPath: null,
+    });
+    mocks.findAvailableGallery.mockResolvedValueOnce({
+      id: "gallery-1",
+      title: "Gallery",
+      accessToken: "gallery-token",
+      status: "PROOFING",
+      createdAt: new Date("2030-01-01T00:00:00.000Z"),
+    });
+
+    await expect(authorizePortalPhoto("photo-1")).resolves.toMatchObject({
+      id: "photo-1",
+    });
+    expect(mocks.findAvailableGallery).toHaveBeenCalledWith(
+      "gallery-1",
+      "account-client",
+      expect.any(Date)
+    );
+  });
+
+  it("returns null without authorizing when the session is anonymous", async () => {
+    mocks.cookies.mockResolvedValue(cookieStore({}));
+    mocks.resolveAccount.mockResolvedValueOnce({ kind: "unauthenticated" });
+
+    await expect(authorizePortalPhoto("photo-1")).resolves.toBeNull();
+    expect(mocks.findPhoto).not.toHaveBeenCalled();
+    expect(mocks.findAvailableGallery).not.toHaveBeenCalled();
+  });
+
+  it("returns null for an unknown photo id", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+    mocks.findPhoto.mockResolvedValueOnce(null);
+
+    await expect(authorizePortalPhoto("photo-missing")).resolves.toBeNull();
+    expect(mocks.findAvailableGallery).not.toHaveBeenCalled();
+  });
+
+  it("returns null for a photo belonging to a gallery the account cannot access", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+    mocks.findPhoto.mockResolvedValueOnce({
+      id: "photo-1",
+      galleryId: "gallery-foreign",
+      status: "PROOF",
+      thumbPath: "thumb.jpg",
+      previewPath: null,
+    });
+    mocks.findAvailableGallery.mockResolvedValueOnce(null);
+
+    await expect(authorizePortalPhoto("photo-1")).resolves.toBeNull();
+  });
+
+  it("returns null for a rejected photo even when its gallery is authorized", async () => {
+    mocks.cookies.mockResolvedValue(
+      cookieStore({ tpg_account_session: "account-token" })
+    );
+    mocks.findPhoto.mockResolvedValueOnce({
+      id: "photo-1",
+      galleryId: "gallery-1",
+      status: "REJECTED",
+      thumbPath: "thumb.jpg",
+      previewPath: null,
+    });
+
+    await expect(authorizePortalPhoto("photo-1")).resolves.toBeNull();
     expect(mocks.findAvailableGallery).not.toHaveBeenCalled();
   });
 });
