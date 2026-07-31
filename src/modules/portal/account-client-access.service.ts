@@ -1,5 +1,6 @@
 import type { GalleryStatus } from "@prisma/client";
 import type { AccountSessionPrincipal } from "@/modules/account-sessions/current-account-session.service";
+import { isSelectionOpen } from "@/modules/galleries/gallery-workflow";
 
 type PortalClient = {
   id: string;
@@ -11,6 +12,7 @@ type PortalGallery = {
   title: string;
   status: GalleryStatus;
   createdAt: Date;
+  expiresAt: Date | null;
   deliveryDriveUrl: string | null;
 };
 
@@ -70,11 +72,15 @@ export function createAccountClientAccessService(
         return null;
       }
 
-      return dependencies.galleries.findAvailableForClient(
+      const now = dependencies.clock.now();
+      const gallery = await dependencies.galleries.findAvailableForClient(
         galleryId,
         principal.clientId,
-        dependencies.clock.now()
+        now
       );
+      return gallery
+        ? { ...gallery, selectionOpen: isSelectionOpen(gallery, now) }
+        : null;
     },
   };
 }

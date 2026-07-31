@@ -146,6 +146,7 @@ describe("Account-Client gallery isolation with PostgreSQL", () => {
     expect(authorized).toMatchObject({
       id: readyA.id,
       deliveryDriveUrl: "https://drive.example.test/ready-a",
+      selectionOpen: false,
     });
     expect(authorized).not.toHaveProperty("accessToken");
     expect(otherClient).toBeNull();

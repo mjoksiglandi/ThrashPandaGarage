@@ -11,9 +11,11 @@ export type PortalGalleryPhotoItem = {
 export function PortalPhotoGrid({
   galleryId,
   photos,
+  selectionOpen,
 }: {
   galleryId: string;
   photos: PortalGalleryPhotoItem[];
+  selectionOpen: boolean;
 }) {
   const [items, setItems] = useState(photos);
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export function PortalPhotoGrid({
   const [, startTransition] = useTransition();
 
   function toggle(photo: PortalGalleryPhotoItem) {
-    if (pendingId) return;
+    if (!selectionOpen || pendingId) return;
     const nextSelected = !photo.selected;
 
     setPendingId(photo.id);
@@ -64,6 +66,9 @@ export function PortalPhotoGrid({
           {error}
         </p>
       )}
+      {!selectionOpen && (
+        <p className="portal-selection-status">La selección está cerrada.</p>
+      )}
       <section className="portal-photo-grid">
         {items.map((photo) => (
           <figure className="portal-photo-card" key={photo.id}>
@@ -73,16 +78,18 @@ export function PortalPhotoGrid({
               alt={photo.baseName}
               loading="lazy"
             />
-            <button
-              type="button"
-              className={`portal-photo-select${photo.selected ? " is-selected" : ""}`}
-              aria-pressed={photo.selected}
-              aria-label={photo.selected ? "Quitar selección" : "Seleccionar foto"}
-              disabled={pendingId === photo.id}
-              onClick={() => toggle(photo)}
-            >
-              {photo.selected ? "Seleccionada" : "Seleccionar"}
-            </button>
+            {selectionOpen && (
+              <button
+                type="button"
+                className={`portal-photo-select${photo.selected ? " is-selected" : ""}`}
+                aria-pressed={photo.selected}
+                aria-label={photo.selected ? "Quitar selección" : "Seleccionar foto"}
+                disabled={pendingId === photo.id}
+                onClick={() => toggle(photo)}
+              >
+                {photo.selected ? "Seleccionada" : "Seleccionar"}
+              </button>
+            )}
           </figure>
         ))}
       </section>

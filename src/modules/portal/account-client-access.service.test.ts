@@ -28,6 +28,7 @@ function fixture() {
       accessToken: "token-a",
       status: "PROOFING" as const,
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
+      expiresAt: null,
       deliveryDriveUrl: null,
     },
   ]);
@@ -41,6 +42,7 @@ function fixture() {
       title: string;
       status: GalleryStatus;
       createdAt: Date;
+      expiresAt: Date | null;
       deliveryDriveUrl: string | null;
     } | null>
   >(async () => null);
@@ -127,6 +129,7 @@ describe("Authenticated gallery delivery lookup", () => {
       title: "Gallery A",
       status: "READY_FOR_DELIVERY",
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
+      expiresAt: null,
       deliveryDriveUrl: "https://drive.example.test/gallery-a",
     });
 
@@ -135,6 +138,7 @@ describe("Authenticated gallery delivery lookup", () => {
     ).resolves.toMatchObject({
       id: "gallery-a",
       deliveryDriveUrl: "https://drive.example.test/gallery-a",
+      selectionOpen: false,
     });
     expect(test.findAvailableForClient).toHaveBeenCalledWith(
       "gallery-a",
@@ -178,6 +182,7 @@ describe("Authenticated gallery delivery lookup", () => {
       title: "Gallery A",
       status: "DELIVERED",
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
+      expiresAt: null,
       deliveryDriveUrl: "https://drive.example.test/gallery-a",
     });
 
@@ -185,5 +190,58 @@ describe("Authenticated gallery delivery lookup", () => {
 
     expect(result).not.toHaveProperty("accessToken");
     expect(JSON.stringify(result)).not.toContain("accessToken");
+  });
+});
+
+describe("Authenticated gallery selection state", () => {
+  it("uses the shared workflow policy for an open PROOFING gallery", async () => {
+    const test = fixture();
+    test.findAvailableForClient.mockResolvedValueOnce({
+      id: "gallery-a",
+      title: "Gallery A",
+      status: "PROOFING",
+      createdAt: new Date("2029-12-01T00:00:00.000Z"),
+      expiresAt: new Date(now.getTime() + 1),
+      deliveryDriveUrl: null,
+    });
+
+    await expect(
+      test.service.findGallery(principal, "gallery-a")
+    ).resolves.toMatchObject({ selectionOpen: true });
+  });
+
+  it.each(["READY_FOR_DELIVERY", "DELIVERED"] as const)(
+    "closes selection for %s",
+    async (status) => {
+      const test = fixture();
+      test.findAvailableForClient.mockResolvedValueOnce({
+        id: "gallery-a",
+        title: "Gallery A",
+        status,
+        createdAt: new Date("2029-12-01T00:00:00.000Z"),
+        expiresAt: null,
+        deliveryDriveUrl: "https://drive.example.test/gallery-a",
+      });
+
+      await expect(
+        test.service.findGallery(principal, "gallery-a")
+      ).resolves.toMatchObject({ selectionOpen: false });
+    }
+  );
+
+  it("closes selection when a PROOFING gallery has expired", async () => {
+    const test = fixture();
+    test.findAvailableForClient.mockResolvedValueOnce({
+      id: "gallery-a",
+      title: "Gallery A",
+      status: "PROOFING",
+      createdAt: new Date("2029-12-01T00:00:00.000Z"),
+      expiresAt: now,
+      deliveryDriveUrl: null,
+    });
+
+    await expect(
+      test.service.findGallery(principal, "gallery-a")
+    ).resolves.toMatchObject({ selectionOpen: false });
   });
 });
