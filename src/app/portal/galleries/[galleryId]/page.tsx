@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { GalleryStatus } from "@prisma/client";
 import { portalGalleryStatusLabels } from "@/modules/portal/gallery-status-labels";
 import {
   listPortalGalleryPhotos,
@@ -9,6 +10,11 @@ import { PortalPhotoGrid } from "./PortalPhotoGrid";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+const DELIVERY_VISIBLE_STATUSES: GalleryStatus[] = [
+  GalleryStatus.READY_FOR_DELIVERY,
+  GalleryStatus.DELIVERED,
+];
+
 export default async function PortalGalleryDetailPage({
   params,
 }: {
@@ -17,6 +23,11 @@ export default async function PortalGalleryDetailPage({
   const { galleryId } = await params;
   const { gallery } = await requirePortalGallery(galleryId);
   const photos = await listPortalGalleryPhotos(gallery.id);
+  const deliveryDriveUrl =
+    DELIVERY_VISIBLE_STATUSES.includes(gallery.status) &&
+    gallery.deliveryDriveUrl?.trim()
+      ? gallery.deliveryDriveUrl
+      : null;
 
   return (
     <main className="portal-page">
@@ -39,6 +50,21 @@ export default async function PortalGalleryDetailPage({
           })}
         </p>
       </section>
+      {deliveryDriveUrl && (
+        <section className="portal-intro">
+          <span className="meta">Entrega disponible</span>
+          <p>
+            <a
+              className="portal-gallery-card__action"
+              href={deliveryDriveUrl}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Ver entrega en Google Drive →
+            </a>
+          </p>
+        </section>
+      )}
       {photos.length === 0 ? (
         <section className="portal-gallery-list">
           <div className="portal-empty">

@@ -9,9 +9,9 @@ type PortalClient = {
 type PortalGallery = {
   id: string;
   title: string;
-  accessToken: string;
   status: GalleryStatus;
   createdAt: Date;
+  deliveryDriveUrl: string | null;
 };
 
 type AccountClientAccessDependencies = {

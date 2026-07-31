@@ -18,8 +18,9 @@ const gallery = {
   id: "gallery-1",
   title: "Sesión de Verano",
   accessToken: "super-secret-token",
-  status: GalleryStatus.PROOFING,
+  status: GalleryStatus.PROOFING as GalleryStatus,
   createdAt: new Date("2030-01-01T00:00:00.000Z"),
+  deliveryDriveUrl: null as string | null,
 };
 
 beforeEach(() => {
@@ -163,5 +164,94 @@ describe("authenticated gallery detail page", () => {
 
     expect(html).toContain("/api/portal/photos/photo-1");
     expect(html).not.toContain("/api/galleries/");
+  });
+});
+
+describe("authenticated gallery delivery link", () => {
+  async function renderWithGallery(overrides: Partial<typeof gallery>) {
+    mocks.requirePortalGallery.mockResolvedValueOnce({
+      actor: { kind: "account", accountId: "account-1", clientId: "client-1", email: "a@example.test" },
+      gallery: { ...gallery, ...overrides },
+    });
+    const element = await PortalGalleryDetailPage({
+      params: Promise.resolve({ galleryId: "gallery-1" }),
+    });
+    return renderToStaticMarkup(element);
+  }
+
+  it("shows the delivery link for READY_FOR_DELIVERY with a non-empty URL", async () => {
+    const html = await renderWithGallery({
+      status: GalleryStatus.READY_FOR_DELIVERY,
+      deliveryDriveUrl: "https://drive.example.test/ready",
+    });
+
+    expect(html).toContain('href="https://drive.example.test/ready"');
+  });
+
+  it("shows the delivery link for DELIVERED with a non-empty URL", async () => {
+    const html = await renderWithGallery({
+      status: GalleryStatus.DELIVERED,
+      deliveryDriveUrl: "https://drive.example.test/delivered",
+    });
+
+    expect(html).toContain('href="https://drive.example.test/delivered"');
+  });
+
+  it("hides the delivery link for a disallowed status even with a URL present", async () => {
+    const html = await renderWithGallery({
+      status: GalleryStatus.PROOFING,
+      deliveryDriveUrl: "https://drive.example.test/ready",
+    });
+
+    expect(html).not.toContain("drive.example.test");
+    expect(html).not.toContain("Ver entrega en Google Drive");
+  });
+
+  it("hides the delivery link when deliveryDriveUrl is null", async () => {
+    const html = await renderWithGallery({
+      status: GalleryStatus.READY_FOR_DELIVERY,
+      deliveryDriveUrl: null,
+    });
+
+    expect(html).not.toContain("Ver entrega en Google Drive");
+  });
+
+  it("hides the delivery link when deliveryDriveUrl is an empty string", async () => {
+    const html = await renderWithGallery({
+      status: GalleryStatus.READY_FOR_DELIVERY,
+      deliveryDriveUrl: "",
+    });
+
+    expect(html).not.toContain("Ver entrega en Google Drive");
+  });
+
+  it("hides the delivery link when deliveryDriveUrl is only whitespace", async () => {
+    const html = await renderWithGallery({
+      status: GalleryStatus.READY_FOR_DELIVERY,
+      deliveryDriveUrl: "   ",
+    });
+
+    expect(html).not.toContain("Ver entrega en Google Drive");
+  });
+
+  it("preserves the closed behavior when the gallery is inaccessible", async () => {
+    mocks.requirePortalGallery.mockRejectedValueOnce(new Error("not-found"));
+
+    await expect(
+      PortalGalleryDetailPage({
+        params: Promise.resolve({ galleryId: "gallery-1" }),
+      })
+    ).rejects.toThrow("not-found");
+    expect(mocks.listPortalGalleryPhotos).not.toHaveBeenCalled();
+  });
+
+  it("never renders accessToken in the delivery block markup", async () => {
+    const html = await renderWithGallery({
+      status: GalleryStatus.DELIVERED,
+      deliveryDriveUrl: "https://drive.example.test/delivered",
+    });
+
+    expect(html).not.toContain("accessToken");
+    expect(html).not.toContain("super-secret-token");
   });
 });

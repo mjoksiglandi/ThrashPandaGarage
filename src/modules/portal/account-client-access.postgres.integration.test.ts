@@ -1,5 +1,5 @@
 import { AccountStatus, GalleryStatus } from "@prisma/client";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it, vi } from "vitest";
 import { db } from "@/lib/db";
 import { clientRepository } from "@/modules/clients/client.repository";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
@@ -40,6 +40,7 @@ async function createGallery(
   overrides: {
     status?: GalleryStatus;
     expiresAt?: Date | null;
+    deliveryDriveUrl?: string | null;
   } = {}
 ) {
   return db.gallery.create({
@@ -50,6 +51,7 @@ async function createGallery(
       accessToken: `${runId}_${label}`,
       status: overrides.status ?? GalleryStatus.PROOFING,
       expiresAt: overrides.expiresAt ?? null,
+      deliveryDriveUrl: overrides.deliveryDriveUrl ?? null,
     },
   });
 }
@@ -117,5 +119,38 @@ describe("Account-Client gallery isolation with PostgreSQL", () => {
     await expect(
       service.findGallery(ownerB.principal, galleryB.id)
     ).resolves.toMatchObject({ id: galleryB.id });
+  });
+
+  it("resolves deliveryDriveUrl through the single authorized query for the matching Account-Client pair", async () => {
+    const ownerA = await createAccountClient("delivery-a");
+    const ownerB = await createAccountClient("delivery-b");
+    const readyA = await createGallery(ownerA.client.id, "ready-a", {
+      status: GalleryStatus.READY_FOR_DELIVERY,
+      deliveryDriveUrl: "https://drive.example.test/ready-a",
+    });
+    await createGallery(ownerA.client.id, "archived-delivery-a", {
+      status: GalleryStatus.ARCHIVED,
+      deliveryDriveUrl: "https://drive.example.test/archived-a",
+    });
+    await createGallery(ownerA.client.id, "expired-delivery-a", {
+      status: GalleryStatus.READY_FOR_DELIVERY,
+      expiresAt: now,
+      deliveryDriveUrl: "https://drive.example.test/expired-a",
+    });
+
+    const findGallerySpy = vi.spyOn(galleryRepository, "findAvailableForClient");
+
+    const authorized = await service.findGallery(ownerA.principal, readyA.id);
+    const otherClient = await service.findGallery(ownerB.principal, readyA.id);
+
+    expect(authorized).toMatchObject({
+      id: readyA.id,
+      deliveryDriveUrl: "https://drive.example.test/ready-a",
+    });
+    expect(authorized).not.toHaveProperty("accessToken");
+    expect(otherClient).toBeNull();
+    expect(findGallerySpy).toHaveBeenCalledTimes(2);
+
+    findGallerySpy.mockRestore();
   });
 });
