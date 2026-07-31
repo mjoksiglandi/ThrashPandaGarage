@@ -26,9 +26,9 @@ function availableForClient(
 const portalGallerySelect = {
   id: true,
   title: true,
-  accessToken: true,
   status: true,
   createdAt: true,
+  deliveryDriveUrl: true,
 } satisfies Prisma.GallerySelect;
 
 export const galleryRepository = {

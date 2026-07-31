@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { GalleryStatus } from "@prisma/client";
 import type { AccountSessionPrincipal } from "@/modules/account-sessions/current-account-session.service";
 import { createAccountClientAccessService } from "./account-client-access.service";
 
@@ -27,9 +28,22 @@ function fixture() {
       accessToken: "token-a",
       status: "PROOFING" as const,
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
+      deliveryDriveUrl: null,
     },
   ]);
-  const findAvailableForClient = vi.fn(async () => null);
+  const findAvailableForClient = vi.fn<
+    (
+      id: string,
+      clientId: string,
+      now: Date
+    ) => Promise<{
+      id: string;
+      title: string;
+      status: GalleryStatus;
+      createdAt: Date;
+      deliveryDriveUrl: string | null;
+    } | null>
+  >(async () => null);
   const service = createAccountClientAccessService({
     clients: { findLinkedToAccount },
     galleries: {
@@ -102,5 +116,74 @@ describe("Account-Client portal access", () => {
       "client-a",
       now
     );
+  });
+});
+
+describe("Authenticated gallery delivery lookup", () => {
+  it("returns the gallery with deliveryDriveUrl for an authorized account", async () => {
+    const test = fixture();
+    test.findAvailableForClient.mockResolvedValueOnce({
+      id: "gallery-a",
+      title: "Gallery A",
+      status: "READY_FOR_DELIVERY",
+      createdAt: new Date("2029-12-01T00:00:00.000Z"),
+      deliveryDriveUrl: "https://drive.example.test/gallery-a",
+    });
+
+    await expect(
+      test.service.findGallery(principal, "gallery-a")
+    ).resolves.toMatchObject({
+      id: "gallery-a",
+      deliveryDriveUrl: "https://drive.example.test/gallery-a",
+    });
+    expect(test.findAvailableForClient).toHaveBeenCalledWith(
+      "gallery-a",
+      "client-a",
+      now
+    );
+  });
+
+  it("fails closed when the account's client link does not match the gallery's client", async () => {
+    const test = fixture();
+    test.findLinkedToAccount.mockResolvedValueOnce(null);
+
+    await expect(
+      test.service.findGallery(principal, "gallery-a")
+    ).resolves.toBeNull();
+    expect(test.findAvailableForClient).not.toHaveBeenCalled();
+  });
+
+  it("does not resolve an archived gallery", async () => {
+    const test = fixture();
+    test.findAvailableForClient.mockResolvedValueOnce(null);
+
+    await expect(
+      test.service.findGallery(principal, "gallery-archived")
+    ).resolves.toBeNull();
+  });
+
+  it("does not resolve an expired gallery", async () => {
+    const test = fixture();
+    test.findAvailableForClient.mockResolvedValueOnce(null);
+
+    await expect(
+      test.service.findGallery(principal, "gallery-expired")
+    ).resolves.toBeNull();
+  });
+
+  it("never includes accessToken in the authorized projection", async () => {
+    const test = fixture();
+    test.findAvailableForClient.mockResolvedValueOnce({
+      id: "gallery-a",
+      title: "Gallery A",
+      status: "DELIVERED",
+      createdAt: new Date("2029-12-01T00:00:00.000Z"),
+      deliveryDriveUrl: "https://drive.example.test/gallery-a",
+    });
+
+    const result = await test.service.findGallery(principal, "gallery-a");
+
+    expect(result).not.toHaveProperty("accessToken");
+    expect(JSON.stringify(result)).not.toContain("accessToken");
   });
 });
