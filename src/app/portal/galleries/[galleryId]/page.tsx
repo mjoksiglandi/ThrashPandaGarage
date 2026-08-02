@@ -73,7 +73,11 @@ export default async function PortalGalleryDetailPage({
           </div>
         </section>
       ) : (
-        <PortalPhotoGrid galleryId={gallery.id} photos={photos} />
+        <PortalPhotoGrid
+          galleryId={gallery.id}
+          photos={photos}
+          selectionOpen={gallery.selectionOpen}
+        />
       )}
     </main>
   );

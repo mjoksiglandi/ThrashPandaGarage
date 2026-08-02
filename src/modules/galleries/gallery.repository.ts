@@ -28,6 +28,7 @@ const portalGallerySelect = {
   title: true,
   status: true,
   createdAt: true,
+  expiresAt: true,
   deliveryDriveUrl: true,
 } satisfies Prisma.GallerySelect;
 

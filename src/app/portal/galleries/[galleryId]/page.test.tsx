@@ -21,6 +21,7 @@ const gallery = {
   status: GalleryStatus.PROOFING as GalleryStatus,
   createdAt: new Date("2030-01-01T00:00:00.000Z"),
   deliveryDriveUrl: null as string | null,
+  selectionOpen: true,
 };
 
 beforeEach(() => {
@@ -252,6 +253,51 @@ describe("authenticated gallery delivery link", () => {
     });
 
     expect(html).not.toContain("accessToken");
+    expect(html).not.toContain("super-secret-token");
+  });
+});
+
+describe("authenticated gallery selection controls", () => {
+  async function renderWithGallery(
+    overrides: Partial<typeof gallery>,
+    selected = false
+  ) {
+    mocks.requirePortalGallery.mockResolvedValueOnce({
+      actor: { kind: "account", accountId: "account-1", clientId: "client-1", email: "a@example.test" },
+      gallery: { ...gallery, ...overrides },
+    });
+    mocks.listPortalGalleryPhotos.mockResolvedValueOnce([
+      { id: "photo-1", baseName: "photo-1", selected },
+    ]);
+    const element = await PortalGalleryDetailPage({
+      params: Promise.resolve({ galleryId: "gallery-1" }),
+    });
+    return renderToStaticMarkup(element);
+  }
+
+  it("renders selection controls while selection is open", async () => {
+    const html = await renderWithGallery({ selectionOpen: true });
+
+    expect(html).toContain('aria-label="Seleccionar foto"');
+    expect(html).not.toContain("La selección está cerrada.");
+  });
+
+  it.each([
+    [GalleryStatus.READY_FOR_DELIVERY, false],
+    [GalleryStatus.DELIVERED, true],
+  ] as const)("keeps photos and delivery visible without selection controls for %s", async (status, selected) => {
+    const html = await renderWithGallery({
+      status,
+      selectionOpen: false,
+      deliveryDriveUrl: "https://drive.example.test/delivery",
+    }, selected);
+
+    expect(html).toContain("/api/portal/photos/photo-1");
+    expect(html).toContain('href="https://drive.example.test/delivery"');
+    expect(html).toContain("La selección está cerrada.");
+    expect(html).not.toContain('aria-label="Seleccionar foto"');
+    expect(html).not.toContain('aria-label="Quitar selección"');
+    expect(html).not.toContain("/g/");
     expect(html).not.toContain("super-secret-token");
   });
 });
