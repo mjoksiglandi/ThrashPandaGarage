@@ -67,6 +67,7 @@ describe("Slice 1 account migration with PostgreSQL", () => {
       "20260725235807_add_account_invitation_sessions",
       "20260726180000_add_account_password_recoveries",
       "20260728120000_expand_user_roles",
+      "20260802040000_add_account_gallery_event_actor",
     ]);
     expect(migrations.every(({ finished_at }) => finished_at !== null)).toBe(true);
     expect(migrations.every(({ rolled_back_at }) => rolled_back_at === null)).toBe(true);

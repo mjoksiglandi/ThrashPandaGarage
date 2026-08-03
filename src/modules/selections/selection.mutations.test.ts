@@ -128,6 +128,22 @@ describe("selection client mutations", () => {
 });
 
 describe("selection confirmation availability", () => {
+  it("keeps public confirmation attributed to the gallery token", async () => {
+    await expect(confirmSelection("token")).resolves.toMatchObject({
+      galleryId: lockedGallery.id,
+      status: "confirmed",
+      selectedCount: 1,
+    });
+    expect(mocks.gallery.event).toHaveBeenCalledWith(
+      expect.objectContaining({
+        galleryId: lockedGallery.id,
+        type: "SELECTION_CONFIRMED",
+        actorType: "GALLERY_TOKEN",
+      }),
+      mocks.tx
+    );
+  });
+
   it("rejects an archived gallery even when it was confirmed previously", async () => {
     mocks.gallery.findByTokenForUpdate.mockResolvedValueOnce({
       ...lockedGallery,
