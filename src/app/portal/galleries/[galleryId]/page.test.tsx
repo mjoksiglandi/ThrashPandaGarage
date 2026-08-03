@@ -22,6 +22,7 @@ const gallery = {
   createdAt: new Date("2030-01-01T00:00:00.000Z"),
   deliveryDriveUrl: null as string | null,
   selectionOpen: true,
+  selectionLimit: 2 as number | null,
 };
 
 beforeEach(() => {
@@ -260,15 +261,19 @@ describe("authenticated gallery delivery link", () => {
 describe("authenticated gallery selection controls", () => {
   async function renderWithGallery(
     overrides: Partial<typeof gallery>,
-    selected = false
+    selectedStates: boolean[] = [false]
   ) {
     mocks.requirePortalGallery.mockResolvedValueOnce({
       actor: { kind: "account", accountId: "account-1", clientId: "client-1", email: "a@example.test" },
       gallery: { ...gallery, ...overrides },
     });
-    mocks.listPortalGalleryPhotos.mockResolvedValueOnce([
-      { id: "photo-1", baseName: "photo-1", selected },
-    ]);
+    mocks.listPortalGalleryPhotos.mockResolvedValueOnce(
+      selectedStates.map((selected, index) => ({
+        id: `photo-${index + 1}`,
+        baseName: `photo-${index + 1}`,
+        selected,
+      }))
+    );
     const element = await PortalGalleryDetailPage({
       params: Promise.resolve({ galleryId: "gallery-1" }),
     });
@@ -276,10 +281,36 @@ describe("authenticated gallery selection controls", () => {
   }
 
   it("renders selection controls while selection is open", async () => {
-    const html = await renderWithGallery({ selectionOpen: true });
+    const html = await renderWithGallery({ selectionOpen: true }, [true, false]);
 
     expect(html).toContain('aria-label="Seleccionar foto"');
-    expect(html).not.toContain("La selección está cerrada.");
+    expect(html).toContain("Selección abierta");
+    expect(html).toContain("1 / 2 seleccionada");
+    expect(html).not.toContain("Selección cerrada / solo lectura");
+  });
+
+  it("shows a complete state, blocks new selections, and leaves deselection enabled", async () => {
+    const html = await renderWithGallery(
+      { selectionOpen: true, selectionLimit: 2 },
+      [true, true, false]
+    );
+
+    expect(html).toContain("Selección completa");
+    expect(html).toContain("2 / 2 seleccionadas");
+    expect(html).toMatch(/aria-label="Seleccionar foto" disabled=""/);
+    expect(html).toMatch(/aria-label="Quitar selección"/);
+    expect(html).not.toMatch(/aria-label="Quitar selección" disabled=""/);
+  });
+
+  it("shows the count without inventing a limit when selectionLimit is null", async () => {
+    const html = await renderWithGallery(
+      { selectionOpen: true, selectionLimit: null },
+      [true, false]
+    );
+
+    expect(html).toContain("Selección abierta");
+    expect(html).toContain("1 seleccionada");
+    expect(html).not.toContain("1 / ");
   });
 
   it.each([
@@ -290,13 +321,14 @@ describe("authenticated gallery selection controls", () => {
       status,
       selectionOpen: false,
       deliveryDriveUrl: "https://drive.example.test/delivery",
-    }, selected);
+    }, [selected, false]);
 
     expect(html).toContain("/api/portal/photos/photo-1");
     expect(html).toContain('href="https://drive.example.test/delivery"');
-    expect(html).toContain("La selección está cerrada.");
+    expect(html).toContain("Selección cerrada / solo lectura");
     expect(html).not.toContain('aria-label="Seleccionar foto"');
     expect(html).not.toContain('aria-label="Quitar selección"');
+    expect(html.match(/>Seleccionada<\/span>/g) ?? []).toHaveLength(selected ? 1 : 0);
     expect(html).not.toContain("/g/");
     expect(html).not.toContain("super-secret-token");
   });

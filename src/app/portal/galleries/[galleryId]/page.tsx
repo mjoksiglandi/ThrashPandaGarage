@@ -77,6 +77,7 @@ export default async function PortalGalleryDetailPage({
           galleryId={gallery.id}
           photos={photos}
           selectionOpen={gallery.selectionOpen}
+          selectionLimit={gallery.selectionLimit}
         />
       )}
     </main>

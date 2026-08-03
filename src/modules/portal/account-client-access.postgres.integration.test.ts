@@ -40,6 +40,7 @@ async function createGallery(
   overrides: {
     status?: GalleryStatus;
     expiresAt?: Date | null;
+    selectionLimit?: number | null;
     deliveryDriveUrl?: string | null;
   } = {}
 ) {
@@ -51,6 +52,7 @@ async function createGallery(
       accessToken: `${runId}_${label}`,
       status: overrides.status ?? GalleryStatus.PROOFING,
       expiresAt: overrides.expiresAt ?? null,
+      selectionLimit: overrides.selectionLimit ?? null,
       deliveryDriveUrl: overrides.deliveryDriveUrl ?? null,
     },
   });
@@ -126,6 +128,7 @@ describe("Account-Client gallery isolation with PostgreSQL", () => {
     const ownerB = await createAccountClient("delivery-b");
     const readyA = await createGallery(ownerA.client.id, "ready-a", {
       status: GalleryStatus.READY_FOR_DELIVERY,
+      selectionLimit: 7,
       deliveryDriveUrl: "https://drive.example.test/ready-a",
     });
     await createGallery(ownerA.client.id, "archived-delivery-a", {
@@ -146,6 +149,7 @@ describe("Account-Client gallery isolation with PostgreSQL", () => {
     expect(authorized).toMatchObject({
       id: readyA.id,
       deliveryDriveUrl: "https://drive.example.test/ready-a",
+      selectionLimit: 7,
       selectionOpen: false,
     });
     expect(authorized).not.toHaveProperty("accessToken");

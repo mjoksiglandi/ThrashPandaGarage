@@ -29,6 +29,7 @@ function fixture() {
       status: "PROOFING" as const,
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: null,
+      selectionLimit: null,
       deliveryDriveUrl: null,
     },
   ]);
@@ -43,6 +44,7 @@ function fixture() {
       status: GalleryStatus;
       createdAt: Date;
       expiresAt: Date | null;
+      selectionLimit: number | null;
       deliveryDriveUrl: string | null;
     } | null>
   >(async () => null);
@@ -130,6 +132,7 @@ describe("Authenticated gallery delivery lookup", () => {
       status: "READY_FOR_DELIVERY",
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: null,
+      selectionLimit: 12,
       deliveryDriveUrl: "https://drive.example.test/gallery-a",
     });
 
@@ -138,6 +141,7 @@ describe("Authenticated gallery delivery lookup", () => {
     ).resolves.toMatchObject({
       id: "gallery-a",
       deliveryDriveUrl: "https://drive.example.test/gallery-a",
+      selectionLimit: 12,
       selectionOpen: false,
     });
     expect(test.findAvailableForClient).toHaveBeenCalledWith(
@@ -183,6 +187,7 @@ describe("Authenticated gallery delivery lookup", () => {
       status: "DELIVERED",
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: null,
+      selectionLimit: null,
       deliveryDriveUrl: "https://drive.example.test/gallery-a",
     });
 
@@ -202,12 +207,13 @@ describe("Authenticated gallery selection state", () => {
       status: "PROOFING",
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: new Date(now.getTime() + 1),
+      selectionLimit: 3,
       deliveryDriveUrl: null,
     });
 
     await expect(
       test.service.findGallery(principal, "gallery-a")
-    ).resolves.toMatchObject({ selectionOpen: true });
+    ).resolves.toMatchObject({ selectionOpen: true, selectionLimit: 3 });
   });
 
   it.each(["READY_FOR_DELIVERY", "DELIVERED"] as const)(
@@ -220,6 +226,7 @@ describe("Authenticated gallery selection state", () => {
         status,
         createdAt: new Date("2029-12-01T00:00:00.000Z"),
         expiresAt: null,
+        selectionLimit: null,
         deliveryDriveUrl: "https://drive.example.test/gallery-a",
       });
 
@@ -237,6 +244,7 @@ describe("Authenticated gallery selection state", () => {
       status: "PROOFING",
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: now,
+      selectionLimit: null,
       deliveryDriveUrl: null,
     });
 
