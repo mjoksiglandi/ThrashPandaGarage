@@ -13,6 +13,7 @@ type PortalGallery = {
   status: GalleryStatus;
   createdAt: Date;
   expiresAt: Date | null;
+  selectionLimit: number | null;
   deliveryDriveUrl: string | null;
 };
 

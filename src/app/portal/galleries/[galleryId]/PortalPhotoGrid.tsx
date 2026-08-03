@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useReducer, useTransition } from "react";
 
 export type PortalGalleryPhotoItem = {
   id: string;
@@ -8,29 +8,76 @@ export type PortalGalleryPhotoItem = {
   selected: boolean;
 };
 
+type PortalPhotoGridState = {
+  items: PortalGalleryPhotoItem[];
+  pendingId: string | null;
+  error: string | null;
+};
+
+type PortalPhotoGridAction =
+  | { type: "toggle"; photoId: string; selected: boolean }
+  | { type: "rollback"; photoId: string; selected: boolean }
+  | { type: "settled" };
+
+const selectionError = "No se pudo actualizar la selección. Intenta nuevamente.";
+
+export function portalPhotoGridReducer(
+  state: PortalPhotoGridState,
+  action: PortalPhotoGridAction
+): PortalPhotoGridState {
+  switch (action.type) {
+    case "toggle":
+      return {
+        items: state.items.map((item) =>
+          item.id === action.photoId ? { ...item, selected: action.selected } : item
+        ),
+        pendingId: action.photoId,
+        error: null,
+      };
+    case "rollback":
+      return {
+        ...state,
+        items: state.items.map((item) =>
+          item.id === action.photoId ? { ...item, selected: action.selected } : item
+        ),
+        error: selectionError,
+      };
+    case "settled":
+      return { ...state, pendingId: null };
+  }
+}
+
 export function PortalPhotoGrid({
   galleryId,
   photos,
   selectionOpen,
+  selectionLimit,
 }: {
   galleryId: string;
   photos: PortalGalleryPhotoItem[];
   selectionOpen: boolean;
+  selectionLimit: number | null;
 }) {
-  const [items, setItems] = useState(photos);
-  const [pendingId, setPendingId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [state, dispatch] = useReducer(portalPhotoGridReducer, {
+    items: photos,
+    pendingId: null,
+    error: null,
+  });
   const [, startTransition] = useTransition();
+  const selectedCount = state.items.filter((item) => item.selected).length;
+  const limitReached = selectionLimit !== null && selectedCount >= selectionLimit;
+  const selectionState = !selectionOpen
+    ? "Selección cerrada / solo lectura"
+    : limitReached
+      ? "Selección completa"
+      : "Selección abierta";
 
   function toggle(photo: PortalGalleryPhotoItem) {
-    if (!selectionOpen || pendingId) return;
+    if (!selectionOpen || state.pendingId) return;
+    if (!photo.selected && limitReached) return;
     const nextSelected = !photo.selected;
 
-    setPendingId(photo.id);
-    setError(null);
-    setItems((current) =>
-      current.map((item) => (item.id === photo.id ? { ...item, selected: nextSelected } : item))
-    );
+    dispatch({ type: "toggle", photoId: photo.id, selected: nextSelected });
 
     startTransition(async () => {
       try {
@@ -43,34 +90,33 @@ export function PortalPhotoGrid({
           }
         );
         if (!response.ok) {
-          setItems((current) =>
-            current.map((item) => (item.id === photo.id ? { ...item, selected: photo.selected } : item))
-          );
-          setError("No se pudo actualizar la selección. Intenta nuevamente.");
+          dispatch({ type: "rollback", photoId: photo.id, selected: photo.selected });
         }
       } catch {
-        setItems((current) =>
-          current.map((item) => (item.id === photo.id ? { ...item, selected: photo.selected } : item))
-        );
-        setError("No se pudo actualizar la selección. Intenta nuevamente.");
+        dispatch({ type: "rollback", photoId: photo.id, selected: photo.selected });
       } finally {
-        setPendingId(null);
+        dispatch({ type: "settled" });
       }
     });
   }
 
   return (
     <>
-      {error && (
+      <p className="portal-selection-status" aria-live="polite">
+        <strong>{selectionState}</strong>
+        <span>
+          {selectedCount}
+          {selectionLimit !== null ? ` / ${selectionLimit}` : ""}{" "}
+          {selectedCount === 1 ? "seleccionada" : "seleccionadas"}
+        </span>
+      </p>
+      {state.error && (
         <p role="alert" className="portal-selection-error">
-          {error}
+          {state.error}
         </p>
       )}
-      {!selectionOpen && (
-        <p className="portal-selection-status">La selección está cerrada.</p>
-      )}
       <section className="portal-photo-grid">
-        {items.map((photo) => (
+        {state.items.map((photo) => (
           <figure className="portal-photo-card" key={photo.id}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -84,11 +130,16 @@ export function PortalPhotoGrid({
                 className={`portal-photo-select${photo.selected ? " is-selected" : ""}`}
                 aria-pressed={photo.selected}
                 aria-label={photo.selected ? "Quitar selección" : "Seleccionar foto"}
-                disabled={pendingId === photo.id}
+                disabled={state.pendingId !== null || (!photo.selected && limitReached)}
                 onClick={() => toggle(photo)}
               >
                 {photo.selected ? "Seleccionada" : "Seleccionar"}
               </button>
+            )}
+            {!selectionOpen && photo.selected && (
+              <span className="portal-photo-select portal-photo-selection-readonly">
+                Seleccionada
+              </span>
             )}
           </figure>
         ))}
