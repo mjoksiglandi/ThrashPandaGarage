@@ -1,12 +1,12 @@
 import type { GalleryStatus } from "@prisma/client";
 
 export const portalGalleryStatusLabels: Record<GalleryStatus, string> = {
-  DRAFT: "Preparación",
-  EMAIL_SENT: "Invitación enviada",
-  PROOFING: "Selección abierta",
-  SELECTION_CONFIRMED: "Selección confirmada",
-  EDITING: "En edición",
+  DRAFT: "Cerrada",
+  EMAIL_SENT: "Cerrada",
+  PROOFING: "Seleccionando",
+  SELECTION_CONFIRMED: "Selección enviada",
+  EDITING: "Selección enviada",
   READY_FOR_DELIVERY: "Lista para entrega",
   DELIVERED: "Entregada",
-  ARCHIVED: "Archivada",
+  ARCHIVED: "Cerrada",
 };

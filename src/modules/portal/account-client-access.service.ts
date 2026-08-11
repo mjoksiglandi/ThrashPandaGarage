@@ -14,6 +14,7 @@ type PortalGallery = {
   createdAt: Date;
   expiresAt: Date | null;
   selectionLimit: number | null;
+  selectionConfirmedAt: Date | null;
   deliveryDriveUrl: string | null;
 };
 

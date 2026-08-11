@@ -98,6 +98,20 @@ export async function authorizePortalPhoto(photoId: string) {
 }
 
 export async function authorizePortalPhotoInGallery(galleryId: string, photoId: string) {
+  const authorized = await authorizePortalGallery(galleryId);
+  if (!authorized) {
+    return null;
+  }
+
+  const photo = await photoRepository.find(photoId);
+  if (!photo || photo.status === "REJECTED" || photo.galleryId !== authorized.gallery.id) {
+    return null;
+  }
+
+  return { ...authorized, photo };
+}
+
+export async function authorizePortalGallery(galleryId: string) {
   const actor = await resolveCurrentPortalActor();
   if (actor.kind === "anonymous") {
     return null;
@@ -107,13 +121,7 @@ export async function authorizePortalPhotoInGallery(galleryId: string, photoId: 
   if (!gallery) {
     return null;
   }
-
-  const photo = await photoRepository.find(photoId);
-  if (!photo || photo.status === "REJECTED" || photo.galleryId !== gallery.id) {
-    return null;
-  }
-
-  return { gallery, photo };
+  return { actor, gallery };
 }
 
 export async function logoutPortalActor() {

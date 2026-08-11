@@ -1,10 +1,14 @@
+import { GalleryStatus } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { portalPhotoGridReducer } from "./PortalPhotoGrid";
+import {
+  portalGalleryFunctionalStatus,
+  portalPhotoGridReducer,
+} from "./PortalPhotoGrid";
 
 const initialState = {
   items: [
-    { id: "photo-1", baseName: "photo-1", selected: true },
-    { id: "photo-2", baseName: "photo-2", selected: false },
+    { id: "photo-1", baseName: "photo-1", selected: true, comment: "" },
+    { id: "photo-2", baseName: "photo-2", selected: false, comment: "" },
   ],
   pendingId: null,
   error: null,
@@ -62,5 +66,40 @@ describe("PortalPhotoGrid optimistic state", () => {
       "No se pudo actualizar la selección. Intenta nuevamente."
     );
     expect(settled.pendingId).toBeNull();
+  });
+
+  it("edits a photo comment without changing its selection", () => {
+    const edited = portalPhotoGridReducer(initialState, {
+      type: "comment",
+      photoId: "photo-2",
+      comment: "Retocar fondo",
+    });
+
+    expect(edited.items[1]).toMatchObject({
+      selected: false,
+      comment: "Retocar fondo",
+    });
+  });
+});
+
+describe("portal gallery functional status", () => {
+  const base = {
+    status: GalleryStatus.PROOFING,
+    selectionOpen: true,
+    confirmed: false,
+    selectedCount: 1,
+    selectionLimit: 2,
+  };
+
+  it.each([
+    [{ ...base }, "Seleccionando"],
+    [{ ...base, selectedCount: 2 }, "Límite alcanzado"],
+    [{ ...base, confirmed: true }, "Selección enviada"],
+    [{ ...base, status: GalleryStatus.EDITING, selectionOpen: false }, "Selección enviada"],
+    [{ ...base, status: GalleryStatus.DRAFT, selectionOpen: false }, "Cerrada"],
+    [{ ...base, status: GalleryStatus.READY_FOR_DELIVERY, selectionOpen: false }, "Lista para entrega"],
+    [{ ...base, status: GalleryStatus.DELIVERED, selectionOpen: false }, "Entregada"],
+  ] as const)("maps the gallery to %s", (input, expected) => {
+    expect(portalGalleryFunctionalStatus(input)).toBe(expected);
   });
 });

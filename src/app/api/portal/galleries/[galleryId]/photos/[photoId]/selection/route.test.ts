@@ -59,7 +59,11 @@ describe("POST portal photo selection", () => {
       "gallery-1",
       "photo-1"
     );
-    await expect(response.json()).resolves.toEqual({ ok: true, selected: true });
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      selected: true,
+      comment: "",
+    });
   });
 
   it("uses the authorized gallery and photo ids for the mutation, not client-controlled ones", async () => {
@@ -77,8 +81,45 @@ describe("POST portal photo selection", () => {
     expect(mocks.setPortalPhotoSelection).toHaveBeenCalledWith(
       "gallery-1",
       "photo-1",
-      true
+      true,
+      undefined
     );
+  });
+
+  it("persists a bounded photo comment through the authorized selection", async () => {
+    mocks.setPortalPhotoSelection.mockResolvedValueOnce({
+      id: "selection-1",
+      galleryId: "gallery-1",
+      photoId: "photo-1",
+      selected: true,
+      comment: "Retocar fondo",
+    });
+
+    const response = await POST(
+      jsonRequest({ selected: true, comment: "Retocar fondo" }),
+      context
+    );
+
+    expect(mocks.setPortalPhotoSelection).toHaveBeenCalledWith(
+      "gallery-1",
+      "photo-1",
+      true,
+      "Retocar fondo"
+    );
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      comment: "Retocar fondo",
+    });
+  });
+
+  it("rejects comments beyond the shared 1000-character limit", async () => {
+    const response = await POST(
+      jsonRequest({ selected: true, comment: "x".repeat(1001) }),
+      context
+    );
+
+    expect(response.status).toBe(400);
+    expect(mocks.setPortalPhotoSelection).not.toHaveBeenCalled();
   });
 
   it("returns a homogeneous 404 and never mutates when authorization fails", async () => {
@@ -120,7 +161,11 @@ describe("POST portal photo selection", () => {
     const response = await POST(request, context);
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true, selected: true });
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      selected: true,
+      comment: "",
+    });
   });
 
   it("deselecting an already-deselected photo is idempotent and returns 200", async () => {
@@ -136,7 +181,11 @@ describe("POST portal photo selection", () => {
     const response = await POST(request, context);
 
     expect(response.status).toBe(200);
-    await expect(response.json()).resolves.toEqual({ ok: true, selected: false });
+    await expect(response.json()).resolves.toEqual({
+      ok: true,
+      selected: false,
+      comment: "",
+    });
   });
 
   it("maps a closed selection window to 409 without leaking internal details", async () => {

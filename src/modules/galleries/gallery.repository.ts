@@ -30,6 +30,7 @@ const portalGallerySelect = {
   createdAt: true,
   expiresAt: true,
   selectionLimit: true,
+  selectionConfirmedAt: true,
   deliveryDriveUrl: true,
 } satisfies Prisma.GallerySelect;
 

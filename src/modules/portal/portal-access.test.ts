@@ -292,7 +292,9 @@ describe("listPortalGalleryPhotos", () => {
 
     await expect(
       listPortalGalleryPhotos("gallery-1")
-    ).resolves.toEqual([{ id: "photo-1", baseName: "photo-1", selected: true }]);
+    ).resolves.toEqual([
+      { id: "photo-1", baseName: "photo-1", selected: true, comment: "" },
+    ]);
     expect(mocks.listAvailablePhotos).toHaveBeenCalledWith("gallery-1");
   });
 });

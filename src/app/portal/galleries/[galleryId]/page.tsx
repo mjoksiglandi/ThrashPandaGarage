@@ -76,8 +76,10 @@ export default async function PortalGalleryDetailPage({
         <PortalPhotoGrid
           galleryId={gallery.id}
           photos={photos}
+          status={gallery.status}
           selectionOpen={gallery.selectionOpen}
           selectionLimit={gallery.selectionLimit}
+          alreadyConfirmed={gallery.selectionConfirmedAt !== null}
         />
       )}
     </main>

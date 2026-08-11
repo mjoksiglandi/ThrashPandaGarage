@@ -4,10 +4,16 @@ import { db } from "@/lib/db";
 import { clientRepository } from "@/modules/clients/client.repository";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 import { photoRepository } from "@/modules/photos/photo.repository";
-import { updateSelectionFromClient } from "@/modules/selections/selection.service";
+import {
+  confirmSelection,
+  updateSelectionFromClient,
+} from "@/modules/selections/selection.service";
 import { createAccountClientAccessService } from "./account-client-access.service";
 import { createPortalGalleryPhotosService } from "./portal-gallery-photos.service";
-import { setPortalPhotoSelection } from "./portal-selection.service";
+import {
+  confirmPortalSelection,
+  setPortalPhotoSelection,
+} from "./portal-selection.service";
 
 const runId = `portal_selection_${Date.now()}`;
 const now = new Date("2030-01-02T03:04:05.000Z");
@@ -212,6 +218,46 @@ describe("Authenticated portal photo selection isolation with PostgreSQL", () =>
 });
 
 describe("Single shared selection state across the public and portal contracts", () => {
+  it("makes a portal comment immediately visible through the public token contract", async () => {
+    const owner = await createAccountClient("shared-portal-comment");
+    const gallery = await createGallery(owner.client.id, "shared-portal-comment-1");
+    const photo = await createPhoto(gallery.id, "shared-portal-comment-1-photo");
+
+    await setPortalPhotoSelection(gallery.id, photo.id, true, "Retocar fondo");
+
+    const viaToken = await galleryRepository.findByToken(gallery.accessToken);
+    expect(viaToken?.photos.find((item) => item.id === photo.id)?.selection).toMatchObject({
+      selected: true,
+      comment: "Retocar fondo",
+    });
+  });
+
+  it("confirms once through the portal and attributes the event to the account", async () => {
+    const owner = await createAccountClient("shared-portal-confirm");
+    const gallery = await createGallery(owner.client.id, "shared-portal-confirm-1", {
+      selectionLimit: 1,
+    });
+    const photo = await createPhoto(gallery.id, "shared-portal-confirm-1-photo");
+    await setPortalPhotoSelection(gallery.id, photo.id, true, "Elegida");
+
+    const confirmed = await confirmPortalSelection(gallery.id, owner.principal);
+    const retryViaToken = await confirmSelection(gallery.accessToken);
+    const persisted = await db.gallery.findUniqueOrThrow({ where: { id: gallery.id } });
+    const events = await db.galleryEvent.findMany({
+      where: { galleryId: gallery.id, type: "SELECTION_CONFIRMED" },
+    });
+
+    expect(confirmed.status).toBe("confirmed");
+    expect(retryViaToken.status).toBe("already_confirmed");
+    expect(persisted.status).toBe(GalleryStatus.SELECTION_CONFIRMED);
+    expect(persisted.selectionConfirmedAt).not.toBeNull();
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      actorType: "ACCOUNT",
+      actorId: owner.account.id,
+    });
+  });
+
   it("makes a portal selection immediately visible through the public token contract", async () => {
     const owner = await createAccountClient("shared-portal-to-public");
     const gallery = await createGallery(owner.client.id, "shared-portal-to-public-1");
