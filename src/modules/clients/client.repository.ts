@@ -11,7 +11,14 @@ export const clientRepository = {
   find(id: string) {
     return db.client.findUnique({
       where: { id },
-      include: { galleries: { orderBy: { createdAt: "desc" } } },
+      include: {
+        galleries: { orderBy: { createdAt: "desc" } },
+        account: {
+          include: {
+            invitations: { orderBy: { createdAt: "desc" } },
+          },
+        },
+      },
     });
   },
   async findLinkedToAccount(accountId: string, clientId: string) {
