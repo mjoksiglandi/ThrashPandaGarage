@@ -4,6 +4,8 @@ node_modules
 dist
 coverage
 *.log
+*.tsbuildinfo
+.codex-remote-attachments/
 .claude/settings.local.json
 
 # Graphify local detection, cache and report output

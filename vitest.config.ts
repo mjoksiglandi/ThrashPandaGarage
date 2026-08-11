@@ -10,6 +10,10 @@ export default defineConfig({
   test: {
     environment: "node",
     setupFiles: ["./vitest.setup.ts"],
-    exclude: [...configDefaults.exclude, "**/*.postgres.integration.test.ts"],
+    exclude: [
+      ...configDefaults.exclude,
+      "**/.next/**",
+      "**/*.postgres.integration.test.ts",
+    ],
   },
 });
