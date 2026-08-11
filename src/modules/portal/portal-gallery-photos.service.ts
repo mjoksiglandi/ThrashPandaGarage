@@ -2,12 +2,13 @@ export type PortalGalleryPhoto = {
   id: string;
   baseName: string;
   selected: boolean;
+  comment: string;
 };
 
 type PortalGalleryPhotoRecord = {
   id: string;
   baseName: string;
-  selection: { selected: boolean } | null;
+  selection: { selected: boolean; comment: string | null } | null;
 };
 
 type PortalGalleryPhotosDependencies = {
@@ -26,6 +27,7 @@ export function createPortalGalleryPhotosService(
         id: photo.id,
         baseName: photo.baseName,
         selected: photo.selection?.selected ?? false,
+        comment: photo.selection?.comment ?? "",
       }));
     },
   };

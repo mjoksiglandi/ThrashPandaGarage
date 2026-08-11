@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => {
     },
     gallery: {
       findByTokenForUpdate: vi.fn(),
+      findForUpdate: vi.fn(),
       update: vi.fn(),
       event: vi.fn(),
     },
@@ -39,6 +40,8 @@ vi.mock("./selection.repository", () => ({
 
 import {
   confirmSelection,
+  confirmSelectionForGallery,
+  updateSelectionForGallery,
   updateSelectionFromClient,
 } from "./selection.service";
 
@@ -55,6 +58,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mocks.db.$transaction.mockImplementation(async (callback) => callback(mocks.tx));
   mocks.gallery.findByTokenForUpdate.mockResolvedValue(lockedGallery);
+  mocks.gallery.findForUpdate.mockResolvedValue(lockedGallery);
   mocks.tx.gallery.findUnique.mockResolvedValue({
     ...lockedGallery,
     photos: [{ id: "photo-1" }],
@@ -124,6 +128,44 @@ describe("selection client mutations", () => {
 
     expect(mocks.tx.gallery.findUnique).not.toHaveBeenCalled();
     expect(mocks.selection.setPhotoSelection).not.toHaveBeenCalled();
+  });
+});
+
+describe("shared account gallery mutations", () => {
+  it("uses the same locked selection logic for comments and selection", async () => {
+    mocks.selection.countSelected.mockResolvedValueOnce(0);
+
+    await updateSelectionForGallery("gallery-1", {
+      photoId: "photo-1",
+      selected: true,
+      comment: "Retocar piel",
+    });
+
+    expect(mocks.gallery.findForUpdate).toHaveBeenCalledWith("gallery-1", mocks.tx);
+    expect(mocks.selection.setPhotoSelection).toHaveBeenCalledWith(
+      "gallery-1",
+      "photo-1",
+      true,
+      "Retocar piel",
+      mocks.tx
+    );
+  });
+
+  it("attributes portal confirmation to the authenticated account", async () => {
+    await confirmSelectionForGallery("gallery-1", {
+      actorType: "ACCOUNT",
+      actorId: "account-1",
+    });
+
+    expect(mocks.gallery.event).toHaveBeenCalledWith(
+      expect.objectContaining({
+        galleryId: "gallery-1",
+        type: "SELECTION_CONFIRMED",
+        actorType: "ACCOUNT",
+        actorId: "account-1",
+      }),
+      mocks.tx
+    );
   });
 });
 

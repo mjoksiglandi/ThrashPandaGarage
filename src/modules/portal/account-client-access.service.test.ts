@@ -30,6 +30,7 @@ function fixture() {
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: null,
       selectionLimit: null,
+      selectionConfirmedAt: null,
       deliveryDriveUrl: null,
     },
   ]);
@@ -45,6 +46,7 @@ function fixture() {
       createdAt: Date;
       expiresAt: Date | null;
       selectionLimit: number | null;
+      selectionConfirmedAt: Date | null;
       deliveryDriveUrl: string | null;
     } | null>
   >(async () => null);
@@ -133,6 +135,7 @@ describe("Authenticated gallery delivery lookup", () => {
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: null,
       selectionLimit: 12,
+      selectionConfirmedAt: new Date("2030-01-02T00:00:00.000Z"),
       deliveryDriveUrl: "https://drive.example.test/gallery-a",
     });
 
@@ -188,6 +191,7 @@ describe("Authenticated gallery delivery lookup", () => {
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: null,
       selectionLimit: null,
+      selectionConfirmedAt: new Date("2030-01-02T00:00:00.000Z"),
       deliveryDriveUrl: "https://drive.example.test/gallery-a",
     });
 
@@ -208,6 +212,7 @@ describe("Authenticated gallery selection state", () => {
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: new Date(now.getTime() + 1),
       selectionLimit: 3,
+      selectionConfirmedAt: null,
       deliveryDriveUrl: null,
     });
 
@@ -227,6 +232,7 @@ describe("Authenticated gallery selection state", () => {
         createdAt: new Date("2029-12-01T00:00:00.000Z"),
         expiresAt: null,
         selectionLimit: null,
+        selectionConfirmedAt: new Date("2030-01-02T00:00:00.000Z"),
         deliveryDriveUrl: "https://drive.example.test/gallery-a",
       });
 
@@ -245,6 +251,7 @@ describe("Authenticated gallery selection state", () => {
       createdAt: new Date("2029-12-01T00:00:00.000Z"),
       expiresAt: now,
       selectionLimit: null,
+      selectionConfirmedAt: null,
       deliveryDriveUrl: null,
     });
 

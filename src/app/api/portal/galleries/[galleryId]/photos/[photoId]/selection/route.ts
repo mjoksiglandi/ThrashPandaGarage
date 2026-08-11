@@ -36,9 +36,14 @@ export async function POST(
     const selection = await setPortalPhotoSelection(
       authorized.gallery.id,
       authorized.photo.id,
-      parsed.data.selected
+      parsed.data.selected,
+      parsed.data.comment
     );
-    return NextResponse.json({ ok: true, selected: selection.selected });
+    return NextResponse.json({
+      ok: true,
+      selected: selection.selected,
+      comment: selection.comment ?? "",
+    });
   } catch (error) {
     if (error instanceof GalleryUnavailableError) {
       return NextResponse.json({ ok: false, error: "Gallery unavailable" }, { status: 410 });
