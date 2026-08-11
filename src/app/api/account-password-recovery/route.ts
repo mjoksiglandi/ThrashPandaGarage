@@ -8,13 +8,17 @@ import {
 import {
   parsePasswordRecoveryEmail,
 } from "@/modules/password-recovery/password-recovery.service";
+import {
+  PASSWORD_RECOVERY_CACHE_CONTROL,
+  PASSWORD_RECOVERY_INVALID_MESSAGE,
+  PASSWORD_RECOVERY_PUBLIC_MESSAGE,
+} from "@/modules/password-recovery/password-recovery-http";
 
-export const PASSWORD_RECOVERY_PUBLIC_MESSAGE =
-  "Si existe una cuenta asociada a ese correo, enviaremos instrucciones para recuperar el acceso.";
-export const PASSWORD_RECOVERY_INVALID_MESSAGE =
-  "Ingresa un correo electrónico válido.";
-export const PASSWORD_RECOVERY_CACHE_CONTROL =
-  "private, no-cache, no-store, max-age=0, must-revalidate";
+export {
+  PASSWORD_RECOVERY_CACHE_CONTROL,
+  PASSWORD_RECOVERY_INVALID_MESSAGE,
+  PASSWORD_RECOVERY_PUBLIC_MESSAGE,
+};
 
 function response(
   body: { ok: boolean; message?: string; error?: string },

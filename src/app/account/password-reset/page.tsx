@@ -24,7 +24,9 @@ export default function AccountPasswordResetPage() {
       <section aria-label="Restablecer contraseña" className="login-card">
         <PasswordResetClient />
         <footer className="login-card__footer">
-          <Link href="/contact">Necesito ayuda</Link>
+          <Link href="/account/password-recovery">
+            Solicitar un nuevo enlace
+          </Link>
         </footer>
       </section>
       <span className="login-stage__copyright">

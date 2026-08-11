@@ -33,4 +33,12 @@ describe("account password reset shell", () => {
     expect(dynamic).toBe("force-dynamic");
     expect(revalidate).toBe(0);
   });
+
+  it("offers a new recovery request instead of sending the user to contact", () => {
+    const html = renderToStaticMarkup(<AccountPasswordResetPage />);
+
+    expect(html).toContain('href="/account/password-recovery"');
+    expect(html).toContain("Solicitar un nuevo enlace");
+    expect(html).not.toContain('href="/contact"');
+  });
 });

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AccountLoginForm } from "./LoginForm";
+import { PasswordRecoveryClient } from "./PasswordRecoveryClient";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const metadata: Metadata = {
-  title: "Iniciar sesión",
+  title: "Recuperar contraseña",
   referrer: "no-referrer",
   robots: {
     index: false,
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   },
 };
 
-export default function AccountLoginPage() {
+export default function AccountPasswordRecoveryPage() {
   return (
     <main className="login-stage">
       <div className="login-stage__background" aria-hidden="true" />
@@ -21,17 +21,10 @@ export default function AccountLoginPage() {
       <Link className="login-stage__logo" href="/">
         TRASHPANDA<span>—</span>GARAGE
       </Link>
-      <section aria-labelledby="account-login-title" className="login-card">
-        <header className="login-card__header">
-          <span className="meta">Cuenta Trashpanda</span>
-          <h1 id="account-login-title">Bienvenido de vuelta.</h1>
-          <p>Ingresa con el correo y la contraseña de tu cuenta.</p>
-        </header>
-        <AccountLoginForm />
+      <section aria-label="Recuperar contraseña" className="login-card">
+        <PasswordRecoveryClient />
         <footer className="login-card__footer">
-          <Link href="/account/password-recovery">
-            ¿Olvidaste tu contraseña?
-          </Link>
+          <Link href="/login">Volver al inicio de sesión</Link>
         </footer>
       </section>
       <span className="login-stage__copyright">

@@ -21,6 +21,9 @@ describe("account login page", () => {
     expect(html).toContain('autoComplete="email"');
     expect(html).toContain('autoComplete="current-password"');
     expect(html).toContain("Correo electrónico");
+    expect(html).toContain('href="/account/password-recovery"');
+    expect(html).toContain("¿Olvidaste tu contraseña?");
+    expect(html).not.toContain('href="/contact"');
     expect(html).not.toContain("passwordHash");
     expect(html).not.toContain("tpg_account_session");
     expect(html).not.toContain("token=");

@@ -17,9 +17,10 @@ import type {
   PasswordRecoveryRecord,
   PasswordRecoveryStore,
 } from "./password-recovery.repository";
+import { PASSWORD_RECOVERY_EMAIL_MAX_LENGTH } from "./password-recovery-http";
 
 export const PASSWORD_RECOVERY_DURATION_MS = 60 * 60 * 1000;
-export const PASSWORD_RECOVERY_EMAIL_MAX_LENGTH = 254;
+export { PASSWORD_RECOVERY_EMAIL_MAX_LENGTH };
 
 export type PasswordRecoveryState = Pick<
   PasswordRecoveryRecord,
