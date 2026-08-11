@@ -15,14 +15,6 @@ import { clientRepository } from "@/modules/clients/client.repository";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 import { photoRepository } from "@/modules/photos/photo.repository";
 import { createAccountClientAccessService } from "./account-client-access.service";
-import { createPortalActorResolver } from "./portal-actor.service";
-import { createPortalGalleryPhotosService } from "./portal-gallery-photos.service";
-
-const portalActors = createPortalActorResolver({
-  accountSessions: {
-    resolve: resolveAccountSessionToken,
-  },
-});
 
 const accountClientAccess = createAccountClientAccessService({
   clients: clientRepository,
@@ -30,15 +22,14 @@ const accountClientAccess = createAccountClientAccessService({
   clock: { now: () => new Date() },
 });
 
-const portalGalleryPhotos = createPortalGalleryPhotosService({
-  photos: photoRepository,
-});
-
 export async function resolveCurrentPortalActor() {
   const cookieStore = await cookies();
-  return portalActors.resolve(
+  const session = await resolveAccountSessionToken(
     cookieStore.get(ACCOUNT_SESSION_COOKIE_NAME)?.value
   );
+  return session.kind === "authenticated"
+    ? { kind: "account" as const, ...session.principal }
+    : { kind: "anonymous" as const };
 }
 
 export async function requirePortalAccount() {
@@ -75,7 +66,7 @@ export async function requirePortalGallery(galleryId: string) {
 }
 
 export async function listPortalGalleryPhotos(galleryId: string) {
-  return portalGalleryPhotos.listForGallery(galleryId);
+  return photoRepository.listAvailableForGallery(galleryId);
 }
 
 export async function authorizePortalPhoto(photoId: string) {

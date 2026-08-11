@@ -24,7 +24,6 @@ export class PasswordResetUnavailableError extends Error {
     this.name = "PasswordResetUnavailableError";
   }
 }
-
 export class PasswordResetHashingError extends Error {
   constructor() {
     super("Password reset hashing failed");
@@ -131,7 +130,3 @@ export function createPasswordResetService(
     },
   };
 }
-
-export type PasswordResetService = ReturnType<
-  typeof createPasswordResetService
->;

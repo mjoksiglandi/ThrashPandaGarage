@@ -1,0 +1,14 @@
+.git
+.next
+node_modules
+.env*
+*.log
+coverage
+graphify-out
+.codex*
+.claude
+.agents
+.superpowers
+mocks
+docs
+tsconfig.tsbuildinfo

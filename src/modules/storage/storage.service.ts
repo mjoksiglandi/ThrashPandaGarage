@@ -8,7 +8,7 @@ type ListImageFilesOptions = {
   rejectUnsupported?: boolean;
 };
 
-export class UnsupportedStoredImageError extends Error {
+class UnsupportedStoredImageError extends Error {
   constructor(relativeFolder: string, filename: string) {
     super(`Unsupported file "${filename}" in configured photo folder "${relativeFolder}"`);
     this.name = "UnsupportedStoredImageError";

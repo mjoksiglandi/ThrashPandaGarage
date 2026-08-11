@@ -16,9 +16,6 @@ import {
   sha256TokenHasher,
 } from "@/modules/accounts/secure-token";
 import {
-  createPortalActorResolver,
-} from "@/modules/portal/portal-actor.service";
-import {
   createAccountSessionService,
 } from "./account-session.service";
 import {
@@ -96,18 +93,11 @@ async function persistSession(input: {
   return { token, session };
 }
 
-function portalActors(store: AccountServiceStore = primaryStore) {
-  return createPortalActorResolver({
-    accountSessions: currentSessions(store),
-  });
-}
-
 afterEach(async () => {
   await db.client.deleteMany({
     where: { name: { startsWith: runId } },
   });
 });
-
 afterAll(async () => {
   const residualClients = await db.client.count({
     where: { name: { startsWith: runId } },
@@ -280,72 +270,5 @@ describe("account logout and concurrency with PostgreSQL", () => {
         kind: "unauthenticated",
       });
     }
-  });
-});
-
-describe("account-only portal actor with PostgreSQL", () => {
-  it("uses the client linked to the account session", async () => {
-    const linked = await createClientAccount("linked");
-    const { token } = await persistSession({
-      accountId: linked.account.id,
-      label: "linked",
-    });
-
-    await expect(
-      portalActors().resolve(token)
-    ).resolves.toEqual({
-      kind: "account",
-      sessionId: expect.any(String),
-      accountId: linked.account.id,
-      clientId: linked.client.id,
-      email: linked.account.email,
-    });
-  });
-
-  it("returns anonymous after account-session revocation", async () => {
-    const accountOwner = await createClientAccount("revoked_owner");
-    const { token } = await persistSession({
-      accountId: accountOwner.account.id,
-      label: "revoked_cutover",
-      revokedAt: new Date(now.getTime() - 1),
-    });
-
-    await expect(
-      portalActors().resolve(token)
-    ).resolves.toEqual({ kind: "anonymous" });
-  });
-
-  it("returns anonymous after account-session expiry", async () => {
-    const accountOwner = await createClientAccount("expired_owner");
-    const { token } = await persistSession({
-      accountId: accountOwner.account.id,
-      label: "expired_cutover",
-      expiresAt: new Date(now.getTime() - 1),
-    });
-
-    await expect(
-      portalActors().resolve(token)
-    ).resolves.toEqual({ kind: "anonymous" });
-  });
-
-  it("returns anonymous for an inactive account", async () => {
-    const accountOwner = await createClientAccount(
-      "inactive_owner",
-      AccountStatus.DISABLED
-    );
-    const { token } = await persistSession({
-      accountId: accountOwner.account.id,
-      label: "inactive_cutover",
-    });
-
-    await expect(
-      portalActors().resolve(token)
-    ).resolves.toEqual({ kind: "anonymous" });
-  });
-
-  it("returns anonymous without an account session", async () => {
-    await expect(portalActors().resolve(undefined)).resolves.toEqual({
-      kind: "anonymous",
-    });
   });
 });

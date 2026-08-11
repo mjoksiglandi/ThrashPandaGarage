@@ -287,7 +287,7 @@ describe("requirePortalGallery", () => {
 describe("listPortalGalleryPhotos", () => {
   it("delegates to the photo repository scoped to the given gallery id", async () => {
     mocks.listAvailablePhotos.mockResolvedValueOnce([
-      { id: "photo-1", baseName: "photo-1", selection: { selected: true } },
+      { id: "photo-1", baseName: "photo-1", selected: true },
     ]);
 
     await expect(

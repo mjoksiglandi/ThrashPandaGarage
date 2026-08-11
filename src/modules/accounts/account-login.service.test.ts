@@ -10,13 +10,13 @@ import type {
   AuthenticationAccountRecord,
 } from "./account-service.repository";
 import {
-  LOGIN_PASSWORD_MAX_BYTES,
   createAccountLoginService,
   parseAccountLoginInput,
 } from "./account-login.service";
 import {
   ACCOUNT_LOGIN_LOCK_POLICY,
   ACCOUNT_SESSION_DURATION_MS,
+  LOGIN_PASSWORD_MAX_BYTES,
 } from "./account-login-policy";
 import type {
   AuthenticationAttemptService,

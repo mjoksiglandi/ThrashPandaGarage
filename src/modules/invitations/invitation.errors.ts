@@ -35,13 +35,6 @@ export class InvitationExpiredError extends Error {
   }
 }
 
-export class InvitationNotUsableError extends Error {
-  constructor() {
-    super("Invitation is not usable");
-    this.name = "InvitationNotUsableError";
-  }
-}
-
 export class InvitationAccountNotFoundError extends Error {
   constructor() {
     super("Invitation account not found");

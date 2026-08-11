@@ -29,7 +29,7 @@ export type PasswordResetRecord = PasswordRecoveryRecord & {
   account: PasswordRecoveryAccount;
 };
 
-export interface PasswordRecoveryTransaction {
+interface PasswordRecoveryTransaction {
   lockAccountById(id: string): Promise<PasswordRecoveryAccount | null>;
   revokeOpenRequests(accountId: string, revokedAt: Date): Promise<number>;
   createRequest(input: {

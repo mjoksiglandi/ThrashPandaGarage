@@ -10,6 +10,7 @@ const loginHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   experimental: {
     authInterrupts: true,
   },

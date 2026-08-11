@@ -5,7 +5,7 @@ import {
   type AccountServiceTransaction,
 } from "@/modules/accounts/account-service.repository";
 
-export type ActiveAccountSessionRecord = {
+type ActiveAccountSessionRecord = {
   id: string;
   createdAt: Date;
   expiresAt: Date;
@@ -20,7 +20,7 @@ export type LockedAccountSessionRecord = {
   revokedAt: Date | null;
 };
 
-export interface AccountSessionManagementTransaction
+interface AccountSessionManagementTransaction
   extends Pick<
     AccountServiceTransaction,
     "lockAccountById" | "revokeSession"

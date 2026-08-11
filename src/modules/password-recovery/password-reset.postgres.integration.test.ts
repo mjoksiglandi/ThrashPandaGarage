@@ -38,9 +38,6 @@ import {
   createInvitationService,
 } from "@/modules/invitations/invitation.service";
 import {
-  createPortalActorResolver,
-} from "@/modules/portal/portal-actor.service";
-import {
   createPasswordRecoveryService,
 } from "./password-recovery.service";
 import {
@@ -260,20 +257,18 @@ describe("password reset with PostgreSQL", () => {
     const currentSessions = createCurrentAccountSessionService({
       accountSessions,
     });
-    const portalActors = createPortalActorResolver({
-      accountSessions: currentSessions,
-    });
-
     const oldSession = await login.authenticate({
       email: account.email,
       password: oldPassword,
     });
     await expect(
-      portalActors.resolve(oldSession.token)
+      currentSessions.resolve(oldSession.token)
     ).resolves.toMatchObject({
-      kind: "account",
-      accountId: account.id,
-      clientId: client.id,
+      kind: "authenticated",
+      principal: {
+        accountId: account.id,
+        clientId: client.id,
+      },
     });
 
     let deliveredRecoveryToken: string | null = null;
@@ -308,10 +303,10 @@ describe("password reset with PostgreSQL", () => {
     ]);
     expect(legacyOnlyCookies.has(LEGACY_CLIENT_COOKIE_NAME)).toBe(true);
     await expect(
-      portalActors.resolve(
+      currentSessions.resolve(
         legacyOnlyCookies.get(ACCOUNT_SESSION_COOKIE_NAME)
       )
-    ).resolves.toEqual({ kind: "anonymous" });
+    ).resolves.toEqual({ kind: "unauthenticated" });
     await expect(
       login.authenticate({
         email: account.email,

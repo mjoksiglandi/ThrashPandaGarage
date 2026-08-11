@@ -44,7 +44,6 @@ function isUnauthenticatedSessionError(error: unknown): boolean {
     (ErrorType) => error instanceof ErrorType
   );
 }
-
 export function createCurrentAccountSessionService(
   dependencies: CurrentAccountSessionDependencies
 ) {
@@ -94,7 +93,3 @@ export function createCurrentAccountSessionService(
     },
   };
 }
-
-export type CurrentAccountSessionService = ReturnType<
-  typeof createCurrentAccountSessionService
->;

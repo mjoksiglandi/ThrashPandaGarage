@@ -19,7 +19,7 @@ import type {
 } from "./password-recovery.repository";
 
 export const PASSWORD_RECOVERY_DURATION_MS = 60 * 60 * 1000;
-export const PASSWORD_RECOVERY_EMAIL_MAX_LENGTH = 254;
+const PASSWORD_RECOVERY_EMAIL_MAX_LENGTH = 254;
 
 export type PasswordRecoveryState = Pick<
   PasswordRecoveryRecord,
@@ -36,7 +36,6 @@ export function isPasswordRecoveryUsable(
     recovery.expiresAt > now
   );
 }
-
 export function parsePasswordRecoveryEmail(
   value: unknown
 ): NormalizedAccountEmail {
@@ -138,7 +137,3 @@ export function createPasswordRecoveryService(
     },
   };
 }
-
-export type PasswordRecoveryService = ReturnType<
-  typeof createPasswordRecoveryService
->;

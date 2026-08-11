@@ -7,12 +7,17 @@ export const photoRepository = {
   find(id: string) {
     return db.photo.findUnique({ where: { id }, include: { gallery: true } });
   },
-  listAvailableForGallery(galleryId: string) {
-    return db.photo.findMany({
+  async listAvailableForGallery(galleryId: string) {
+    const photos = await db.photo.findMany({
       where: { galleryId, status: { not: PhotoStatus.REJECTED } },
       orderBy: { sortOrder: "asc" },
       select: { id: true, baseName: true, selection: { select: { selected: true } } },
     });
+    return photos.map((photo) => ({
+      id: photo.id,
+      baseName: photo.baseName,
+      selected: photo.selection?.selected ?? false,
+    }));
   },
   async findImportState(galleryId: string, baseNames: string[], client: DbClient = db) {
     return client.photo.findMany({

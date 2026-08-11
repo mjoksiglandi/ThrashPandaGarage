@@ -6,7 +6,6 @@ import { galleryRepository } from "@/modules/galleries/gallery.repository";
 import { photoRepository } from "@/modules/photos/photo.repository";
 import { updateSelectionFromClient } from "@/modules/selections/selection.service";
 import { createAccountClientAccessService } from "./account-client-access.service";
-import { createPortalGalleryPhotosService } from "./portal-gallery-photos.service";
 import { setPortalPhotoSelection } from "./portal-selection.service";
 
 const runId = `portal_selection_${Date.now()}`;
@@ -82,8 +81,6 @@ const access = createAccountClientAccessService({
   galleries: galleryRepository,
   clock: { now: () => now },
 });
-const portalPhotos = createPortalGalleryPhotosService({ photos: photoRepository });
-
 /**
  * Mirrors authorizePortalPhotoInGallery's gate without depending on next/headers'
  * request-scoped cookies(), which is unavailable outside an actual request.
@@ -231,7 +228,7 @@ describe("Single shared selection state across the public and portal contracts",
 
     await updateSelectionFromClient(gallery.accessToken, { photoId: photo.id, selected: true });
 
-    const viaPortal = await portalPhotos.listForGallery(gallery.id);
+    const viaPortal = await photoRepository.listAvailableForGallery(gallery.id);
     expect(viaPortal.find((item) => item.id === photo.id)).toMatchObject({ selected: true });
   });
 
@@ -243,7 +240,7 @@ describe("Single shared selection state across the public and portal contracts",
 
     await updateSelectionFromClient(gallery.accessToken, { photoId: photo.id, selected: false });
 
-    const viaPortal = await portalPhotos.listForGallery(gallery.id);
+    const viaPortal = await photoRepository.listAvailableForGallery(gallery.id);
     expect(viaPortal.find((item) => item.id === photo.id)).toMatchObject({ selected: false });
   });
 
@@ -342,7 +339,7 @@ describe("Selection concurrency across the public and portal contracts", () => {
     const persisted = await db.selection.findUniqueOrThrow({ where: { photoId: photo.id } });
     expect(typeof persisted.selected).toBe("boolean");
 
-    const viaPortal = await portalPhotos.listForGallery(gallery.id);
+    const viaPortal = await photoRepository.listAvailableForGallery(gallery.id);
     const viaToken = await galleryRepository.findByToken(gallery.accessToken);
     const selectionViaToken = viaToken?.photos.find((item) => item.id === photo.id)?.selection;
     expect(viaPortal.find((item) => item.id === photo.id)?.selected).toBe(persisted.selected);

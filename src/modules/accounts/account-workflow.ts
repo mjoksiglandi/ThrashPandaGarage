@@ -16,7 +16,7 @@ export const ACCOUNT_TRANSITIONS = {
   DISABLED: [],
 } as const satisfies Record<AccountStatusValue, readonly AccountStatusValue[]>;
 
-export function hasExpiredAccountLock(
+function hasExpiredAccountLock(
   account: AccountWorkflowState,
   now: Date
 ): boolean {
@@ -96,7 +96,7 @@ export type LoginAttemptState = AccountWorkflowState & {
   failedLoginAttempts: number;
 };
 
-export function assertLoginLockPolicy(policy: LoginLockPolicy): void {
+function assertLoginLockPolicy(policy: LoginLockPolicy): void {
   if (
     !Number.isInteger(policy.failedAttemptThreshold) ||
     policy.failedAttemptThreshold < 1 ||

@@ -5,7 +5,6 @@ import { clientRepository } from "@/modules/clients/client.repository";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 import { photoRepository } from "@/modules/photos/photo.repository";
 import { createAccountClientAccessService } from "./account-client-access.service";
-import { createPortalGalleryPhotosService } from "./portal-gallery-photos.service";
 
 const runId = `portal_gallery_photos_${Date.now()}`;
 const now = new Date("2030-01-02T03:04:05.000Z");
@@ -75,10 +74,6 @@ const access = createAccountClientAccessService({
   galleries: galleryRepository,
   clock: { now: () => now },
 });
-const portalPhotos = createPortalGalleryPhotosService({
-  photos: photoRepository,
-});
-
 afterAll(async () => {
   await db.client.deleteMany({ where: { id: { in: clientIds } } });
   await db.$disconnect();
@@ -112,7 +107,7 @@ describe("Authenticated portal gallery photo isolation with PostgreSQL", () => {
     const authorized = await access.findGallery(ownerA.principal, galleryA1.id);
     expect(authorized).toMatchObject({ id: galleryA1.id });
 
-    const photos = await portalPhotos.listForGallery(authorized!.id);
+    const photos = await photoRepository.listAvailableForGallery(authorized!.id);
     const photoIds = photos.map((photo) => photo.id);
 
     expect(photoIds).toEqual([first.id, second.id]);

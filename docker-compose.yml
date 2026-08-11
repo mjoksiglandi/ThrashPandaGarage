@@ -12,7 +12,7 @@ services:
       PHOTO_STORAGE_ROOT: /data/photos
     depends_on:
       - db
-    command: sh -c "npx prisma migrate deploy && npm run start"
+    command: sh -c "npx prisma migrate deploy && node server.js"
 
   db:
     image: postgres:16
