@@ -9,6 +9,10 @@ const envSchema = z.object({
   SMTP_USER: z.string().optional(),
   SMTP_PASS: z.string().optional(),
   MAIL_FROM: z.string().default("Trashpanda Garage <noreply@example.com>"),
+  CONTACT_EMAIL: z.preprocess(
+    (value) => typeof value === "string" && value.trim() === "" ? undefined : value,
+    z.string().trim().email().optional()
+  ),
   ADMIN_EMAIL: z.string().email().optional(),
   ADMIN_PASSWORD: z.string().optional(),
   AUTH_SECRET: z.string().min(32, "AUTH_SECRET must be at least 32 characters long"),
