@@ -44,6 +44,16 @@ describe("AdminSidebar Portfolio navigation", () => {
     expect(html).not.toMatch(/<a[^>]*aria-current="page"[^>]*href="\/admin"/);
   });
 
+  it("marks only the dashboard at the admin root", () => {
+    const html = renderToStaticMarkup(
+      <AdminSidebar adminEmail="admin@example.test" onLogout={async () => {}} />
+    );
+
+    expect(html).toMatch(/<a[^>]*aria-current="page"[^>]*href="\/admin"/);
+    expect(html).not.toMatch(/<a[^>]*aria-current="page"[^>]*href="\/admin\/clients"/);
+    expect(html).not.toMatch(/<a[^>]*aria-current="page"[^>]*href="\/admin\/galleries"/);
+  });
+
   it("exposes mobile navigation controls", () => {
     const html = renderToStaticMarkup(
       <AdminSidebar adminEmail="admin@example.test" onLogout={async () => {}} />

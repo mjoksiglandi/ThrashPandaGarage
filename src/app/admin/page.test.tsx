@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
 
 const mocks = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
@@ -50,5 +51,25 @@ describe("AdminPage", () => {
 
     expect(mocks.listClients).not.toHaveBeenCalled();
     expect(mocks.listGalleries).not.toHaveBeenCalled();
+  });
+
+  it("derives every metric from the current repositories", async () => {
+    mocks.listClients.mockResolvedValue([{ id: "client-1" }, { id: "client-2" }]);
+    mocks.listGalleries.mockResolvedValue([
+      { status: "PROOFING" },
+      { status: "SELECTION_CONFIRMED" },
+      { status: "READY_FOR_DELIVERY" },
+      { status: "DELIVERED" },
+      { status: "ARCHIVED" },
+    ]);
+
+    const html = renderToStaticMarkup(await AdminPage());
+
+    expect(html).toContain("Clientes");
+    expect(html).toContain("Selección abierta");
+    expect(html).toContain("Selección confirmada");
+    expect(html).toContain("Listas para entrega");
+    expect(html).toContain("Entregadas / archivadas");
+    expect(html).toContain('href="/admin/galleries?status=PROOFING"');
   });
 });

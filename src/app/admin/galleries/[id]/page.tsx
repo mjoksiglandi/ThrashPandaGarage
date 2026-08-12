@@ -2,6 +2,8 @@ import { GalleryStatus } from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminActionForm } from "@/components/admin/AdminActionForm";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPanel } from "@/components/admin/AdminPanel";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { GalleryPhotoManager } from "@/components/admin/GalleryPhotoManager";
 import { GalleryStatusBadge, galleryStatusLabels } from "@/components/admin/GalleryStatusBadge";
@@ -155,15 +157,13 @@ export default async function GalleryDetailPage({
 
   return (
     <AdminShell>
-      <Link href="/admin/galleries" className="text-sm text-zinc-500 hover:text-zinc-300">← Volver a galerías</Link>
-      <div className="mt-4 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-widest text-zinc-500">Centro operativo</p>
-          <h1 className="mt-1 text-3xl font-black">{gallery.title}</h1>
-          <p className="mt-2 text-zinc-500">{gallery.client.name}</p>
-        </div>
-        <GalleryStatusBadge status={gallery.status} />
-      </div>
+      <AdminPageHeader
+        breadcrumbs={[{ href: "/admin", label: "Admin" }, { href: "/admin/galleries", label: "Galerías" }, { label: gallery.title }]}
+        description={gallery.client.name}
+        eyebrow="Centro operativo"
+        status={<GalleryStatusBadge status={gallery.status} />}
+        title={gallery.title}
+      />
 
       {message.error && <p role="alert" className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-300">{message.error}</p>}
       {message.success && successMessages[message.success] && <p role="status" className="mt-4 rounded-lg border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">{successMessages[message.success]}</p>}
@@ -180,7 +180,7 @@ export default async function GalleryDetailPage({
       </section>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-        <AdminActionForm action={update} className="grid gap-4 rounded-lg border border-zinc-800 bg-[#141417] p-5" label="Guardar galería" pendingLabel="Guardando…">
+        <AdminActionForm action={update} className="grid gap-4 rounded-[8px] border border-[var(--line)] bg-[var(--panel)] p-5" label="Guardar galería" pendingLabel="Guardando…">
           <h2 className="text-xl font-bold">Configuración</h2>
           <FormField label="Cliente"><select name="clientId" defaultValue={gallery.clientId}>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></FormField>
           <FormField label="Título"><input name="title" defaultValue={gallery.title} required /></FormField>
@@ -195,26 +195,26 @@ export default async function GalleryDetailPage({
         </AdminActionForm>
 
         <aside className="grid content-start gap-3">
-          <section className="grid gap-3 rounded-lg border border-zinc-800 bg-[#141417] p-4">
+          <AdminPanel className="grid gap-3 p-4">
             <div><h2 className="font-bold">Estado actual</h2><div className="mt-2"><GalleryStatusBadge status={gallery.status} /></div><p className="mt-3 text-sm text-zinc-400">{statusDescriptions[gallery.status]}</p></div>
             {transitions.length > 0 ? (
               <AdminActionForm action={changeStatus} className="grid gap-3" confirmMessage="¿Cambiar el estado de esta galería?" label="Aplicar transición" pendingLabel="Actualizando…">
                 <select name="status" required defaultValue=""><option value="" disabled>Selecciona el siguiente estado</option>{transitions.map((status) => <option key={status} value={status}>{galleryStatusLabels[status]}</option>)}</select>
               </AdminActionForm>
             ) : <p className="text-sm text-zinc-500">No hay más transiciones disponibles.</p>}
-          </section>
+          </AdminPanel>
 
-          <section className="grid gap-2 rounded-lg border border-zinc-800 bg-[#141417] p-4">
+          <AdminPanel className="grid gap-2 p-4">
             <h2 className="font-bold">Acceso</h2>
             <Link className="break-all text-sm text-[#d9902f]" href={`/g/${gallery.accessToken}`} target="_blank" rel="noopener noreferrer">Abrir galería del cliente ↗</Link>
             <p className="break-all text-xs text-zinc-500">{publicUrl}</p>
-          </section>
+          </AdminPanel>
 
           {gallery.status !== GalleryStatus.ARCHIVED && <AdminActionForm action={importGalleryPhotosAction.bind(null, id)} buttonClassName="w-full" label="Importar fotos" pendingLabel="Importando…" />}
           {canSendInitialInvitation(gallery.status) && <AdminActionForm action={sendInitialInvitation} buttonClassName="secondary w-full" confirmMessage={`¿Enviar la invitación a ${gallery.client.email ?? "este cliente"}?`} label="Enviar invitación" pendingLabel="Enviando…" />}
           {canResendInvitation(gallery.status) && <AdminActionForm action={resendInvitation} buttonClassName="secondary w-full" confirmMessage={`¿Reenviar la invitación a ${gallery.client.email ?? "este cliente"}?`} label="Reenviar invitación" pendingLabel="Enviando…" />}
 
-          <section className="rounded-lg border border-zinc-800 bg-[#141417] p-4">
+          <AdminPanel className="p-4">
             <h2 className="font-bold">Selección</h2>
             <p className="mt-1 text-sm text-zinc-400">{selected.length} de {gallery.selectionLimit ?? "sin límite"} fotos</p>
             {selected.length === 0 ? (
@@ -223,7 +223,7 @@ export default async function GalleryDetailPage({
               <><div className="mt-4 grid gap-2"><a className="button secondary text-center" href={`/admin/galleries/${id}/export`}>Exportar TXT</a><a className="button secondary text-center" href={`/admin/galleries/${id}/export/csv`}>Exportar CSV</a></div>
               <ul className="mt-4 grid gap-2 text-sm">{selected.map((selection) => <li key={selection.id} className="rounded border border-zinc-800 p-2"><strong>{selection.photo.baseName}</strong>{selection.comment && <p className="mt-1 text-zinc-400">{selection.comment}</p>}</li>)}</ul></>
             )}
-          </section>
+          </AdminPanel>
 
           {gallery.status !== GalleryStatus.ARCHIVED && <AdminActionForm action={archive} buttonClassName="secondary w-full" confirmMessage="¿Archivar esta galería? Se cerrará el acceso operativo y no podrás importar más fotos." label="Archivar galería" pendingLabel="Archivando…" />}
         </aside>
@@ -231,18 +231,16 @@ export default async function GalleryDetailPage({
 
       <GalleryPhotoManager photos={gallery.photos} />
 
-      <section className="mt-8">
-        <h2 className="text-xl font-bold">Historial</h2>
-        <p className="mt-1 text-sm text-zinc-500">Actividad administrativa y del cliente, de más reciente a más antigua.</p>
-        <ul className="mt-4 grid gap-2 text-sm text-zinc-400">
-          {gallery.events.map((event) => <li key={event.id} className="rounded border border-zinc-800 p-3"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="text-zinc-200">{eventLabels[event.type] ?? event.type}</strong><time className="font-mono text-xs text-zinc-500">{event.createdAt.toLocaleString("es-CL")}</time></div>{eventSummary(event.metadata) && <p className="mt-1 text-zinc-500">{eventSummary(event.metadata)}</p>}<p className="mt-1 text-xs text-zinc-600">Origen: {event.actorType === "ADMIN" ? "Administración" : event.actorType === "SYSTEM" ? "Sistema" : "Cliente"}</p></li>)}
-          {gallery.events.length === 0 && <li className="rounded border border-dashed border-zinc-700 p-6 text-center text-zinc-500">Todavía no hay actividad registrada.</li>}
+      <AdminPanel className="mt-8" description="Actividad administrativa y del cliente, de más reciente a más antigua." title="Historial">
+        <ul className="divide-y divide-[var(--line)] text-sm text-[var(--muted)]">
+          {gallery.events.map((event) => <li key={event.id} className="p-4"><div className="flex flex-wrap items-center justify-between gap-2"><strong className="font-medium text-[var(--foreground)]">{eventLabels[event.type] ?? event.type}</strong><time className="font-mono text-[10px] text-[var(--muted-2)]">{event.createdAt.toLocaleString("es-CL")}</time></div>{eventSummary(event.metadata) && <p className="mt-1 text-[var(--muted)]">{eventSummary(event.metadata)}</p>}<p className="mt-1 font-mono text-[9px] uppercase tracking-wider text-[var(--muted-2)]">Origen: {event.actorType === "ADMIN" ? "Administración" : event.actorType === "SYSTEM" ? "Sistema" : "Cliente"}</p></li>)}
+          {gallery.events.length === 0 && <li className="p-8 text-center text-[var(--muted-2)]">Todavía no hay actividad registrada.</li>}
         </ul>
-      </section>
+      </AdminPanel>
     </AdminShell>
   );
 }
 
 function Summary({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return <article className="rounded-lg border border-zinc-800 bg-[#141417] p-4"><p className="text-xs uppercase tracking-wider text-zinc-500">{label}</p><p className="mt-2 font-semibold text-zinc-200">{value}</p><p className="mt-1 text-xs leading-5 text-zinc-500">{detail}</p></article>;
+  return <article className="rounded-[8px] border border-[var(--line)] bg-[var(--panel)] p-4"><p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted-2)]">{label}</p><p className="mt-2 font-medium text-[var(--foreground)]">{value}</p><p className="mt-1 text-xs leading-5 text-[var(--muted)]">{detail}</p></article>;
 }

@@ -13,7 +13,9 @@ export async function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
       <AdminSidebar adminEmail={admin.email} onLogout={logout} />
-      <main className="mx-auto max-w-6xl p-5 pt-24 md:ml-[230px] md:p-8">{children}</main>
+      <main className="min-w-0 p-4 pt-24 sm:p-6 sm:pt-24 md:ml-[240px] md:p-8 md:pt-24 xl:p-10">
+        <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+      </main>
     </div>
   );
 }
