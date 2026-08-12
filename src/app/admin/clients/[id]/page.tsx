@@ -1,5 +1,6 @@
 import { AccountStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
+import { AdminActionForm } from "@/components/admin/AdminActionForm";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FormField } from "@/components/ui/FormField";
 import { requireAdmin } from "@/lib/auth";
@@ -55,8 +56,13 @@ export default async function ClientDetailPage({
   async function update(formData: FormData) {
     "use server";
     await requireAdmin();
-    await updateClientFromForm(id, formData);
-    redirect(`/admin/clients/${id}`);
+    let target = `/admin/clients/${id}?success=saved`;
+    try {
+      await updateClientFromForm(id, formData);
+    } catch {
+      target = `/admin/clients/${id}?error=${encodeURIComponent("No se pudo guardar el cliente. Revisa los datos e inténtalo nuevamente.")}`;
+    }
+    redirect(target);
   }
 
   async function createAccount() {
@@ -93,24 +99,25 @@ export default async function ClientDetailPage({
     <AdminShell>
       <h1 className="text-3xl font-black">{client.name}</h1>
       {message.error && (
-        <p className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-300">
+        <p role="alert" className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-300">
           {message.error}
         </p>
       )}
       {message.success && (
-        <p className="mt-4 rounded-lg border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">
-          {message.success === "resent"
+        <p role="status" className="mt-4 rounded-lg border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">
+          {message.success === "saved"
+            ? "Cliente guardado correctamente."
+            : message.success === "resent"
             ? "Invitación reenviada."
             : "Cuenta creada e invitación enviada."}
         </p>
       )}
-      <form action={update} className="mt-6 grid max-w-xl gap-4">
+      <AdminActionForm action={update} className="mt-6 grid max-w-xl gap-4" label="Guardar" pendingLabel="Guardando…">
         <FormField label="Nombre"><input name="name" defaultValue={client.name} required /></FormField>
         <FormField label="Email"><input name="email" type="email" defaultValue={client.email ?? ""} /></FormField>
         <FormField label="Telefono"><input name="phone" defaultValue={client.phone ?? ""} /></FormField>
         <FormField label="Notas"><textarea name="notes" rows={4} defaultValue={client.notes ?? ""} /></FormField>
-        <button type="submit">Guardar</button>
-      </form>
+      </AdminActionForm>
 
       <section className="mt-10 max-w-xl rounded-lg border border-zinc-800 bg-[#141417] p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -149,18 +156,10 @@ export default async function ClientDetailPage({
         )}
 
         {!account && (
-          <form action={createAccount} className="mt-5">
-            <button type="submit" disabled={!client.email}>
-              Crear cuenta e invitar
-            </button>
-          </form>
+          <AdminActionForm action={createAccount} className="mt-5" disabled={!client.email} label="Crear cuenta e invitar" pendingLabel="Creando y enviando…" />
         )}
         {account?.status === AccountStatus.INVITED && (
-          <form action={resendInvitation} className="mt-5">
-            <button className="secondary" type="submit">
-              Reenviar invitación
-            </button>
-          </form>
+          <AdminActionForm action={resendInvitation} className="mt-5" buttonClassName="secondary" label="Reenviar invitación" pendingLabel="Reenviando…" />
         )}
       </section>
     </AdminShell>

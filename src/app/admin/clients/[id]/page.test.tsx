@@ -57,8 +57,12 @@ function findFormAction(node: ReactNode, buttonLabel: string): () => Promise<voi
   const element = node as ReactElement<{
     action?: () => Promise<void>;
     children?: ReactNode;
+    label?: string;
   }>;
-  if (element.type === "form" && textContent(element).includes(buttonLabel)) {
+  if (
+    (element.type === "form" && textContent(element).includes(buttonLabel)) ||
+    element.props.label === buttonLabel
+  ) {
     if (typeof element.props.action !== "function") throw new Error("Missing action");
     return element.props.action;
   }

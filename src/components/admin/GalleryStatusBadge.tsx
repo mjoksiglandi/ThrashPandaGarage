@@ -1,6 +1,6 @@
 import type { GalleryStatus } from "@prisma/client";
 
-const labels: Record<GalleryStatus, string> = {
+export const galleryStatusLabels: Record<GalleryStatus, string> = {
   DRAFT: "Borrador",
   EMAIL_SENT: "Correo enviado",
   PROOFING: "En revision",
@@ -29,7 +29,7 @@ export function GalleryStatusBadge({ status }: { status: GalleryStatus }) {
         className="h-1.5 w-1.5 rounded-full"
         style={{ background: colors[status], boxShadow: `0 0 6px ${colors[status]}` }}
       />
-      {labels[status]}
+      {galleryStatusLabels[status]}
     </span>
   );
 }
