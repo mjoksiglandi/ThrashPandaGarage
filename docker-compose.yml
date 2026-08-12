@@ -10,8 +10,13 @@ services:
     environment:
       DATABASE_URL: postgresql://trashpanda:trashpanda_password@db:5432/trashpanda
       PHOTO_STORAGE_ROOT: /data/photos
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_USER: ""
+      SMTP_PASS: ""
     depends_on:
       - db
+      - mailpit
     command: sh -c "npx prisma migrate deploy && npm run start"
 
   db:
@@ -22,6 +27,12 @@ services:
       POSTGRES_PASSWORD: trashpanda_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  mailpit:
+    image: axllent/mailpit:v1.30.6
+    ports:
+      - "1025:1025"
+      - "8025:8025"
 
 volumes:
   postgres_data:

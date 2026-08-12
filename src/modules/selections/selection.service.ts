@@ -176,9 +176,7 @@ export async function exportSelectionText(galleryId: string) {
     `Client: ${gallery.client.name}`,
     `Selected: ${selected.length}`,
     "",
-    ...selected.map((item) =>
-      item.comment ? `${item.photo.baseName} — ${item.comment}` : item.photo.baseName
-    ),
+    selected.map((item) => item.photo.filename).join(";"),
     "",
   ].join("\n");
 }

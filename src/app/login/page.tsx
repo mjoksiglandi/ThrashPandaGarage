@@ -32,6 +32,9 @@ export default function AccountLoginPage() {
           <Link href="/account/password-recovery">
             ¿Olvidaste tu contraseña?
           </Link>
+          <p className="password-reset-login">
+            <Link href="/admin/login">¿Eres administrador? Ingresa aquí</Link>
+          </p>
         </footer>
       </section>
       <span className="login-stage__copyright">

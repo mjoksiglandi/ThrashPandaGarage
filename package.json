@@ -13,6 +13,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:push": "prisma db push",
     "db:seed": "tsx scripts/seed-admin.ts",
+    "db:fixtures:operational": "tsx scripts/seed-operational-fixtures.ts",
     "gallery:import": "tsx scripts/import-gallery.ts",
     "selection:export": "tsx scripts/export-selection.ts"
   },

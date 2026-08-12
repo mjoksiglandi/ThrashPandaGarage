@@ -48,13 +48,32 @@ npm run db:seed
 npm run dev
 ```
 
+### Escenario operacional de desarrollo
+
+PR 17 incorpora una fixture reiniciable y Mailpit para recorrer selección por
+token, activación de cuenta, portal, entrega y controles básicos de seguridad
+sin usar correo real:
+
+```bash
+docker compose up -d db mailpit
+npm run db:fixtures:operational
+npm run dev
+```
+
+La bandeja queda en `http://localhost:8025`. Para ejecutar Next fuera de
+Docker, configura `SMTP_HOST=localhost` y `SMTP_PORT=1025` en `.env`. El
+procedimiento y la evidencia esperada están en
+[`docs/pr17-operational-verification.md`](docs/pr17-operational-verification.md).
+
 ## Docker
 
 ```bash
 docker compose up --build
 ```
 
-El servicio `app` monta `D:/Lightroom/revelado/web` en `/data/photos` y fuerza `DATABASE_URL` hacia el servicio `db`.
+El servicio `app` monta `D:/Lightroom/revelado/web` en `/data/photos`, fuerza
+`DATABASE_URL` hacia `db` y envía el correo de desarrollo a Mailpit. Su UI se
+publica sólo en el host local por el puerto `8025`.
 
 > **Primera vez:** el servicio `app` corre `npx prisma migrate deploy` al arrancar, pero este repo todavia no incluye ninguna migracion en `prisma/migrations/`. Si intentas `docker compose up --build` antes de generar la migracion inicial, el contenedor levanta con la base de datos vacia (sin tablas) y sin ningun error visible. Antes del primer `docker compose up`, genera la migracion inicial una vez:
 >

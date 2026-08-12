@@ -36,12 +36,13 @@ describe("exportSelectionCsv", () => {
 });
 
 describe("exportSelectionText", () => {
-  it("includes the comment after the baseName when present, and just the baseName otherwise", async () => {
+  it("lists the original filenames separated by semicolons", async () => {
     const text = await exportSelectionText("gallery_1");
     const lines = text.split("\n");
 
-    expect(lines).toContain("IMG_2031 — me gusta para perfil");
-    expect(lines).toContain("IMG_2044");
-    expect(lines).toContain('IMG_2050 — con "comillas", y coma');
+    expect(lines).toContain("Gallery: Boda Ana y Luis");
+    expect(lines).toContain("Client: Ana Perez");
+    expect(lines).toContain("Selected: 3");
+    expect(lines).toContain("IMG_2031.webp;IMG_2044.webp;IMG_2050.webp");
   });
 });

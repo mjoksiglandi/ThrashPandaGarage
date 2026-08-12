@@ -27,7 +27,8 @@ export function ClientGallery({
   alreadyConfirmed: boolean;
 }) {
   const [items, setItems] = useState(photos);
-  const [active, setActive] = useState<Photo | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const active = useMemo(() => items.find((item) => item.id === activeId) ?? null, [items, activeId]);
   const [confirmed, setConfirmed] = useState(alreadyConfirmed);
   const [pending, startTransition] = useTransition();
   const selectedCount = useMemo(() => items.filter((item) => item.selected).length, [items]);
@@ -119,27 +120,52 @@ export function ClientGallery({
                 tu seleccion.
               </p>
             </div>
-            <button type="button" disabled={pending || confirmed || !canConfirm} onClick={confirm}>
+            <button
+              type="button"
+              disabled={pending || confirmed || !canConfirm}
+              onClick={confirm}
+              className="rounded-[4px] border border-[var(--accent)] bg-[var(--accent)] px-5 py-3 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:border-[var(--line-strong)] disabled:bg-transparent disabled:text-[var(--muted)]"
+            >
               {confirmed ? "Seleccion enviada" : "Confirmar seleccion"}
             </button>
           </div>
         )}
         <GalleryGrid
           photos={items}
-          onOpen={setActive}
+          onOpen={(photo) => setActiveId(photo.id)}
           onToggleSelected={(photo) => updatePhoto(photo, !photo.selected)}
           onCommentChange={(photo, comment) => updatePhoto(photo, photo.selected, comment)}
           selectionOpen={selectionOpen && !confirmed}
         />
       </section>
-      {active && <PhotoLightbox photo={active} onClose={() => setActive(null)} />}
+      {active && (
+        <PhotoLightbox
+          photo={active}
+          onClose={() => setActiveId(null)}
+          onToggleSelected={(photo) => updatePhoto(photo, !photo.selected)}
+          onCommentChange={(photo, comment) => updatePhoto(photo, photo.selected, comment)}
+          selectionOpen={selectionOpen && !confirmed}
+        />
+      )}
       <div className="fixed inset-x-0 bottom-0 z-10 flex items-center justify-between gap-4 border-t border-white/10 bg-[rgba(12,12,13,0.92)] px-5 py-4 backdrop-blur-md md:px-10">
-        <strong className="mono text-sm font-medium text-[var(--foreground)]">
-          {selectedCount}
-          {selectionLimit ? ` / ${selectionLimit}` : ""}{" "}
-          <span className="text-[var(--muted-2)]">seleccionadas</span>
-        </strong>
-        <button type="button" disabled={pending || confirmed || !canConfirm} onClick={confirm}>
+        <div>
+          <strong className="mono text-sm font-medium text-[var(--foreground)]">
+            {selectedCount}
+            {selectionLimit ? ` / ${selectionLimit}` : ""}{" "}
+            <span className="text-[var(--muted-2)]">seleccionadas</span>
+          </strong>
+          {!confirmed && selectionOpen && selectionLimit != null && selectedCount !== selectionLimit && (
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              Selecciona exactamente {selectionLimit} fotos para poder confirmar.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          disabled={pending || confirmed || !canConfirm}
+          onClick={confirm}
+          className="rounded-[4px] border border-[var(--accent)] bg-[var(--accent)] px-5 py-3 text-sm font-medium text-white transition-colors disabled:cursor-not-allowed disabled:border-[var(--line-strong)] disabled:bg-transparent disabled:text-[var(--muted)]"
+        >
           {confirmed ? "Seleccion enviada" : "Confirmar seleccion"}
         </button>
       </div>
