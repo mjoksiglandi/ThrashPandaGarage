@@ -40,17 +40,16 @@ export default async function GalleriesPage({ searchParams }: { searchParams: Pr
         actions={<Link className="button" href="/admin/galleries/new">Nueva galería</Link>}
         breadcrumbs={[{ href: "/admin", label: "Admin" }, { label: "Galerías" }]}
         description={`${galleries.length} ${galleries.length === 1 ? "galería registrada" : "galerías registradas"}`}
-        eyebrow="Producción"
         title="Galerías"
       />
-      <AdminPanel className="overflow-hidden">
-        <AdminToolbar placeholder="Buscar por galería o cliente…" query={q} resetHref="/admin/galleries">
+      <AdminToolbar placeholder="Buscar por galería o cliente…" query={q} resetHref="/admin/galleries">
           <select className="!w-full !rounded-[5px] !border !border-[var(--line)] !bg-black/10 !px-3 !py-2.5 text-sm md:!w-56" defaultValue={status} name="status">
             <option value="all">Todos los estados</option>
             {Object.values(GalleryStatus).map((value) => <option key={value} value={value}>{galleryStatusLabels[value]}</option>)}
             <option value="closed">Entregadas o archivadas</option>
           </select>
-        </AdminToolbar>
+      </AdminToolbar>
+      <AdminPanel className="overflow-hidden">
         {visibleGalleries.length > 0 ? <GalleryTable galleries={visibleGalleries} /> : (
           <AdminEmptyState
             actionHref={galleries.length ? "/admin/galleries" : "/admin/galleries/new"}

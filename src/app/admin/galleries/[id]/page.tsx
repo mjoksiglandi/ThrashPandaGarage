@@ -158,9 +158,9 @@ export default async function GalleryDetailPage({
   return (
     <AdminShell>
       <AdminPageHeader
+        actions={<Link className="button" href={`/g/${gallery.accessToken}`} target="_blank" rel="noopener noreferrer">Ver como cliente ↗</Link>}
         breadcrumbs={[{ href: "/admin", label: "Admin" }, { href: "/admin/galleries", label: "Galerías" }, { label: gallery.title }]}
         description={gallery.client.name}
-        eyebrow="Centro operativo"
         status={<GalleryStatusBadge status={gallery.status} />}
         title={gallery.title}
       />
@@ -168,16 +168,14 @@ export default async function GalleryDetailPage({
       {message.error && <p role="alert" className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-300">{message.error}</p>}
       {message.success && successMessages[message.success] && <p role="status" className="mt-4 rounded-lg border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">{successMessages[message.success]}</p>}
 
-      <section aria-label="Resumen de la galería" className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <Summary label="Cliente" value={gallery.client.name} detail={gallery.client.email ?? "Sin correo configurado"} />
-        <Summary label="Estado" value={galleryStatusLabels[gallery.status]} detail={statusDescriptions[gallery.status]} />
-        <Summary label="Fotos" value={`${gallery.photos.length}`} detail={gallery.photos.length ? "fotografías disponibles" : "Pendiente de importación"} />
-        <Summary label="Selección" value={`${selected.length} seleccionadas`} detail={gallery.selectionConfirmedAt ? `Confirmada ${gallery.selectionConfirmedAt.toLocaleString("es-CL")}` : "Aún no confirmada"} />
-        <Summary label="Límite" value={gallery.selectionLimit ? `${gallery.selectionLimit} fotos` : "Sin límite"} detail={selectionLimitLocked ? "Bloqueado por el estado actual" : "Se puede editar"} />
-        <Summary label="Acceso" value={gallery.emailSentAt ? "Invitación enviada" : "Aún no enviado"} detail={gallery.expiresAt ? `Expira ${gallery.expiresAt.toLocaleDateString("es-CL")}` : "Sin vencimiento"} />
-        <Summary label="Entrega" value={gallery.deliveryDriveUrl ? "Enlace configurado" : "Pendiente"} detail={gallery.deliveredAt ? `Entregada ${gallery.deliveredAt.toLocaleString("es-CL")}` : "Aún no entregada"} />
-        <Summary label="Historial" value={`${gallery.events.length} eventos`} detail={gallery.events[0] ? `Último: ${eventLabels[gallery.events[0].type] ?? gallery.events[0].type}` : "Sin actividad registrada"} />
-      </section>
+      <dl aria-label="Hechos clave de la galería" className="admin-gallery-facts">
+        <div><dt>Cliente ·</dt><dd>{gallery.client.name}</dd></div>
+        <div><dt>Fotos ·</dt><dd>{gallery.photos.length}</dd></div>
+        <div><dt>Selección ·</dt><dd>{selected.length}{gallery.selectionLimit ? `/${gallery.selectionLimit}` : ""}</dd></div>
+        <div><dt>Acceso ·</dt><dd>{gallery.emailSentAt ? "Enviado" : "Pendiente"}</dd></div>
+        <div><dt>Vence ·</dt><dd>{gallery.expiresAt ? gallery.expiresAt.toLocaleDateString("es-CL") : "Sin vencimiento"}</dd></div>
+        <div><dt>Entrega ·</dt><dd>{gallery.deliveredAt ? gallery.deliveredAt.toLocaleDateString("es-CL") : "Pendiente"}</dd></div>
+      </dl>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
         <AdminActionForm action={update} className="grid gap-4 rounded-[8px] border border-[var(--line)] bg-[var(--panel)] p-5" label="Guardar galería" pendingLabel="Guardando…">
@@ -239,8 +237,4 @@ export default async function GalleryDetailPage({
       </AdminPanel>
     </AdminShell>
   );
-}
-
-function Summary({ label, value, detail }: { label: string; value: string; detail: string }) {
-  return <article className="rounded-[8px] border border-[var(--line)] bg-[var(--panel)] p-4"><p className="font-mono text-[9px] uppercase tracking-[0.14em] text-[var(--muted-2)]">{label}</p><p className="mt-2 font-medium text-[var(--foreground)]">{value}</p><p className="mt-1 text-xs leading-5 text-[var(--muted)]">{detail}</p></article>;
 }

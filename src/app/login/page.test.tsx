@@ -23,6 +23,7 @@ describe("account login page", () => {
     expect(html).toContain("Correo electrónico");
     expect(html).toContain('href="/account/password-recovery"');
     expect(html).toContain("¿Olvidaste tu contraseña?");
+    expect(html).not.toContain('href="/admin/login"');
     expect(html).not.toContain('href="/contact"');
     expect(html).not.toContain("passwordHash");
     expect(html).not.toContain("tpg_account_session");

@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { loginAdmin } from "@/lib/auth";
+import { resolveTrustedClientIp } from "@/lib/client-origin";
 import { env } from "@/lib/env";
+import { checkRateLimit, resetRateLimit } from "@/lib/rate-limit";
 import {
   accountSessionCookie,
   clearedLegacyClientCookie,
@@ -7,11 +10,15 @@ import {
 import { authenticateAccount } from "@/modules/accounts/account-login";
 import {
   ACCOUNT_LOGIN_REDIRECT,
+  ADMIN_LOGIN_REDIRECT,
   LOGIN_CACHE_CONTROL,
   TEMPORARY_LOGIN_MESSAGE,
   isTrustedLoginOrigin,
   publicLoginError,
 } from "@/modules/accounts/account-login-http";
+
+const LOGIN_RATE_LIMIT = 5;
+const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
 
 function jsonResponse(
   body: { ok: boolean; error?: string },
@@ -47,10 +54,37 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const clientIp =
+      resolveTrustedClientIp(
+        request.headers,
+        env.TRUSTED_CLIENT_IP_HEADER
+      ) ?? "untrusted";
+    const rateLimitKey = `login:${clientIp}`;
+    if (!checkRateLimit(rateLimitKey, LOGIN_RATE_LIMIT, LOGIN_RATE_WINDOW_MS)) {
+      return jsonResponse(
+        { ok: false, error: TEMPORARY_LOGIN_MESSAGE },
+        429
+      );
+    }
+
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+    if (await loginAdmin(email, password)) {
+      resetRateLimit(rateLimitKey);
+      const response = NextResponse.redirect(
+        new URL(ADMIN_LOGIN_REDIRECT, env.APP_BASE_URL),
+        303
+      );
+      response.headers.set("Cache-Control", LOGIN_CACHE_CONTROL);
+      response.headers.set("Referrer-Policy", "no-referrer");
+      return response;
+    }
+
     const session = await authenticateAccount({
-      email: formData.get("email"),
-      password: formData.get("password"),
+      email,
+      password,
     });
+    resetRateLimit(rateLimitKey);
     const response = NextResponse.redirect(
       new URL(ACCOUNT_LOGIN_REDIRECT, env.APP_BASE_URL),
       303

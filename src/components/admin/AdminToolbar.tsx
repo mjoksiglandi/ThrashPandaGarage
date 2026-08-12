@@ -10,7 +10,7 @@ type AdminToolbarProps = {
 
 export function AdminToolbar({ children, placeholder, query = "", resetHref }: AdminToolbarProps) {
   return (
-    <form className="flex flex-col gap-3 border-b border-[var(--line)] bg-black/[0.08] p-4 md:flex-row md:items-center" method="get">
+    <form className="admin-toolbar" method="get">
       <label className="relative min-w-0 flex-1">
         <span className="sr-only">Buscar</span>
         <span aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-2)]">⌕</span>

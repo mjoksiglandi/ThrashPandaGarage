@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import {
   ACCOUNT_LOGIN_REDIRECT,
+  ADMIN_LOGIN_REDIRECT,
   TEMPORARY_LOGIN_MESSAGE,
 } from "@/modules/accounts/account-login-http";
 import {
@@ -36,11 +37,15 @@ export function AccountLoginForm() {
       });
       if (response.redirected) {
         const redirectUrl = new URL(response.url);
+        const allowedRedirects = [
+          ACCOUNT_LOGIN_REDIRECT,
+          ADMIN_LOGIN_REDIRECT,
+        ];
         if (
           redirectUrl.origin === window.location.origin &&
-          redirectUrl.pathname === ACCOUNT_LOGIN_REDIRECT
+          allowedRedirects.includes(redirectUrl.pathname)
         ) {
-          window.location.assign(ACCOUNT_LOGIN_REDIRECT);
+          window.location.assign(redirectUrl.pathname);
           return;
         }
         setError(TEMPORARY_LOGIN_MESSAGE);

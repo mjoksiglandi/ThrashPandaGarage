@@ -7,6 +7,7 @@ import {
 } from "./account.errors";
 import {
   ACCOUNT_LOGIN_REDIRECT,
+  ADMIN_LOGIN_REDIRECT,
   INVALID_LOGIN_MESSAGE,
   TEMPORARY_LOGIN_MESSAGE,
   isTrustedLoginOrigin,
@@ -97,6 +98,7 @@ describe("login HTTP trust boundary", () => {
 
   it("uses a fixed internal redirect without accepting a next value", () => {
     expect(ACCOUNT_LOGIN_REDIRECT).toBe("/portal");
+    expect(ADMIN_LOGIN_REDIRECT).toBe("/admin");
     expect(ACCOUNT_LOGIN_REDIRECT.startsWith("/")).toBe(true);
     expect(ACCOUNT_LOGIN_REDIRECT.startsWith("//")).toBe(false);
   });

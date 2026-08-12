@@ -10,6 +10,7 @@ export const INVALID_LOGIN_MESSAGE =
 export const TEMPORARY_LOGIN_MESSAGE =
   "No pudimos iniciar sesión. Inténtalo nuevamente.";
 export const ACCOUNT_LOGIN_REDIRECT = "/portal";
+export const ADMIN_LOGIN_REDIRECT = "/admin";
 export const LOGIN_CACHE_CONTROL =
   "private, no-cache, no-store, max-age=0, must-revalidate";
 

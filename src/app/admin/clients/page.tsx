@@ -36,18 +36,17 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         actions={<Link className="button" href="/admin/clients/new">Nuevo cliente</Link>}
         breadcrumbs={[{ href: "/admin", label: "Admin" }, { label: "Clientes" }]}
         description={`${clients.length} ${clients.length === 1 ? "cliente registrado" : "clientes registrados"}`}
-        eyebrow="Directorio"
         title="Clientes"
       />
       {success === "created" && <p role="status" className="mb-4 rounded-[6px] border border-emerald-900 bg-emerald-950/40 p-4 text-sm text-emerald-300">Cliente creado correctamente.</p>}
-      <AdminPanel className="overflow-hidden">
-        <AdminToolbar placeholder="Buscar por nombre, correo o teléfono…" query={q} resetHref="/admin/clients">
+      <AdminToolbar placeholder="Buscar por nombre, correo o teléfono…" query={q} resetHref="/admin/clients">
           <select className="!w-full !rounded-[5px] !border !border-[var(--line)] !bg-black/10 !px-3 !py-2.5 text-sm md:!w-48" defaultValue={gallery} name="gallery">
             <option value="all">Todas las galerías</option>
             <option value="with">Con galerías</option>
             <option value="without">Sin galerías</option>
           </select>
-        </AdminToolbar>
+      </AdminToolbar>
+      <AdminPanel className="overflow-hidden">
         {visibleClients.length > 0 ? <ClientTable clients={visibleClients} /> : (
           <AdminEmptyState
             actionHref={clients.length ? "/admin/clients" : "/admin/clients/new"}

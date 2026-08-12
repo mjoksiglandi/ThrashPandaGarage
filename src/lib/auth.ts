@@ -61,7 +61,7 @@ export async function getCurrentAdmin(): Promise<AuthenticatedAdmin | null> {
 
 export async function requireAdmin(): Promise<AuthenticatedAdmin> {
   const user = await getSessionUser();
-  if (!user) redirect("/admin/login");
+  if (!user) redirect("/login");
   if (!canAccessAdministration(user.role)) {
     forbidden();
   }

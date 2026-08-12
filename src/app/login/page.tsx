@@ -23,18 +23,15 @@ export default function AccountLoginPage() {
       </Link>
       <section aria-labelledby="account-login-title" className="login-card">
         <header className="login-card__header">
-          <span className="meta">Cuenta Trashpanda</span>
+          <span className="meta">Acceso Trashpanda</span>
           <h1 id="account-login-title">Bienvenido de vuelta.</h1>
-          <p>Ingresa con el correo y la contraseña de tu cuenta.</p>
+          <p>Ingresa con tus credenciales. Te llevaremos al espacio disponible para tu perfil.</p>
         </header>
         <AccountLoginForm />
         <footer className="login-card__footer">
           <Link href="/account/password-recovery">
             ¿Olvidaste tu contraseña?
           </Link>
-          <p className="password-reset-login">
-            <Link href="/admin/login">¿Eres administrador? Ingresa aquí</Link>
-          </p>
         </footer>
       </section>
       <span className="login-stage__copyright">
