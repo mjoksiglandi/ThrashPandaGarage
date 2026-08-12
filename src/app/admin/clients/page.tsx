@@ -6,8 +6,9 @@ import { clientRepository } from "@/modules/clients/client.repository";
 
 export const dynamic = "force-dynamic";
 
-export default async function ClientsPage() {
+export default async function ClientsPage({ searchParams }: { searchParams: Promise<{ success?: string }> }) {
   await requireAdmin();
+  const { success } = await searchParams;
   const clients = await clientRepository.list();
   return (
     <AdminShell>
@@ -15,6 +16,7 @@ export default async function ClientsPage() {
         <h1 className="text-3xl font-black">Clientes</h1>
         <Link className="button" href="/admin/clients/new">Nuevo cliente</Link>
       </div>
+      {success === "created" && <p role="status" className="mt-4 rounded-lg border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">Cliente creado correctamente.</p>}
       <ClientTable clients={clients} />
     </AdminShell>
   );

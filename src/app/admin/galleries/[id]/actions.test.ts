@@ -41,7 +41,9 @@ describe("importGalleryPhotosAction", () => {
     expect(mocks.requireAdmin.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.importGalleryPhotos.mock.invocationCallOrder[0]
     );
-    expect(mocks.redirect).toHaveBeenCalledWith("/admin/galleries/gallery-1");
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      "/admin/galleries/gallery-1?success=imported&imported=1&updated=0&skipped=0"
+    );
   });
 
   it("does not touch the import service when authentication fails", async () => {
@@ -51,5 +53,15 @@ describe("importGalleryPhotosAction", () => {
 
     expect(mocks.importGalleryPhotos).not.toHaveBeenCalled();
     expect(mocks.redirect).not.toHaveBeenCalled();
+  });
+
+  it("redirects to actionable feedback when importing fails", async () => {
+    mocks.importGalleryPhotos.mockRejectedValueOnce(new Error("storage unavailable"));
+
+    await importGalleryPhotosAction("gallery-1");
+
+    const target = mocks.redirect.mock.calls[0][0] as string;
+    expect(target).toContain("/admin/galleries/gallery-1?error=");
+    expect(decodeURIComponent(target)).toContain("Revisa las rutas configuradas");
   });
 });
