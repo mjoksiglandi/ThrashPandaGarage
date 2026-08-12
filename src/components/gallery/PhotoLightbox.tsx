@@ -2,7 +2,19 @@
 
 import type { Photo } from "./gallery.types";
 
-export function PhotoLightbox({ photo, onClose }: { photo: Photo; onClose: () => void }) {
+export function PhotoLightbox({
+  photo,
+  onClose,
+  onToggleSelected,
+  onCommentChange,
+  selectionOpen,
+}: {
+  photo: Photo;
+  onClose: () => void;
+  onToggleSelected: (photo: Photo) => void;
+  onCommentChange: (photo: Photo, comment: string) => void;
+  selectionOpen: boolean;
+}) {
   return (
     <div className="fixed inset-0 z-20 grid place-items-center bg-[#050506]/95 p-4" onClick={onClose}>
       <div
@@ -25,20 +37,27 @@ export function PhotoLightbox({ photo, onClose }: { photo: Photo; onClose: () =>
           </span>
         </div>
         <aside className="grid content-start gap-5 border-l border-[var(--line)] p-6">
-          <span
-            className={`inline-flex justify-center rounded-[3px] border px-4 py-3 text-sm font-semibold ${
+          <button
+            type="button"
+            disabled={!selectionOpen}
+            onClick={() => onToggleSelected(photo)}
+            className={`inline-flex justify-center rounded-[3px] border px-4 py-3 text-sm font-semibold transition-colors disabled:cursor-not-allowed ${
               photo.selected
                 ? "border-[var(--accent)] bg-[oklch(58%_0.11_300_/_0.16)] text-[var(--foreground)]"
                 : "border-[var(--line-strong)] text-[var(--muted)]"
             }`}
           >
-            {photo.selected ? "✓ Seleccionada" : "Sin seleccionar"}
-          </span>
+            {photo.selected ? "✓ Seleccionada" : "Seleccionar foto"}
+          </button>
           <div>
             <p className="mono mb-2 text-xs uppercase tracking-[0.05em] text-[var(--muted)]">Comentario</p>
-            <p className="min-h-28 rounded-[3px] border border-[var(--line)] bg-[var(--panel)] p-3 text-sm leading-6 text-[#d8d6dd]">
-              {photo.comment || "Sin comentario."}
-            </p>
+            <textarea
+              className="min-h-28 w-full rounded-[3px] border border-[var(--line)] bg-[var(--panel)] p-3 text-sm leading-6 text-[#d8d6dd]"
+              placeholder="Comentario"
+              value={photo.comment}
+              disabled={!selectionOpen}
+              onChange={(event) => onCommentChange(photo, event.target.value)}
+            />
           </div>
           <p className="mono mt-auto border-t border-[var(--line)] pt-4 text-xs text-[var(--muted-2)]">{photo.filename}</p>
         </aside>
