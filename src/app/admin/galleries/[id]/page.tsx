@@ -14,6 +14,7 @@ import { clientRepository } from "@/modules/clients/client.repository";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 import { archiveGallery, transitionGallery, updateGalleryFromForm } from "@/modules/galleries/gallery.service";
 import { allowedGalleryTransitions } from "@/modules/galleries/gallery-workflow";
+import { eventLabels } from "@/modules/galleries/gallery-event-labels";
 import { resendGalleryInvitation, sendInitialGalleryInvitation } from "@/modules/mail/mail.service";
 import { canResendInvitation, canSendInitialInvitation } from "@/modules/mail/mail-workflow";
 import { importGalleryPhotosAction } from "./actions";
@@ -29,18 +30,6 @@ const statusDescriptions: Record<GalleryStatus, string> = {
   READY_FOR_DELIVERY: "La entrega está preparada y pendiente de marcar como entregada.",
   DELIVERED: "La entrega fue completada.",
   ARCHIVED: "Galería cerrada; no admite nuevas operaciones.",
-};
-
-const eventLabels: Record<string, string> = {
-  GALLERY_CREATED: "Galería creada",
-  GALLERY_UPDATED: "Datos actualizados",
-  STATUS_CHANGED: "Estado actualizado",
-  GALLERY_ARCHIVED: "Galería archivada",
-  PHOTOS_IMPORTED: "Fotografías importadas",
-  GALLERY_EMAIL_SENT: "Invitación enviada",
-  GALLERY_EMAIL_RESENT: "Invitación reenviada",
-  PHOTO_SELECTION_UPDATED: "Selección modificada",
-  SELECTION_CONFIRMED: "Selección confirmada",
 };
 
 function actionError(fallback: string) {

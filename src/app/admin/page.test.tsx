@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
   requireAdmin: vi.fn(),
   listClients: vi.fn(),
   listGalleries: vi.fn(),
+  recentEvents: vi.fn(),
 }));
 
 vi.mock("@/lib/auth", () => ({ requireAdmin: mocks.requireAdmin }));
@@ -15,7 +16,7 @@ vi.mock("@/modules/clients/client.repository", () => ({
   clientRepository: { list: mocks.listClients },
 }));
 vi.mock("@/modules/galleries/gallery.repository", () => ({
-  galleryRepository: { list: mocks.listGalleries },
+  galleryRepository: { list: mocks.listGalleries, recentEvents: mocks.recentEvents },
 }));
 
 import AdminPage from "./page";
@@ -29,6 +30,7 @@ beforeEach(() => {
   });
   mocks.listClients.mockResolvedValue([]);
   mocks.listGalleries.mockResolvedValue([]);
+  mocks.recentEvents.mockResolvedValue([]);
 });
 
 describe("AdminPage", () => {
@@ -57,7 +59,7 @@ describe("AdminPage", () => {
     mocks.listClients.mockResolvedValue([{ id: "client-1" }, { id: "client-2" }]);
     mocks.listGalleries.mockResolvedValue([
       { status: "PROOFING" },
-      { status: "SELECTION_CONFIRMED" },
+      { status: "EDITING" },
       { status: "READY_FOR_DELIVERY" },
       { status: "DELIVERED" },
       { status: "ARCHIVED" },
@@ -66,10 +68,27 @@ describe("AdminPage", () => {
     const html = renderToStaticMarkup(await AdminPage());
 
     expect(html).toContain("Clientes");
-    expect(html).toContain("Selección abierta");
-    expect(html).toContain("Selección confirmada");
-    expect(html).toContain("Listas para entrega");
-    expect(html).toContain("Entregadas / archivadas");
+    expect(html).toContain("Galerías activas");
+    expect(html).toContain("Selecciones pendientes");
+    expect(html).toContain("En edición");
+    expect(html).toContain("Entregas disponibles");
+    expect(html).toContain("Próx. a expirar");
     expect(html).toContain('href="/admin/galleries?status=PROOFING"');
+    expect(html).not.toContain("Sin abrir aún");
+  });
+
+  it("counts only galleries that are still operationally open as active", async () => {
+    mocks.listClients.mockResolvedValue([]);
+    mocks.listGalleries.mockResolvedValue([
+      { status: "PROOFING" },
+      { status: "EDITING" },
+      { status: "DELIVERED" },
+      { status: "ARCHIVED" },
+    ]);
+
+    const html = renderToStaticMarkup(await AdminPage());
+    const activeCell = html.split("Galerías activas")[0];
+
+    expect(activeCell).toContain(">2<");
   });
 });

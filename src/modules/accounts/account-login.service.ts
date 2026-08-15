@@ -21,12 +21,6 @@ import {
   LOGIN_PASSWORD_MAX_LENGTH,
 } from "./account-login-policy";
 
-export {
-  LOGIN_EMAIL_MAX_LENGTH,
-  LOGIN_PASSWORD_MAX_BYTES,
-  LOGIN_PASSWORD_MAX_LENGTH,
-} from "./account-login-policy";
-
 export type AccountLoginInput = {
   email: NormalizedAccountEmail;
   password: string;

@@ -86,7 +86,7 @@ describe("requireAdmin", () => {
     await expect(requireAdmin()).rejects.toThrow("NEXT_REDIRECT");
 
     expect(mocks.findUnique).not.toHaveBeenCalled();
-    expect(mocks.redirect).toHaveBeenCalledWith("/login");
+    expect(mocks.redirect).toHaveBeenCalledWith("/admin/login");
   });
 
   it("rejects a session whose user no longer exists", async () => {
@@ -94,7 +94,7 @@ describe("requireAdmin", () => {
 
     await expect(requireAdmin()).rejects.toThrow("NEXT_REDIRECT");
 
-    expect(mocks.redirect).toHaveBeenCalledWith("/login");
+    expect(mocks.redirect).toHaveBeenCalledWith("/admin/login");
   });
 
   it.each([UserRole.STAFF, UserRole.CLIENT])(

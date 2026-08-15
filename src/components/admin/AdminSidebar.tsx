@@ -9,14 +9,23 @@ const items = [
   { href: "/admin", label: "Dashboard", mark: "◨" },
   { href: "/admin/galleries", label: "Galerías", mark: "▦" },
   { href: "/admin/clients", label: "Clientes", mark: "◍" },
-  { href: "/work", label: "Portfolio", mark: "↗", external: true },
 ];
 
-export function AdminSidebar({ adminEmail, onLogout }: { adminEmail: string; onLogout: () => Promise<void> }) {
+const systemItems = [{ href: "/work", label: "Portfolio", mark: "↗", external: true }];
+
+export function AdminSidebar({
+  adminEmail,
+  onLogout,
+  attentionCount = 0,
+}: {
+  adminEmail: string;
+  onLogout: () => Promise<void>;
+  attentionCount?: number;
+}) {
   const pathname = usePathname() ?? "";
   const [open, setOpen] = useState(false);
   const initial = adminEmail.slice(0, 1).toUpperCase();
-  const currentSection = items.find((item) => !item.external && isActive(item.href))?.label ?? "Administración";
+  const currentSection = items.find((item) => isActive(item.href))?.label ?? "Administración";
 
   function isActive(href: string) {
     if (href === "/admin") return pathname === href;
@@ -59,22 +68,38 @@ export function AdminSidebar({ adminEmail, onLogout }: { adminEmail: string; onL
       <p className="admin-sidebar__section">Operación</p>
       <nav className="admin-sidebar__nav">
         {items.map((item) => {
-          const active = !item.external && isActive(item.href);
+          const active = isActive(item.href);
           return (
           <Link
             key={item.href}
             href={item.href}
-            target={item.external ? "_blank" : undefined}
-            rel={item.external ? "noopener noreferrer" : undefined}
             aria-current={active ? "page" : undefined}
             onClick={() => setOpen(false)}
             className={active ? "is-active" : undefined}
           >
             <span className="admin-sidebar__icon">{item.mark}</span>
             {item.label}
+            {item.href === "/admin/galleries" && attentionCount > 0 && (
+              <span className="admin-sidebar__badge">{attentionCount}</span>
+            )}
           </Link>
           );
         })}
+      </nav>
+      <p className="admin-sidebar__section">Sistema</p>
+      <nav className="admin-sidebar__nav">
+        {systemItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => setOpen(false)}
+          >
+            <span className="admin-sidebar__icon">{item.mark}</span>
+            {item.label}
+          </Link>
+        ))}
       </nav>
       <form action={onLogout} className="admin-sidebar__footer">
         <div className="admin-sidebar__identity">

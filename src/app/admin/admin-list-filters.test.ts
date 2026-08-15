@@ -1,7 +1,6 @@
 import { GalleryStatus } from "@prisma/client";
 import { describe, expect, it } from "vitest";
-import { filterClients } from "./clients/page";
-import { filterGalleries } from "./galleries/page";
+import { filterClients, filterGalleries } from "./admin-list-filters";
 
 describe("admin list filters", () => {
   it("searches client fields and derives the gallery filter locally", () => {

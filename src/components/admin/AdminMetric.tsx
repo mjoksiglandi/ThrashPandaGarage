@@ -11,17 +11,19 @@ const valueColors: Record<AdminStatusTone, string> = {
 };
 
 type AdminMetricProps = {
+  context?: string;
   href?: string;
   label: string;
   tone?: AdminStatusTone;
   value: number;
 };
 
-export function AdminMetric({ href, label, tone = "neutral", value }: AdminMetricProps) {
+export function AdminMetric({ context, href, label, tone = "neutral", value }: AdminMetricProps) {
   const content = (
     <>
       <p className="admin-metric__value" style={{ color: valueColors[tone] }}>{value}</p>
       <p className="admin-metric__label">{label}</p>
+      {context && <p className="admin-metric__context" style={{ color: tone === "red" ? valueColors.red : undefined }}>{context}</p>}
     </>
   );
   const className = "admin-metric";

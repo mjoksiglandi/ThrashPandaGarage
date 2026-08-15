@@ -5,7 +5,10 @@ export const clientRepository = {
   list() {
     return db.client.findMany({
       orderBy: { createdAt: "desc" },
-      include: { galleries: { select: { id: true } } },
+      include: {
+        galleries: { select: { id: true } },
+        account: { select: { status: true } },
+      },
     });
   },
   find(id: string) {

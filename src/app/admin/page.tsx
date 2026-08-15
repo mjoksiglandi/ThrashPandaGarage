@@ -7,54 +7,123 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { GalleryStatusBadge } from "@/components/admin/GalleryStatusBadge";
 import { requireAdmin } from "@/lib/auth";
 import { clientRepository } from "@/modules/clients/client.repository";
+import { eventLabels } from "@/modules/galleries/gallery-event-labels";
 import { galleryRepository } from "@/modules/galleries/gallery.repository";
 
 export const dynamic = "force-dynamic";
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export default async function AdminPage() {
   await requireAdmin();
-  const [clients, galleries] = await Promise.all([clientRepository.list(), galleryRepository.list()]);
+  const [clients, galleries, events] = await Promise.all([
+    clientRepository.list(),
+    galleryRepository.list(),
+    galleryRepository.recentEvents(6),
+  ]);
+
+  const now = new Date().getTime();
   const count = (...statuses: GalleryStatus[]) => galleries.filter((gallery) => statuses.includes(gallery.status)).length;
+  const active = galleries.filter(
+    (gallery) => gallery.status !== GalleryStatus.ARCHIVED && gallery.status !== GalleryStatus.DELIVERED
+  ).length;
+  const expiring = galleries.filter(
+    (gallery) =>
+      gallery.status !== GalleryStatus.ARCHIVED &&
+      gallery.expiresAt &&
+      gallery.expiresAt.getTime() > now &&
+      gallery.expiresAt.getTime() - now < 7 * DAY_MS
+  );
+  const expiringTomorrow = expiring.filter((gallery) => gallery.expiresAt!.getTime() - now < DAY_MS).length;
+  const attention = galleries
+    .filter((gallery) => gallery.status === GalleryStatus.PROOFING || gallery.status === GalleryStatus.EDITING)
+    .sort((a, b) => (a.expiresAt?.getTime() ?? Infinity) - (b.expiresAt?.getTime() ?? Infinity))
+    .slice(0, 5);
 
   return (
     <AdminShell>
       <AdminPageHeader
         actions={<><Link className="secondary" href="/admin/clients/new">+ Cliente</Link><Link className="button" href="/admin/galleries/new">+ Nueva galería</Link></>}
         breadcrumbs={[{ label: "Admin" }, { label: "Dashboard" }]}
-        description="Resumen de clientes, galerías y estados operativos con datos actuales."
+        description={`Resumen operativo · ${new Date().toLocaleDateString("es-CL", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}`}
         title="Dashboard"
       />
       <section aria-label="Métricas del estudio" className="admin-metrics">
         <AdminMetric href="/admin/clients" label="Clientes" value={clients.length} />
-        <AdminMetric href="/admin/galleries" label="Galerías" value={galleries.length} />
-        <AdminMetric href="/admin/galleries?status=PROOFING" label="Selección abierta" tone="blue" value={count(GalleryStatus.PROOFING)} />
-        <AdminMetric href="/admin/galleries?status=SELECTION_CONFIRMED" label="Selección confirmada" tone="violet" value={count(GalleryStatus.SELECTION_CONFIRMED)} />
-        <AdminMetric href="/admin/galleries?status=READY_FOR_DELIVERY" label="Listas para entrega" tone="green" value={count(GalleryStatus.READY_FOR_DELIVERY)} />
-        <AdminMetric href="/admin/galleries?status=closed" label="Entregadas / archivadas" value={count(GalleryStatus.DELIVERED, GalleryStatus.ARCHIVED)} />
+        <AdminMetric href="/admin/galleries" label="Galerías activas" value={active} />
+        <AdminMetric
+          href="/admin/galleries?status=PROOFING"
+          label="Selecciones pendientes"
+          tone="blue"
+          value={count(GalleryStatus.PROOFING)}
+        />
+        <AdminMetric href="/admin/galleries?status=EDITING" label="En edición" tone="amber" value={count(GalleryStatus.EDITING)} />
+        <AdminMetric href="/admin/galleries?status=READY_FOR_DELIVERY" label="Entregas disponibles" tone="green" value={count(GalleryStatus.READY_FOR_DELIVERY)} />
+        <AdminMetric
+          context={expiringTomorrow > 0 ? `${expiringTomorrow} vence mañana` : undefined}
+          href="/admin/galleries"
+          label="Próx. a expirar"
+          tone={expiring.length > 0 ? "red" : "neutral"}
+          value={expiring.length}
+        />
       </section>
       <div className="admin-dashboard-grid">
-        <AdminPanel actions={<Link className="font-mono text-[10px] tracking-[0.1em] text-[var(--accent)]" href="/admin/galleries">Ver todas →</Link>} title="Galerías recientes">
-          {galleries.length ? (
+        <AdminPanel actions={<Link className="font-mono text-[10px] tracking-[0.1em] text-[var(--accent)]" href="/admin/galleries">Ver todas →</Link>} title="Galerías que requieren atención">
+          {attention.length ? (
             <div className="admin-table-wrap">
               <table className="admin-table">
-                <thead><tr><th>Galería</th><th>Cliente</th><th>Estado</th><th>Fotos</th><th></th></tr></thead>
-                <tbody>{galleries.slice(0, 5).map((gallery) => (
-                  <tr key={gallery.id}>
-                    <td><strong className="font-normal text-[var(--foreground)]">{gallery.title}</strong></td>
-                    <td className="text-[var(--muted)]">{gallery.client?.name ?? "Sin cliente"}</td>
-                    <td><GalleryStatusBadge status={gallery.status} /></td>
-                    <td className="font-mono text-xs text-[var(--muted)]">{gallery.photos?.length ?? 0}</td>
-                    <td className="text-right"><Link className="secondary inline-flex px-3 py-1.5 text-xs" href={`/admin/galleries/${gallery.id}`}>Abrir</Link></td>
-                  </tr>
-                ))}</tbody>
+                <thead><tr><th>Galería</th><th>Estado</th><th>Selección</th><th>Vence</th><th></th></tr></thead>
+                <tbody>{attention.map((gallery) => {
+                  const selected = (gallery.selections ?? []).filter((selection) => selection.selected).length;
+                  const pct = gallery.selectionLimit ? Math.min(100, Math.round((selected / gallery.selectionLimit) * 100)) : 0;
+                  const dueSoon = gallery.expiresAt && gallery.expiresAt.getTime() - now < 2 * DAY_MS;
+                  return (
+                    <tr key={gallery.id}>
+                      <td>
+                        <div className="admin-cell-media">
+                          <span className="admin-thumb">
+                            {gallery.photos?.[0] && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img alt="" src={`/api/photos/${gallery.photos[0].id}?variant=thumb`} />
+                            )}
+                          </span>
+                          <span className="min-w-0">
+                            <strong className="block truncate font-normal text-[var(--foreground)]">{gallery.title}</strong>
+                            <span className="block truncate font-mono text-[10px] text-[var(--muted-2)]">{gallery.client?.name ?? "Sin cliente"}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td><GalleryStatusBadge status={gallery.status} /></td>
+                      <td className="admin-count font-mono text-xs text-[var(--muted)]">
+                        {gallery.selectionLimit ? <><b>{selected}</b>/{gallery.selectionLimit}<span className="admin-progress"><i style={{ width: `${pct}%` }} /></span></> : "—"}
+                      </td>
+                      <td className="font-mono text-xs" style={{ color: dueSoon ? "#df9090" : "#e1b467" }}>
+                        {gallery.expiresAt ? gallery.expiresAt.toLocaleDateString("es-CL") : "—"}
+                      </td>
+                      <td className="text-right"><Link className="secondary inline-flex px-3 py-1.5 text-xs" href={`/admin/galleries/${gallery.id}`}>Abrir</Link></td>
+                    </tr>
+                  );
+                })}</tbody>
               </table>
             </div>
-          ) : <p className="admin-list-summary">Todavía no hay galerías.</p>}
+          ) : <p className="admin-list-summary">Nada pendiente por ahora.</p>}
         </AdminPanel>
-        <AdminPanel actions={<Link className="font-mono text-[10px] tracking-[0.1em] text-[var(--accent)]" href="/admin/clients">Ver todos →</Link>} title="Clientes recientes">
-          {clients.length ? <ul className="divide-y divide-[var(--line)]">
-            {clients.slice(0, 5).map((client) => <li key={client.id} className="flex items-center justify-between gap-4 px-4 py-3"><div className="min-w-0"><Link className="block truncate text-sm text-[var(--foreground)] hover:text-[var(--accent)]" href={`/admin/clients/${client.id}`}>{client.name}</Link><p className="mt-0.5 truncate font-mono text-[10px] text-[var(--muted-2)]">{client.email ?? "Sin correo"}</p></div><span className="font-mono text-[10px] text-[var(--muted-2)]">{client.galleries?.length ?? 0} gal.</span></li>)}
-          </ul> : <p className="admin-list-summary">Todavía no hay clientes.</p>}
+        <AdminPanel title="Actividad reciente">
+          {events.length ? (
+            <ul className="admin-activity">
+              {events.map((event) => (
+                <li key={event.id}>
+                  <time dateTime={event.createdAt.toISOString()}>
+                    {event.createdAt.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
+                  </time>
+                  <div className="min-w-0">
+                    <p>{eventLabels[event.type] ?? event.type}</p>
+                    <small className="truncate">{event.gallery.client.name} · {event.gallery.title}</small>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          ) : <p className="admin-list-summary">Todavía no hay actividad.</p>}
         </AdminPanel>
       </div>
     </AdminShell>

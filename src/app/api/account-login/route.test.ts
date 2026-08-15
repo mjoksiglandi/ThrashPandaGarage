@@ -4,18 +4,10 @@ import { InvalidCredentialsError } from "@/modules/accounts/account.errors";
 
 const mocks = vi.hoisted(() => ({
   authenticate: vi.fn(),
-  checkRateLimit: vi.fn(),
-  loginAdmin: vi.fn(),
-  resetRateLimit: vi.fn(),
 }));
 
 vi.mock("@/modules/accounts/account-login", () => ({
   authenticateAccount: mocks.authenticate,
-}));
-vi.mock("@/lib/auth", () => ({ loginAdmin: mocks.loginAdmin }));
-vi.mock("@/lib/rate-limit", () => ({
-  checkRateLimit: mocks.checkRateLimit,
-  resetRateLimit: mocks.resetRateLimit,
 }));
 
 import { POST } from "./route";
@@ -52,24 +44,9 @@ function loginRequest(
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("NODE_ENV", "production");
-  mocks.checkRateLimit.mockReturnValue(true);
-  mocks.loginAdmin.mockResolvedValue(false);
 });
 
 describe("POST /api/account-login", () => {
-  it("routes administrative credentials to the admin panel", async () => {
-    mocks.loginAdmin.mockResolvedValueOnce(true);
-
-    const response = await POST(loginRequest({ email: "admin@example.test" }));
-
-    expect(response.status).toBe(303);
-    expect(response.headers.get("location")).toBe(
-      "http://localhost:3000/admin"
-    );
-    expect(mocks.authenticate).not.toHaveBeenCalled();
-    expect(mocks.resetRateLimit).toHaveBeenCalledOnce();
-  });
-
   it("emits the opaque session cookie only after a successful login", async () => {
     mocks.authenticate.mockResolvedValueOnce({
       token: "opaque-token-value",
@@ -96,8 +73,6 @@ describe("POST /api/account-login", () => {
     expect(response.headers.get("cache-control")).toBe(
       "private, no-cache, no-store, max-age=0, must-revalidate"
     );
-    expect(mocks.loginAdmin).toHaveBeenCalled();
-    expect(mocks.resetRateLimit).toHaveBeenCalledOnce();
   });
 
   it("does not derive the success redirect from a hostile request URL", async () => {
