@@ -11,6 +11,17 @@ export const clientRepository = {
       },
     });
   },
+  findForBulkInvitation(ids: string[]) {
+    return db.client.findMany({
+      where: { id: { in: ids } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        account: { select: { status: true } },
+      },
+    });
+  },
   find(id: string) {
     return db.client.findUnique({
       where: { id },

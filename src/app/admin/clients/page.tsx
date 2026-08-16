@@ -9,6 +9,7 @@ import { ClientTable } from "@/components/admin/ClientTable";
 import { requireAdmin } from "@/lib/auth";
 import { clientRepository } from "@/modules/clients/client.repository";
 import { filterClients } from "../admin-list-filters";
+import { inviteSelectedClients } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         resetHref="/admin/clients"
       />
       <AdminPanel className="overflow-hidden">
-        {visibleClients.length > 0 ? <ClientTable clients={visibleClients} /> : (
+        {visibleClients.length > 0 ? <ClientTable action={inviteSelectedClients} clients={visibleClients} /> : (
           <AdminEmptyState
             actionHref={clients.length ? "/admin/clients" : "/admin/clients/new"}
             actionLabel={clients.length ? "Limpiar filtros" : "Crear primer cliente"}
