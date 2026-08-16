@@ -41,17 +41,19 @@ export default async function ClientsPage({ searchParams }: { searchParams: Prom
         title="Clientes"
       />
       {success === "created" && <p role="status" className="mb-4 rounded-[6px] border border-emerald-900 bg-emerald-950/40 p-4 text-sm text-emerald-300">Cliente creado correctamente.</p>}
-      <nav aria-label="Filtrar clientes" className="admin-tabs mb-4">
-        <Link className={gallery === "all" ? "is-active" : undefined} href={tabHref("all")}>Todos<span>{clients.length}</span></Link>
-        <Link className={gallery === "with" ? "is-active" : undefined} href={tabHref("with")}>Con galerías<span>{withGalleries}</span></Link>
-        <Link className={gallery === "without" ? "is-active" : undefined} href={tabHref("without")}>Sin galerías<span>{clients.length - withGalleries}</span></Link>
-      </nav>
-      <AdminToolbar
-        placeholder="Buscar por nombre, correo o teléfono…"
-        preservedParams={gallery === "all" ? undefined : { gallery }}
-        query={q}
-        resetHref="/admin/clients"
-      />
+      <div className="admin-list-controls">
+        <nav aria-label="Filtrar clientes" className="admin-tabs">
+          <Link className={gallery === "all" ? "is-active" : undefined} href={tabHref("all")}>Todos<span>{clients.length}</span></Link>
+          <Link className={gallery === "with" ? "is-active" : undefined} href={tabHref("with")}>Con galerías<span>{withGalleries}</span></Link>
+          <Link className={gallery === "without" ? "is-active" : undefined} href={tabHref("without")}>Sin galerías<span>{clients.length - withGalleries}</span></Link>
+        </nav>
+        <AdminToolbar
+          placeholder="Buscar por nombre, correo o teléfono…"
+          preservedParams={gallery === "all" ? undefined : { gallery }}
+          query={q}
+          resetHref="/admin/clients"
+        />
+      </div>
       <AdminPanel className="overflow-hidden">
         {visibleClients.length > 0 ? <ClientTable action={inviteSelectedClients} clients={visibleClients} /> : (
           <AdminEmptyState

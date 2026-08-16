@@ -41,7 +41,8 @@ export default async function GalleriesPage({ searchParams }: { searchParams: Pr
         description={`${galleries.length} ${galleries.length === 1 ? "galería registrada" : "galerías registradas"}`}
         title="Galerías"
       />
-      <nav aria-label="Filtrar por estado" className="admin-tabs mb-4">
+      <div className="admin-list-controls">
+      <nav aria-label="Filtrar por estado" className="admin-tabs">
         <Link className={status === "all" ? "is-active" : undefined} href={tabHref("all")}>
           Todas<span>{galleries.length}</span>
         </Link>
@@ -57,6 +58,7 @@ export default async function GalleriesPage({ searchParams }: { searchParams: Pr
         query={q}
         resetHref="/admin/galleries"
       />
+      </div>
       <AdminPanel className="overflow-hidden">
         {visibleGalleries.length > 0 ? (
           <GalleryTable galleries={visibleGalleries} />

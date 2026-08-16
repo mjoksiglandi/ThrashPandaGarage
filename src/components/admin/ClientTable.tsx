@@ -83,14 +83,6 @@ export function ClientTable({ action, clients }: ClientTableProps) {
 
   return (
     <form action={formAction}>
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-4 py-3">
-        <p aria-live="polite" className="text-sm text-[var(--muted)]">
-          {selected.length ? `${selected.length} seleccionado${selected.length === 1 ? "" : "s"}` : "Sin selección"}
-        </p>
-        <button className="button px-4 py-2 text-sm" disabled={pending || selected.length === 0} type="submit">
-          {pending ? "Enviando invitaciones…" : "Invitar seleccionados"}
-        </button>
-      </div>
       <BulkInvitationFeedback state={state} />
       <AdminTable headers={headers}>
         {clients.map((client) => {
@@ -135,6 +127,18 @@ export function ClientTable({ action, clients }: ClientTableProps) {
           );
         })}
       </AdminTable>
+      <div className="admin-batch-bar">
+        <p aria-live="polite" className="admin-batch-bar__count">
+          {selected.length ? <><strong>{selected.length}</strong> {selected.length === 1 ? "cliente seleccionado" : "clientes seleccionados"}</> : "Sin selección"}
+        </p>
+        <span aria-hidden="true" className="admin-batch-bar__separator" />
+        <button className="button px-4 py-2 text-sm" disabled={pending || selected.length === 0} type="submit">
+          {pending ? "Enviando invitaciones…" : "Enviar invitación"}
+        </button>
+        <button className="admin-batch-bar__clear" disabled={selected.length === 0} onClick={() => setSelected([])} type="button">
+          Limpiar selección
+        </button>
+      </div>
     </form>
   );
 }

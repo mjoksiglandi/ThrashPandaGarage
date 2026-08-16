@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { AdminActionForm } from "@/components/admin/AdminActionForm";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPanel } from "@/components/admin/AdminPanel";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FormField } from "@/components/ui/FormField";
 import { requireAdmin } from "@/lib/auth";
@@ -26,8 +28,8 @@ export default async function NewGalleryPage({ searchParams }: { searchParams: P
   }
   return (
     <AdminShell>
-      <h1 className="text-3xl font-black">Nueva galería</h1>
-      {error && <p role="alert" className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-300">{error}</p>}
+      <AdminPageHeader breadcrumbs={[{ href: "/admin", label: "Admin" }, { href: "/admin/galleries", label: "Galerías" }, { label: "Nueva galería" }]} description="Crea el espacio de trabajo y define su selección inicial." title="Nueva galería" />
+      {error && <p role="alert" className="admin-alert admin-alert--error">{error}</p>}
       <GalleryForm clients={clients} action={create} />
     </AdminShell>
   );
@@ -35,13 +37,15 @@ export default async function NewGalleryPage({ searchParams }: { searchParams: P
 
 function GalleryForm({ clients, action }: { clients: { id: string; name: string }[]; action: (formData: FormData) => void }) {
   return (
-    <AdminActionForm action={action} className="mt-6 grid max-w-2xl gap-4" label="Crear galería" pendingLabel="Creando…">
-      <FormField label="Cliente"><select name="clientId" required>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></FormField>
-      <FormField label="Título"><input name="title" required /></FormField>
-      <FormField label="Slug"><input name="slug" /></FormField>
-      <FormField label="Límite de selección"><input name="selectionLimit" type="number" min="1" /></FormField>
-      <FormField label="Carpeta thumbs relativa"><input name="thumbnailLocalPath" placeholder="2026-07-08_cliente/thumbs" /></FormField>
-      <FormField label="Carpeta preview relativa"><input name="previewLocalPath" placeholder="2026-07-08_cliente/preview" /></FormField>
-    </AdminActionForm>
+    <AdminPanel className="admin-form-shell" description="Datos operativos de la galería" title="Información principal">
+      <AdminActionForm action={action} className="admin-form admin-form-grid" label="Crear galería" pendingLabel="Creando…">
+        <FormField label="Cliente"><select name="clientId" required>{clients.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></FormField>
+        <FormField label="Título"><input name="title" required /></FormField>
+        <FormField label="Slug"><input name="slug" /></FormField>
+        <FormField label="Límite de selección"><input name="selectionLimit" type="number" min="1" /></FormField>
+        <FormField label="Carpeta thumbs relativa"><input name="thumbnailLocalPath" placeholder="2026-07-08_cliente/thumbs" /></FormField>
+        <FormField label="Carpeta preview relativa"><input name="previewLocalPath" placeholder="2026-07-08_cliente/preview" /></FormField>
+      </AdminActionForm>
+    </AdminPanel>
   );
 }
