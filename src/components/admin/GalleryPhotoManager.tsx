@@ -11,18 +11,16 @@ export function GalleryPhotoManager({ photos }: { photos: PhotoWithSelection[] }
       {photos.length === 0 ? (
         <AdminEmptyState description="Configura las rutas locales y usa Importar fotos para sincronizarlas." title="Esta galería todavía no tiene fotos" />
       ) : (
-        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+        <div className="admin-photo-grid">
           {photos.map((photo) => (
-            <article key={photo.id} className="overflow-hidden rounded-[6px] border border-[var(--line)] bg-black/10">
+            <article key={photo.id} className="admin-photo-card">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/api/photos/${photo.id}?variant=thumb`} alt={photo.baseName} className="aspect-[4/3] w-full object-cover" />
-              <div className="p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <p className="min-w-0 truncate text-sm text-[var(--foreground)]">{photo.filename}</p>
-                  {photo.selection?.selected && <AdminStatusChip tone="violet">Seleccionada</AdminStatusChip>}
-                </div>
-                {photo.selection?.comment && <p className="mt-2 line-clamp-2 text-xs text-[var(--muted-2)]">{photo.selection.comment}</p>}
+              <img src={`/api/photos/${photo.id}?variant=thumb`} alt={photo.baseName} />
+              <div className="admin-photo-card__meta">
+                <p>{photo.filename}</p>
+                {photo.selection?.selected && <AdminStatusChip tone="violet">Cliente</AdminStatusChip>}
               </div>
+              {photo.selection?.comment && <p className="admin-photo-card__comment">{photo.selection.comment}</p>}
             </article>
           ))}
         </div>

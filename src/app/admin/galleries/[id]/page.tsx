@@ -150,6 +150,10 @@ export default async function GalleryDetailPage({
         actions={<Link className="button" href={`/g/${gallery.accessToken}`} target="_blank" rel="noopener noreferrer">Ver como cliente ↗</Link>}
         breadcrumbs={[{ href: "/admin", label: "Admin" }, { href: "/admin/galleries", label: "Galerías" }, { label: gallery.title }]}
         description={gallery.client.name}
+        media={gallery.photos[0] ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" src={`/api/photos/${gallery.photos[0].id}?variant=thumb`} />
+        ) : <span aria-hidden="true">▦</span>}
         status={<GalleryStatusBadge status={gallery.status} />}
         title={gallery.title}
       />
@@ -166,8 +170,8 @@ export default async function GalleryDetailPage({
         <div><dt>Entrega ·</dt><dd>{gallery.deliveredAt ? gallery.deliveredAt.toLocaleDateString("es-CL") : "Pendiente"}</dd></div>
       </dl>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_360px]">
-        <AdminActionForm action={update} className="grid gap-4 rounded-[8px] border border-[var(--line)] bg-[var(--panel)] p-5" label="Guardar galería" pendingLabel="Guardando…">
+      <div className="admin-detail-grid">
+        <AdminActionForm action={update} className="admin-form admin-form-card admin-form-grid" label="Guardar galería" pendingLabel="Guardando…">
           <h2 className="text-xl font-bold">Configuración</h2>
           <FormField label="Cliente"><select name="clientId" defaultValue={gallery.clientId}>{clients.map((client) => <option key={client.id} value={client.id}>{client.name}</option>)}</select></FormField>
           <FormField label="Título"><input name="title" defaultValue={gallery.title} required /></FormField>

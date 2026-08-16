@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { AdminActionForm } from "@/components/admin/AdminActionForm";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPanel } from "@/components/admin/AdminPanel";
 import { AdminShell } from "@/components/admin/AdminShell";
 import { FormField } from "@/components/ui/FormField";
 import { requireAdmin } from "@/lib/auth";
@@ -25,8 +27,8 @@ export default async function NewClientPage({ searchParams }: { searchParams: Pr
 
   return (
     <AdminShell>
-      <h1 className="text-3xl font-black">Nuevo cliente</h1>
-      {error && <p role="alert" className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-300">{error}</p>}
+      <AdminPageHeader breadcrumbs={[{ href: "/admin", label: "Admin" }, { href: "/admin/clients", label: "Clientes" }, { label: "Nuevo cliente" }]} description="Registra los datos esenciales del cliente. El acceso al portal se habilita después." title="Nuevo cliente" />
+      {error && <p role="alert" className="admin-alert admin-alert--error">{error}</p>}
       <ClientForm action={create} />
     </AdminShell>
   );
@@ -34,11 +36,13 @@ export default async function NewClientPage({ searchParams }: { searchParams: Pr
 
 function ClientForm({ action }: { action: (formData: FormData) => void }) {
   return (
-    <AdminActionForm action={action} className="mt-6 grid max-w-xl gap-4" label="Crear cliente" pendingLabel="Creando…">
-      <FormField label="Nombre"><input name="name" required /></FormField>
-      <FormField label="Email"><input name="email" type="email" /></FormField>
-      <FormField label="Teléfono"><input name="phone" /></FormField>
-      <FormField label="Notas"><textarea name="notes" rows={4} /></FormField>
-    </AdminActionForm>
+    <AdminPanel className="admin-form-shell" description="Datos de contacto del cliente" title="Información principal">
+      <AdminActionForm action={action} className="admin-form admin-form-grid" label="Crear cliente" pendingLabel="Creando…">
+        <FormField label="Nombre"><input name="name" required /></FormField>
+        <FormField label="Email"><input name="email" type="email" /></FormField>
+        <FormField label="Teléfono"><input name="phone" /></FormField>
+        <FormField label="Notas"><textarea name="notes" rows={4} /></FormField>
+      </AdminActionForm>
+    </AdminPanel>
   );
 }

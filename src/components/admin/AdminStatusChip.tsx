@@ -14,7 +14,7 @@ const tones: Record<AdminStatusTone, string> = {
 export function AdminStatusChip({ children, tone = "neutral" }: { children: ReactNode; tone?: AdminStatusTone }) {
   const color = tones[tone];
   return (
-    <span className="inline-flex w-fit items-center gap-2 rounded-[4px] border border-[var(--line-strong)] bg-white/[0.025] px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.08em] text-[#d8dfe6]">
+    <span className="admin-status-chip" style={{ color }}>
       <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ background: color, boxShadow: `0 0 7px ${color}` }} />
       {children}
     </span>

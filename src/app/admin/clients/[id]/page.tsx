@@ -1,7 +1,12 @@
 import { AccountStatus } from "@prisma/client";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminActionForm } from "@/components/admin/AdminActionForm";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
+import { AdminPanel } from "@/components/admin/AdminPanel";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { AdminStatusChip } from "@/components/admin/AdminStatusChip";
+import { GalleryStatusBadge } from "@/components/admin/GalleryStatusBadge";
 import { FormField } from "@/components/ui/FormField";
 import { requireAdmin } from "@/lib/auth";
 import {
@@ -97,14 +102,21 @@ export default async function ClientDetailPage({
 
   return (
     <AdminShell>
-      <h1 className="text-3xl font-black">{client.name}</h1>
+      <AdminPageHeader
+        actions={<Link className="button" href="/admin/galleries/new">+ Nueva galería</Link>}
+        breadcrumbs={[{ href: "/admin", label: "Admin" }, { href: "/admin/clients", label: "Clientes" }, { label: client.name }]}
+        description={`${client.email ?? "Sin correo"}${client.phone ? ` · ${client.phone}` : ""} · ${client.galleries.length} ${client.galleries.length === 1 ? "galería" : "galerías"}`}
+        media={<span className="admin-client-hero-avatar">{client.name.slice(0, 1).toUpperCase()}</span>}
+        status={<AdminStatusChip tone={account?.status === AccountStatus.ACTIVE ? "green" : account?.status === AccountStatus.INVITED ? "amber" : account ? "red" : "neutral"}>{account ? accountStatusLabels[account.status] : "Sin acceso"}</AdminStatusChip>}
+        title={client.name}
+      />
       {message.error && (
-        <p role="alert" className="mt-4 rounded-lg border border-red-900 bg-red-950/40 p-4 text-red-300">
+        <p role="alert" className="admin-alert admin-alert--error">
           {message.error}
         </p>
       )}
       {message.success && (
-        <p role="status" className="mt-4 rounded-lg border border-emerald-900 bg-emerald-950/40 p-4 text-emerald-300">
+        <p role="status" className="admin-alert admin-alert--success">
           {message.success === "saved"
             ? "Cliente guardado correctamente."
             : message.success === "resent"
@@ -112,56 +124,52 @@ export default async function ClientDetailPage({
             : "Cuenta creada e invitación enviada."}
         </p>
       )}
-      <AdminActionForm action={update} className="mt-6 grid max-w-xl gap-4" label="Guardar" pendingLabel="Guardando…">
-        <FormField label="Nombre"><input name="name" defaultValue={client.name} required /></FormField>
-        <FormField label="Email"><input name="email" type="email" defaultValue={client.email ?? ""} /></FormField>
-        <FormField label="Telefono"><input name="phone" defaultValue={client.phone ?? ""} /></FormField>
-        <FormField label="Notas"><textarea name="notes" rows={4} defaultValue={client.notes ?? ""} /></FormField>
-      </AdminActionForm>
-
-      <section className="mt-10 max-w-xl rounded-lg border border-zinc-800 bg-[#141417] p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-bold">Cuenta</h2>
-            <p className="mt-1 text-sm text-zinc-400">
-              {account ? accountStatusLabels[account.status] : "Sin cuenta"}
-            </p>
-          </div>
-          <span className="rounded-full border border-zinc-700 px-3 py-1 text-xs text-zinc-300">
-            {account ? accountStatusLabels[account.status] : "Sin cuenta"}
-          </span>
+      <div className="admin-detail-grid">
+        <div className="grid content-start gap-5">
+          <AdminPanel title="Información de contacto">
+            <AdminActionForm action={update} className="admin-form admin-form-grid" label="Guardar cambios" pendingLabel="Guardando…">
+              <FormField label="Nombre"><input name="name" defaultValue={client.name} required /></FormField>
+              <FormField label="Email"><input name="email" type="email" defaultValue={client.email ?? ""} /></FormField>
+              <FormField label="Teléfono"><input name="phone" defaultValue={client.phone ?? ""} /></FormField>
+              <FormField label="Notas"><textarea name="notes" rows={4} defaultValue={client.notes ?? ""} /></FormField>
+            </AdminActionForm>
+          </AdminPanel>
+          <AdminPanel actions={<Link className="admin-panel-link" href="/admin/galleries">Ver todas →</Link>} title="Galerías recientes">
+            {client.galleries.length ? (
+              <ul className="admin-related-list">
+                {client.galleries.slice(0, 5).map((gallery) => (
+                  <li key={gallery.id}>
+                    <Link href={`/admin/galleries/${gallery.id}`}>{gallery.title}</Link>
+                    <GalleryStatusBadge status={gallery.status} />
+                    <time>{gallery.createdAt.toLocaleDateString("es-CL")}</time>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="admin-list-summary">Este cliente todavía no tiene galerías.</p>}
+          </AdminPanel>
         </div>
 
-        {account ? (
-          <dl className="mt-5 grid gap-4 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-zinc-500">Correo asociado</dt>
-              <dd className="mt-1 break-all text-zinc-200">{account.email}</dd>
+        <aside className="grid content-start gap-5">
+          <AdminPanel title="Estado de cuenta">
+            <dl className="admin-key-values">
+              <div><dt>Acceso</dt><dd>{account ? accountStatusLabels[account.status] : "Sin cuenta"}</dd></div>
+              <div><dt>Correo asociado</dt><dd>{account?.email ?? client.email ?? "—"}</dd></div>
+              <div><dt>Fecha de invitación</dt><dd>{formatDate(latestInvitation?.createdAt)}</dd></div>
+              <div><dt>Activación</dt><dd>{formatDate(activation)}</dd></div>
+            </dl>
+            <div className="admin-panel-actions">
+              {!account && <AdminActionForm action={createAccount} disabled={!client.email} label="Crear cuenta e invitar" pendingLabel="Creando y enviando…" />}
+              {account?.status === AccountStatus.INVITED && <AdminActionForm action={resendInvitation} buttonClassName="secondary" label="Reenviar invitación" pendingLabel="Reenviando…" />}
             </div>
-            <div>
-              <dt className="text-zinc-500">Fecha de invitación</dt>
-              <dd className="mt-1 text-zinc-200">{formatDate(latestInvitation?.createdAt)}</dd>
+          </AdminPanel>
+          <AdminPanel title="Próximas acciones">
+            <div className="admin-next-actions">
+              <Link href="/admin/galleries/new"><span>＋</span>Crear una nueva galería</Link>
+              {!account && <span><i>!</i>{client.email ? "Invitación pendiente de envío" : "Falta un correo de acceso"}</span>}
             </div>
-            <div>
-              <dt className="text-zinc-500">Activación</dt>
-              <dd className="mt-1 text-zinc-200">{formatDate(activation)}</dd>
-            </div>
-          </dl>
-        ) : (
-          <p className="mt-5 text-sm text-zinc-400">
-            {client.email
-              ? `La invitación se enviará a ${client.email}.`
-              : "Guarda primero un correo válido para habilitar la invitación."}
-          </p>
-        )}
-
-        {!account && (
-          <AdminActionForm action={createAccount} className="mt-5" disabled={!client.email} label="Crear cuenta e invitar" pendingLabel="Creando y enviando…" />
-        )}
-        {account?.status === AccountStatus.INVITED && (
-          <AdminActionForm action={resendInvitation} className="mt-5" buttonClassName="secondary" label="Reenviar invitación" pendingLabel="Reenviando…" />
-        )}
-      </section>
+          </AdminPanel>
+        </aside>
+      </div>
     </AdminShell>
   );
 }
