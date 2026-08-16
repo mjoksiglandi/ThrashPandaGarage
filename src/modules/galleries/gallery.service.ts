@@ -5,7 +5,7 @@ import { gallerySchema } from "@/lib/validators";
 import { createAccessToken, slugify } from "@/lib/tokens";
 import { GalleryNotFoundError, InvalidGalleryTransitionError } from "./gallery.errors";
 import { galleryRepository } from "./gallery.repository";
-import { assertGalleryTransition, isSelectionOpen } from "./gallery-workflow";
+import { assertGalleryTransition } from "./gallery-workflow";
 import { selectionRepository } from "@/modules/selections/selection.repository";
 
 export type AdminActor = { actorId: string };
@@ -193,5 +193,3 @@ export async function archiveGallery(id: string, actor: AdminActor) {
   revalidatePath("/admin/galleries");
   return gallery;
 }
-
-export { isSelectionOpen };

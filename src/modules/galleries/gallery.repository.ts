@@ -38,7 +38,21 @@ export const galleryRepository = {
   list() {
     return db.gallery.findMany({
       orderBy: { createdAt: "desc" },
-      include: { client: true, photos: { select: { id: true } }, selections: true },
+      include: {
+        client: true,
+        photos: { select: { id: true }, orderBy: { sortOrder: "asc" } },
+        selections: true,
+      },
+    });
+  },
+  countByStatus(status: GalleryStatus) {
+    return db.gallery.count({ where: { status } });
+  },
+  recentEvents(limit: number) {
+    return db.galleryEvent.findMany({
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      include: { gallery: { include: { client: true } } },
     });
   },
   find(id: string) {

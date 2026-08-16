@@ -20,11 +20,6 @@ import {
   ACCOUNT_SESSION_DURATION_MS,
 } from "./account-login-policy";
 
-export {
-  ACCOUNT_LOGIN_LOCK_POLICY,
-  ACCOUNT_SESSION_DURATION_MS,
-} from "./account-login-policy";
-
 // This is a cost-12 bcrypt hash for a public sentinel, never a user password.
 // It keeps valid-but-unknown emails on the same bcrypt path as real accounts.
 const NONEXISTENT_ACCOUNT_PASSWORD_HASH =
